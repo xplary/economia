@@ -1,0 +1,42 @@
+/* Título de Marca en Degradado Azul a Verde */
+.brand-gradient {
+    background: linear-gradient(90deg, #0d47a1 0%, #1976d2 40%, #00c853 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+/* Estilos para el ESPACIO 1 (Artículos tipo Blog) */
+.blog-post {
+    border-top: 4px solid #f0ca4d; 
+}
+.blog-title {
+    font-family: 'Georgia', serif; 
+    font-weight: bold;
+    color: #333;
+}
+.sidebar-box {
+    background: #fdfdfd;
+    border-top: 3px solid #ccc !important;
+}
+
+/* Ajustes generales */
+.nav-pills .nav-link {
+    color: #444;
+    font-weight: 500;
+}
+.nav-pills .nav-link.active {
+    background-color: #1976d2;
+}
+
+/* Ocultar elementos administrativos por defecto */
+.admin-only {
+    display: none !important;
+}
+
+/* JS inyectará esta clase si el usuario es dueño */
+.is-owner .admin-only {
+    display: block !important;
+}

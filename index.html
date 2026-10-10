@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Economía</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light">
+
+    <!-- Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand brand-gradient" href="#">ECONOMIA</a>
+            <div class="d-flex align-items-center">
+                <button id="btn-login" class="btn btn-outline-primary me-2">Iniciar con Google</button>
+                <button id="btn-logout" class="btn btn-outline-danger d-none">Cerrar Sesión</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Pestañas de Navegación -->
+        <ul class="nav nav-pills mb-4 justify-content-center" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#articulos" type="button">Trabajos y Artículos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#opiniones" type="button">Opiniones y Debates</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#eventos" type="button">Facultad y Eventos</button>
+            </li>
+        </ul>
+
+        <!-- Contenido de las Pestañas -->
+        <div class="tab-content" id="pills-tabContent">
+            
+            <!-- ESPACIO 1: Artículos -->
+            <div class="tab-pane fade show active" id="articulos" role="tabpanel">
+                <div class="admin-only d-none mb-4 p-3 bg-white rounded border">
+                    <h5>+ Publicar Nuevo Artículo</h5>
+                    <input type="text" class="form-control mb-2" placeholder="Título del trabajo">
+                    <textarea class="form-control mb-2" rows="3" placeholder="Contenido del artículo..."></textarea>
+                    <button class="btn btn-success">Publicar</button>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="blog-post bg-white p-4 border mb-4">
+                            <h2 class="blog-title">Análisis del Crecimiento Económico</h2>
+                            <p class="text-muted small">02/10/2026 | Por: Autor Principal | Categoría: General</p>
+                            <p>El crecimiento económico es un concepto fundamental...</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-white p-3 border mb-4 sidebar-box">
+                            <h5>Entradas Recientes</h5>
+                            <ul class="list-unstyled text-muted small">
+                                <li>→ La obsesión con el crecimiento infinito</li>
+                                <li>→ El futuro del empleo juvenil</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESPACIO 2: Opiniones y Comentarios -->
+            <div class="tab-pane fade" id="opiniones" role="tabpanel">
+                <div class="admin-only d-none mb-4 p-3 bg-white rounded border">
+                    <h5>+ Abrir Hilo de Opinión</h5>
+                    <input type="text" class="form-control mb-2" placeholder="Ej: Encuesta de elecciones a decano">
+                    <button class="btn btn-success">Publicar Hilo</button>
+                </div>
+                <div class="feed-container">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Encuesta de Elecciones para Decano</h5>
+                            <p class="card-text">Este espacio no es un trabajo formal, es para debatir sobre las tendencias en la facultad. ¿Qué opinan de las propuestas?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESPACIO 3: Eventos -->
+            <div class="tab-pane fade" id="eventos" role="tabpanel">
+                <div class="admin-only d-none mb-4 p-3 bg-white rounded border">
+                    <h5>+ Publicar Evento o Noticia</h5>
+                    <input type="text" class="form-control mb-2" placeholder="Titular de la noticia">
+                    <button class="btn btn-success">Publicar Evento</button>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4 class="border-bottom pb-2 mb-3 text-primary">• Noticias de Economía</h4>
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="row g-0 align-items-center">
+                                <div class="col-md-4">
+                                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 150px;">Imagen Noticia</div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <p class="text-muted small mb-1">ECONOMÍA Y EMPRESA</p>
+                                        <h5 class="card-title fw-bold">Estudiantes publican investigación internacional</h5>
+                                        <p class="text-muted small">07.10.2026</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-light p-3 border">
+                            <h5 class="fw-bold">Próximos eventos</h5>
+                            <hr>
+                            <p class="mb-0 fw-bold">15 OCT</p>
+                            <p class="small">Conferencia Internacional de Empleabilidad</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Scripts de Firebase y Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
