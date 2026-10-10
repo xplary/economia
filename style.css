@@ -1,42 +1,58 @@
-/* Título de Marca en Degradado Azul a Verde */
+:root {
+    --primary-blue: #092e6e;
+    --accent-blue: #1976d2;
+    --accent-green: #00c853;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #333;
+}
+
 .brand-gradient {
-    background: linear-gradient(90deg, #0d47a1 0%, #1976d2 40%, #00c853 100%);
+    background: linear-gradient(90deg, var(--primary-blue) 0%, var(--accent-blue) 50%, var(--accent-green) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-size: 1.8rem;
-    font-weight: 800;
+    font-weight: 900;
     letter-spacing: 1px;
 }
 
-/* Estilos para el ESPACIO 1 (Artículos tipo Blog) */
-.blog-post {
-    border-top: 4px solid #f0ca4d; 
-}
-.blog-title {
-    font-family: 'Georgia', serif; 
-    font-weight: bold;
-    color: #333;
-}
-.sidebar-box {
-    background: #fdfdfd;
-    border-top: 3px solid #ccc !important;
+.text-main-color {
+    color: var(--primary-blue);
 }
 
-/* Ajustes generales */
-.nav-pills .nav-link {
-    color: #444;
+.nav-underline .nav-link {
+    color: #555;
     font-weight: 500;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
 }
-.nav-pills .nav-link.active {
-    background-color: #1976d2;
+.nav-underline .nav-link:hover { color: var(--accent-blue) !important; }
+.nav-underline .nav-link.active {
+    color: var(--primary-blue) !important;
+    border-bottom: 2px solid var(--primary-blue);
+    font-weight: 700;
 }
 
-/* Ocultar elementos administrativos por defecto */
-.admin-only {
-    display: none !important;
+.admin-only { display: none !important; }
+.is-owner .admin-only { display: block !important; }
+
+/* Estilos de carga (Skeletons) */
+.skeleton-box {
+    background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
-/* JS inyectará esta clase si el usuario es dueño */
-.is-owner .admin-only {
-    display: block !important;
+/* Ajustes para el contenido de Quill (Editor enriquecido) */
+.ql-editor img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
 }
+.noticia-content p { color: #555; }

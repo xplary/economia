@@ -6,127 +6,106 @@
     <title>Plataforma de Economía</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Iconos Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Quill.js (Editor de texto enriquecido) -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <!-- CSS Personalizado -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light">
+<body class="bg-white">
 
-    <!-- Navegación -->
-    <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm mb-4">
-        <div class="container">
-            <a class="navbar-brand brand-gradient" href="#">ECONOMIA</a>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3 mb-4">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand brand-gradient m-0" href="#">ECONOMIA</a>
+            
+            <ul class="nav nav-underline" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-dark active" data-bs-toggle="pill" data-bs-target="#eventos" type="button">Noticias de Economía</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-dark" data-bs-toggle="pill" data-bs-target="#articulos" type="button">Trabajos y Artículos</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-dark" data-bs-toggle="pill" data-bs-target="#opiniones" type="button">Debates y Encuestas</button>
+                </li>
+            </ul>
+
             <div class="d-flex align-items-center">
-                <button id="btn-login" class="btn btn-outline-primary me-2">Iniciar con Google</button>
-                <button id="btn-logout" class="btn btn-outline-danger d-none">Cerrar Sesión</button>
+                <button id="btn-login" class="btn btn-outline-primary btn-sm rounded-pill px-4">Ingresar</button>
+                <button id="btn-logout" class="btn btn-outline-danger btn-sm rounded-pill px-4 d-none">Cerrar Sesión</button>
             </div>
         </div>
     </nav>
 
     <div class="container">
-        <!-- Pestañas de Navegación -->
-        <ul class="nav nav-pills mb-4 justify-content-center" id="pills-tab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#articulos" type="button">Trabajos y Artículos</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#opiniones" type="button">Opiniones y Debates</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#eventos" type="button">Facultad y Eventos</button>
-            </li>
-        </ul>
-
-        <!-- Contenido de las Pestañas -->
         <div class="tab-content" id="pills-tabContent">
             
-            <!-- ESPACIO 1: Artículos -->
-            <div class="tab-pane fade show active" id="articulos" role="tabpanel">
-                <div class="admin-only d-none mb-4 p-3 bg-white rounded border">
-                    <h5>+ Publicar Nuevo Artículo</h5>
-                    <input type="text" class="form-control mb-2" placeholder="Título del trabajo">
-                    <textarea class="form-control mb-2" rows="3" placeholder="Contenido del artículo..."></textarea>
-                    <button class="btn btn-success">Publicar</button>
+            <!-- SECCIÓN: NOTICIAS -->
+            <div class="tab-pane fade show active" id="eventos" role="tabpanel">
+                <div class="admin-only d-none mb-5 p-4 bg-light rounded border border-primary">
+                    <h5 class="text-primary fw-bold mb-3"><i class="bi bi-newspaper"></i> Publicar Nueva Noticia</h5>
+                    <input type="text" id="noticia-titulo" class="form-control mb-2" placeholder="Titular de la noticia">
+                    <input type="text" id="noticia-etiqueta" class="form-control mb-3" placeholder="Etiqueta (Ej: ECONOMÍA Y EMPRESA)">
+                    <div class="bg-white mb-3">
+                        <div id="editor-noticias" style="height: 200px;"></div>
+                    </div>
+                    <button id="btn-publicar-noticia" class="btn btn-primary px-4">Publicar Noticia</button>
                 </div>
                 
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="blog-post bg-white p-4 border mb-4">
-                            <h2 class="blog-title">Análisis del Crecimiento Económico</h2>
-                            <p class="text-muted small">02/10/2026 | Por: Autor Principal | Categoría: General</p>
-                            <p>El crecimiento económico es un concepto fundamental...</p>
+                <h2 class="mb-4 fw-bold text-main-color" style="letter-spacing: -0.5px;">
+                    <span class="text-primary">•</span> Noticias de Economía y Desarrollo
+                </h2>
+
+                <!-- Contenedor dinámico de Noticias -->
+                <div id="contenedor-noticias">
+                    <!-- Skeletons (Mientras carga) -->
+                    <div class="row mb-5 border-bottom pb-5 skeleton-card">
+                        <div class="col-lg-7 mb-3 mb-lg-0">
+                            <div class="skeleton-box rounded w-100" style="height: 350px;"></div>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="bg-white p-3 border mb-4 sidebar-box">
-                            <h5>Entradas Recientes</h5>
-                            <ul class="list-unstyled text-muted small">
-                                <li>→ La obsesión con el crecimiento infinito</li>
-                                <li>→ El futuro del empleo juvenil</li>
-                            </ul>
+                        <div class="col-lg-5 d-flex flex-column justify-content-center ps-lg-4">
+                            <div class="skeleton-box rounded mb-3" style="width: 100px; height: 25px;"></div>
+                            <div class="skeleton-box rounded mb-3" style="width: 100%; height: 40px;"></div>
+                            <div class="skeleton-box rounded mb-4" style="width: 100%; height: 80px;"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ESPACIO 2: Opiniones y Comentarios -->
+            <!-- SECCIÓN: ARTÍCULOS (Estructura similar) -->
+            <div class="tab-pane fade" id="articulos" role="tabpanel">
+                <!-- Se puede replicar la estructura de noticias aquí más adelante -->
+                <p class="text-muted text-center mt-5">Aún no hay artículos publicados.</p>
+            </div>
+
+            <!-- SECCIÓN: DEBATES Y ENCUESTAS -->
             <div class="tab-pane fade" id="opiniones" role="tabpanel">
-                <div class="admin-only d-none mb-4 p-3 bg-white rounded border">
-                    <h5>+ Abrir Hilo de Opinión</h5>
-                    <input type="text" class="form-control mb-2" placeholder="Ej: Encuesta de elecciones a decano">
-                    <button class="btn btn-success">Publicar Hilo</button>
-                </div>
-                <div class="feed-container">
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Encuesta de Elecciones para Decano</h5>
-                            <p class="card-text">Este espacio no es un trabajo formal, es para debatir sobre las tendencias en la facultad. ¿Qué opinan de las propuestas?</p>
-                        </div>
+                <div class="admin-only d-none mb-4 p-4 bg-light rounded border border-primary">
+                    <h5 class="text-primary fw-bold"><i class="bi bi-bar-chart-fill"></i> Crear Encuesta / Debate</h5>
+                    <input type="text" id="encuesta-pregunta" class="form-control mb-3" placeholder="Pregunta del debate o encuesta">
+                    
+                    <div id="opciones-encuesta">
+                        <input type="text" class="form-control mb-2 opcion-input" placeholder="Opción 1">
+                        <input type="text" class="form-control mb-2 opcion-input" placeholder="Opción 2">
                     </div>
+                    <button id="btn-agregar-opcion" class="btn btn-sm btn-outline-secondary mb-3">+ Agregar Opción</button>
+                    <br>
+                    <button id="btn-publicar-encuesta" class="btn btn-primary px-4">Publicar Encuesta</button>
                 </div>
-            </div>
 
-            <!-- ESPACIO 3: Eventos -->
-            <div class="tab-pane fade" id="eventos" role="tabpanel">
-                <div class="admin-only d-none mb-4 p-3 bg-white rounded border">
-                    <h5>+ Publicar Evento o Noticia</h5>
-                    <input type="text" class="form-control mb-2" placeholder="Titular de la noticia">
-                    <button class="btn btn-success">Publicar Evento</button>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-8">
-                        <h4 class="border-bottom pb-2 mb-3 text-primary">• Noticias de Economía</h4>
-                        <div class="card mb-3 border-0 shadow-sm">
-                            <div class="row g-0 align-items-center">
-                                <div class="col-md-4">
-                                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 150px;">Imagen Noticia</div>
-                                </div>
-                                <div class="col-md-8">
-                                    <div class="card-body">
-                                        <p class="text-muted small mb-1">ECONOMÍA Y EMPRESA</p>
-                                        <h5 class="card-title fw-bold">Estudiantes publican investigación internacional</h5>
-                                        <p class="text-muted small">07.10.2026</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="bg-light p-3 border">
-                            <h5 class="fw-bold">Próximos eventos</h5>
-                            <hr>
-                            <p class="mb-0 fw-bold">15 OCT</p>
-                            <p class="small">Conferencia Internacional de Empleabilidad</p>
-                        </div>
-                    </div>
+                <!-- Contenedor dinámico de Encuestas -->
+                <div id="contenedor-encuestas">
+                    <div class="skeleton-box rounded w-100 mb-3" style="height: 150px;"></div>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- Scripts de Firebase y Bootstrap -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script type="module" src="app.js"></script>
 </body>
 </html>
