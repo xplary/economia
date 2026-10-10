@@ -40,7 +40,7 @@ body {
 
 /* Estilos de carga (Skeletons) */
 .skeleton-box {
-    background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+    background: linear-gradient(90deg, #e0e0e0 25%, #f4f4f4 50%, #e0e0e0 75%);
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s infinite;
 }
@@ -49,10 +49,31 @@ body {
     100% { background-position: -200% 0; }
 }
 
-/* Ajustes para el contenido de Quill (Editor enriquecido) */
+/* Ajustes Quill Editor para que parezca moderno */
+.ql-toolbar.ql-snow {
+    border: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    background-color: #f8f9fa;
+}
+.ql-container.ql-snow {
+    border: none !important;
+    font-size: 1.1rem;
+    font-family: inherit;
+}
 .ql-editor img {
     max-width: 100%;
     height: auto;
     border-radius: 8px;
+    margin-bottom: 1rem;
 }
-.noticia-content p { color: #555; }
+.noticia-content p { color: #444; line-height: 1.7; }
+
+/* Tarjetas de artículos */
+.articulo-card {
+    transition: transform 0.2s ease;
+    border-left: 4px solid var(--primary-blue) !important;
+}
+.articulo-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
