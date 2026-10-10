@@ -1,79 +1,22 @@
-:root {
-    --primary-blue: #092e6e;
-    --accent-blue: #1976d2;
-    --accent-green: #00c853;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: #333;
-}
+:root { --primary-blue: #092e6e; --accent-blue: #1976d2; --accent-green: #00c853; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #333; }
 
 .brand-gradient {
     background: linear-gradient(90deg, var(--primary-blue) 0%, var(--accent-blue) 50%, var(--accent-green) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 900;
-    letter-spacing: 1px;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1px;
 }
 
-.text-main-color {
-    color: var(--primary-blue);
-}
-
-.nav-underline .nav-link {
-    color: #555;
-    font-weight: 500;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-}
-.nav-underline .nav-link:hover { color: var(--accent-blue) !important; }
-.nav-underline .nav-link.active {
-    color: var(--primary-blue) !important;
-    border-bottom: 2px solid var(--primary-blue);
-    font-weight: 700;
-}
+.nav-underline .nav-link { color: #555; font-weight: 500; border-bottom: 2px solid transparent; transition: 0.2s; }
+.nav-underline .nav-link:hover { color: var(--accent-blue); }
+.nav-underline .nav-link.active { color: var(--primary-blue); border-bottom: 2px solid var(--primary-blue); font-weight: 700; }
 
 .admin-only { display: none !important; }
 .is-owner .admin-only { display: block !important; }
 
-/* Estilos de carga (Skeletons) */
-.skeleton-box {
-    background: linear-gradient(90deg, #e0e0e0 25%, #f4f4f4 50%, #e0e0e0 75%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-}
-@keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
+/* Estilos de las tarjetas */
+.post-principal { border-left: 6px solid var(--primary-blue); background: #fff; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+.post-normal { background: #fff; padding: 1.5rem; border-radius: 12px; border: 1px solid #eaeaea; transition: 0.3s; height: 100%; display: flex; flex-direction: column;}
+.post-normal:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.08); transform: translateY(-3px); }
 
-/* Ajustes Quill Editor para que parezca moderno */
-.ql-toolbar.ql-snow {
-    border: none !important;
-    border-bottom: 1px solid #e0e0e0 !important;
-    background-color: #f8f9fa;
-}
-.ql-container.ql-snow {
-    border: none !important;
-    font-size: 1.1rem;
-    font-family: inherit;
-}
-.ql-editor img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-.noticia-content p { color: #444; line-height: 1.7; }
-
-/* Tarjetas de artículos */
-.articulo-card {
-    transition: transform 0.2s ease;
-    border-left: 4px solid var(--primary-blue) !important;
-}
-.articulo-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
-}
+.tag-badge { padding: 5px 12px; border-radius: 20px; color: white; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-right: 5px; margin-bottom: 5px; display: inline-block; }
+.ql-editor img { max-width: 100%; border-radius: 8px; }
