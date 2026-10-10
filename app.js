@@ -10,11 +10,11 @@ const app = initializeApp({
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Inicializar Editor Compacto
+// Quill Editor
 const quillNoticias = new Quill('#editor-noticias', {
     theme: 'snow',
-    placeholder: 'Escribe tu columna aquí...',
-    modules: { toolbar: [['bold', 'italic'], [{'color':[]}], ['link', 'image'], ['clean']] }
+    placeholder: 'Escribe tu publicación...',
+    modules: { toolbar: [['bold', 'italic'], [{'color':[]}], ['link'], ['clean']] }
 });
 
 // Autenticación
@@ -31,15 +31,112 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// Función Global para Borrar Documentos
+// Borrar Documentos
 window.borrarPost = async (coleccion, id) => {
-    if(confirm("¿Estás seguro de que deseas eliminar esta publicación permanentemente?")) {
+    if(confirm("¿Estás seguro de que deseas eliminar esto permanentemente?")) {
         await deleteDoc(doc(db, coleccion, id));
     }
 };
 
+window.compartir = (titulo) => {
+    if (navigator.share) navigator.share({ title: titulo, url: window.location.href });
+};
+
 // ==========================================
-// 1. INVESTIGACIÓN & PAPERS (Artículos)
+// 1. NOTICIAS Y COLUMNAS (DISEÑO MODERNO)
+// ==========================================
+document.getElementById('btn-pub-noticia').onclick = async () => {
+    const titulo = document.getElementById('not-titulo').value;
+    const etiqueta = document.getElementById('not-etiqueta').value || 'General';
+    const imagenUrl = document.getElementById('not-imagen').value || 'https://via.placeholder.com/800x500/eaeaea/a0a0a0?text=Imagen+No+Disponible';
+    const esPrincipal = document.getElementById('not-principal').checked;
+    const contenido = quillNoticias.root.innerHTML;
+    
+    if (!titulo) return alert("Falta el titular.");
+
+    await addDoc(collection(db, "noticias"), { 
+        titulo, etiqueta, imagen: imagenUrl, principal: esPrincipal, contenido, fecha: serverTimestamp() 
+    });
+    
+    document.getElementById('not-titulo').value = '';
+    document.getElementById('not-etiqueta').value = '';
+    document.getElementById('not-imagen').value = '';
+    document.getElementById('not-principal').checked = false;
+    quillNoticias.setContents([]);
+    bootstrap.Collapse.getInstance(document.getElementById('colNoticia')).hide();
+};
+
+onSnapshot(query(collection(db, "noticias"), orderBy("fecha", "desc")), (snap) => {
+    const contPrincipal = document.getElementById('contenedor-noticia-principal');
+    const contLista = document.getElementById('contenedor-noticias-lista');
+    
+    if (snap.empty) {
+        contPrincipal.innerHTML = '';
+        contLista.innerHTML = '<div class="text-center text-muted py-4">No hay publicaciones disponibles.</div>';
+        return;
+    }
+    
+    let htmlPrincipal = '';
+    let htmlLista = '';
+    let principalEncontrada = false;
+
+    snap.forEach(d => {
+        const data = d.data();
+        const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : 'Reciente';
+        
+        // Si es marcada como principal y aún no hemos dibujado una principal
+        if (data.principal && !principalEncontrada) {
+            principalEncontrada = true;
+            htmlPrincipal = `
+            <div class="row mb-5 border-bottom pb-5">
+                <div class="col-lg-7 position-relative">
+                    <img src="${data.imagen}" class="img-fluid w-100 object-fit-cover rounded-1" style="height: 380px; background: #eaeaea;" alt="Noticia Principal">
+                    <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 admin-only-inline shadow" onclick="borrarPost('noticias', '${d.id}')" title="Borrar Principal"><i class="bi bi-trash"></i></button>
+                </div>
+                <div class="col-lg-5 d-flex flex-column justify-content-center ps-lg-4 mt-3 mt-lg-0">
+                    <span class="badge bg-white text-secondary border border-secondary-subtle px-2 py-1 mb-3 align-self-start text-uppercase" style="letter-spacing: 0.5px;">${data.etiqueta}</span>
+                    <h2 class="fw-bold mb-3" style="font-family: Georgia, serif; font-size: 2.2rem; color: #1a202c;">${data.titulo}</h2>
+                    <div class="text-muted mb-4 text-truncate-3" style="line-height: 1.6;">${data.contenido}</div>
+                    <div class="d-flex justify-content-between mt-auto align-items-center">
+                        <small class="text-muted">${date}</small>
+                        <small class="text-muted" style="cursor: pointer;" onclick="compartir('${data.titulo}')">Compartir <i class="bi bi-share ms-1"></i></small>
+                    </div>
+                </div>
+            </div>`;
+        } else {
+            // El resto va a la lista normal
+            htmlLista += `
+            <div class="card border-0 border-bottom rounded-0 mb-4 pb-3">
+                <div class="row g-0">
+                    <div class="col-md-4 position-relative">
+                        <img src="${data.imagen}" class="img-fluid w-100 object-fit-cover rounded-1" style="height: 140px; background: #eaeaea;" alt="Imagen">
+                    </div>
+                    <div class="col-md-8 ps-3 d-flex flex-column">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-white border border-secondary-subtle text-secondary px-2 py-1 text-uppercase" style="font-size:0.7rem;">${data.etiqueta}</span>
+                            <div>
+                               <i class="bi bi-share text-muted me-2" onclick="compartir('${data.titulo}')" style="cursor:pointer"></i>
+                               <i class="bi bi-trash text-danger admin-only-inline" onclick="borrarPost('noticias', '${d.id}')" style="cursor:pointer"></i>
+                            </div>
+                        </div>
+                        <h5 class="fw-bold mb-2" style="font-family: Georgia, serif; color: #1a202c; font-size: 1.25rem;">${data.titulo}</h5>
+                        <div class="mt-auto">
+                            <small class="text-muted">${date}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+    });
+
+    // Si no se encontró ninguna noticia principal, limpiamos el contenedor superior
+    contPrincipal.innerHTML = principalEncontrada ? htmlPrincipal : '';
+    contLista.innerHTML = htmlLista;
+});
+
+
+// ==========================================
+// 2. INVESTIGACIÓN & PAPERS
 // ==========================================
 document.getElementById('btn-pub-articulo').onclick = async () => {
     const titulo = document.getElementById('art-titulo').value;
@@ -64,60 +161,17 @@ onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) 
         const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : 'Reciente';
         html += `
         <div class="col-12 mb-3">
-            <div class="card articulo-card border-0 shadow-sm h-100">
+            <div class="card border border-primary-subtle shadow-sm h-100 rounded-3">
                 <div class="card-body p-3">
                     <h5 class="fw-bold text-dark mb-1">${data.titulo}</h5>
                     <p class="text-muted small mb-3">${data.resumen}</p>
                     <div class="d-flex align-items-center justify-content-between">
-                        <a href="${data.link}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill fw-bold px-3">
-                            <i class="bi bi-file-pdf-fill"></i> Leer Documento
-                        </a>
+                        <a href="${data.link}" target="_blank" class="btn btn-sm btn-outline-danger rounded-pill fw-bold px-3"><i class="bi bi-file-pdf-fill"></i> Leer Documento</a>
                         <div>
                             <small class="text-muted">${date}</small>
                             <button class="btn btn-sm btn-outline-danger px-2 py-0 ms-2 admin-only-inline" onclick="borrarPost('articulos', '${d.id}')" title="Borrar"><i class="bi bi-trash"></i></button>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>`;
-    });
-    cont.innerHTML = html;
-});
-
-// ==========================================
-// 2. COLUMNAS DE OPINIÓN (Noticias)
-// ==========================================
-document.getElementById('btn-pub-noticia').onclick = async () => {
-    const titulo = document.getElementById('not-titulo').value;
-    const etiqueta = document.getElementById('not-etiqueta').value || 'Opinión';
-    const contenido = quillNoticias.root.innerHTML;
-    if (!titulo) return alert("Falta el titular.");
-
-    await addDoc(collection(db, "noticias"), { titulo, etiqueta, contenido, fecha: serverTimestamp() });
-    document.getElementById('not-titulo').value = '';
-    document.getElementById('not-etiqueta').value = '';
-    quillNoticias.setContents([]);
-    bootstrap.Collapse.getInstance(document.getElementById('colNoticia')).hide();
-};
-
-onSnapshot(query(collection(db, "noticias"), orderBy("fecha", "desc")), (snap) => {
-    const cont = document.getElementById('contenedor-noticias');
-    if (snap.empty) return cont.innerHTML = '<div class="text-center text-muted py-4">No hay columnas publicadas.</div>';
-    
-    let html = '';
-    snap.forEach(d => {
-        const data = d.data();
-        const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : 'Reciente';
-        html += `
-        <div class="mb-4 border-bottom pb-4">
-            <span class="badge bg-light text-secondary border px-2 py-1 mb-2 text-uppercase">${data.etiqueta}</span>
-            <h3 class="fw-bold mb-3" style="font-family: Georgia, serif;">${data.titulo}</h3>
-            <div class="text-muted mb-3">${data.contenido}</div>
-            <div class="d-flex justify-content-between align-items-center">
-                <small class="text-muted fw-bold">${date}</small>
-                <div>
-                    <button class="btn btn-sm btn-light text-primary rounded-pill px-3" onclick="compartir('${data.titulo}')"><i class="bi bi-share"></i> Compartir</button>
-                    <button class="btn btn-sm btn-outline-danger px-2 py-1 ms-2 admin-only-inline" onclick="borrarPost('noticias', '${d.id}')" title="Borrar"><i class="bi bi-trash"></i></button>
                 </div>
             </div>
         </div>`;
@@ -157,10 +211,10 @@ onSnapshot(query(collection(db, "encuestas"), orderBy("fecha", "desc")), (snap) 
     snap.forEach(d => {
         const data = d.data();
         html += `
-        <div class="card mb-3 border-0 shadow-sm">
+        <div class="card mb-3 border border-secondary-subtle shadow-sm rounded-3">
             <div class="card-body p-3">
-                <div class="d-flex justify-content-between">
-                    <h5 class="fw-bold mb-3">${data.pregunta}</h5>
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="fw-bold m-0">${data.pregunta}</h5>
                     <button class="btn btn-sm text-danger px-2 py-0 admin-only-inline" style="height:fit-content;" onclick="borrarPost('encuestas', '${d.id}')" title="Borrar"><i class="bi bi-trash"></i></button>
                 </div>
                 <div class="d-grid gap-2">`;
@@ -177,7 +231,7 @@ onSnapshot(query(collection(db, "encuestas"), orderBy("fecha", "desc")), (snap) 
                 </button>`;
         });
         html += `</div>
-                <div class="mt-2 text-end small text-muted">${data.totalVotos} votos</div>
+                <div class="mt-2 text-end small text-muted">${data.totalVotos} votos totales</div>
             </div>
         </div>`;
     });
@@ -193,8 +247,4 @@ window.votar = async (id, index) => {
         data.totalVotos += 1;
         await updateDoc(ref, { opciones: data.opciones, totalVotos: data.totalVotos });
     }
-};
-
-window.compartir = (titulo) => {
-    if (navigator.share) navigator.share({ title: titulo, url: window.location.href });
 };

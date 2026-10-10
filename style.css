@@ -24,7 +24,7 @@ body {
     color: var(--primary-blue) !important; border-bottom: 2px solid var(--primary-blue); font-weight: 700;
 }
 
-/* Clases para Dueños / Admin */
+/* Clases Admin */
 .admin-only { display: none !important; }
 .admin-only-inline { display: none !important; }
 
@@ -37,18 +37,21 @@ body {
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s infinite;
 }
-@keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
+@keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
 /* Ajustes Quill Editor */
 .ql-toolbar.ql-snow { background-color: #f8f9fa; padding: 4px; }
 .ql-container.ql-snow { border: none !important; font-size: 1rem; }
 .ql-editor img { max-width: 100%; height: auto; border-radius: 8px; }
 
-/* Tarjetas */
-.articulo-card {
-    transition: transform 0.2s ease; border-left: 4px solid var(--primary-blue) !important;
+/* Utilidad para truncar texto (para el contenido de Quill) */
+.text-truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
-.articulo-card:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.1)!important; }
+
+/* Ajustes para inputs y botones estilo moderno */
+.input-group-text, .form-control { border-radius: 4px; }
+.input-group .form-control:focus { box-shadow: none; background-color: #f1f3f5 !important; }

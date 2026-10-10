@@ -4,27 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FEUNP - Plataforma Académica</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Quill.js (Editor de texto) -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <!-- CSS Personalizado -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light">
+<body class="bg-white">
 
     <!-- Navegación -->
-    <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm py-3 mb-4 sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3 mb-4 sticky-top">
         <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand brand-gradient m-0 fs-3 fw-bold" href="#">ECONOMIA</a>
             
             <ul class="nav nav-underline d-none d-md-flex" id="pills-tab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link text-dark active px-3" data-bs-toggle="pill" data-bs-target="#investigacion" type="button">Investigación & Papers</button>
+                    <button class="nav-link text-dark active px-3" data-bs-toggle="pill" data-bs-target="#columnas" type="button">Columnas de Opinion</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link text-dark px-3" data-bs-toggle="pill" data-bs-target="#columnas" type="button">Columnas de Opinión</button>
+                    <button class="nav-link text-dark px-3" data-bs-toggle="pill" data-bs-target="#investigacion" type="button">Investigación & Papers</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link text-dark px-3" data-bs-toggle="pill" data-bs-target="#ensayos" type="button">Ensayos & Debates</button>
@@ -42,105 +39,132 @@
         <div class="tab-content" id="pills-tabContent">
             
             <!-- ========================================== -->
-            <!-- SECCIÓN 1: INVESTIGACIÓN & PAPERS (PDFs) -->
+            <!-- SECCIÓN PRINCIPAL: NOTICIAS Y COLUMNAS -->
             <!-- ========================================== -->
-            <div class="tab-pane fade show active" id="investigacion" role="tabpanel">
+            <div class="tab-pane fade show active" id="columnas" role="tabpanel">
                 
-                <!-- Panel Admin Compacto -->
-                <div class="admin-only d-none mb-4">
-                    <button class="btn btn-primary btn-sm shadow-sm px-3 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#colArticulo">
-                        <i class="bi bi-cloud-arrow-up me-1"></i> Subir Paper
-                    </button>
-                    <div class="collapse" id="colArticulo">
-                        <div class="card border-0 shadow-sm p-3 bg-white">
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <input type="text" id="art-titulo" class="form-control form-control-sm bg-light" placeholder="Título de la investigación">
-                                </div>
-                                <div class="col-md-6">
-                                    <input type="url" id="art-link" class="form-control form-control-sm bg-light" placeholder="Enlace de Google Drive">
-                                </div>
-                                <div class="col-12">
-                                    <textarea id="art-resumen" class="form-control form-control-sm bg-light" rows="2" placeholder="Breve resumen o abstract..."></textarea>
-                                </div>
-                                <div class="col-12 text-end mt-2">
-                                    <button id="btn-pub-articulo" class="btn btn-primary btn-sm px-4">Publicar Paper</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row" id="contenedor-articulos">
-                    <div class="col-12"><div class="skeleton-box rounded w-100 mb-3" style="height: 150px;"></div></div>
-                </div>
-            </div>
-
-            <!-- ========================================== -->
-            <!-- SECCIÓN 2: COLUMNAS DE OPINIÓN (Noticias) -->
-            <!-- ========================================== -->
-            <div class="tab-pane fade" id="columnas" role="tabpanel">
-                
-                <!-- Panel Admin Compacto -->
+                <!-- Panel Admin de Noticias -->
                 <div class="admin-only d-none mb-4">
                     <button class="btn btn-primary btn-sm shadow-sm px-3 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#colNoticia">
-                        <i class="bi bi-pencil-square me-1"></i> Redactar Columna
+                        <i class="bi bi-pencil-square me-1"></i> Redactar Publicación
                     </button>
                     <div class="collapse" id="colNoticia">
-                        <div class="card border-0 shadow-sm p-3 bg-white">
+                        <div class="card border border-primary-subtle shadow-sm p-3 bg-light rounded-3">
                             <div class="row g-2 mb-2">
-                                <div class="col-md-8">
-                                    <input type="text" id="not-titulo" class="form-control form-control-sm bg-light" placeholder="Titular de la columna">
+                                <div class="col-md-6">
+                                    <input type="text" id="not-titulo" class="form-control form-control-sm" placeholder="Titular de la publicación">
                                 </div>
-                                <div class="col-md-4">
-                                    <input type="text" id="not-etiqueta" class="form-control form-control-sm bg-light" placeholder="Etiqueta (Ej: Nacional)">
+                                <div class="col-md-3">
+                                    <input type="text" id="not-etiqueta" class="form-control form-control-sm" placeholder="Etiqueta (Ej: Nacional)">
                                 </div>
+                                <div class="col-md-3">
+                                    <input type="url" id="not-imagen" class="form-control form-control-sm" placeholder="URL de imagen de portada">
+                                </div>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="not-principal">
+                                <label class="form-check-label fw-bold text-primary small">Marcar como Noticia Principal (Tamaño Grande)</label>
                             </div>
                             <div class="border rounded bg-white">
                                 <div id="editor-noticias" style="height: 150px;"></div>
                             </div>
                             <div class="text-end mt-2">
-                                <button id="btn-pub-noticia" class="btn btn-primary btn-sm px-4">Publicar Columna</button>
+                                <button id="btn-pub-noticia" class="btn btn-primary btn-sm px-4">Publicar</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="contenedor-noticias" class="bg-white p-4 rounded shadow-sm">
-                    <div class="skeleton-box rounded w-100 mb-4" style="height: 200px;"></div>
+                <!-- CONTENEDOR: Noticia Principal (Grande) -->
+                <div id="contenedor-noticia-principal">
+                    <!-- Skeleton -->
+                    <div class="skeleton-box rounded w-100 mb-4" style="height: 350px;"></div>
                 </div>
+
+                <!-- Barra de Búsqueda y Filtros estáticos -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="d-flex gap-2">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0 text-muted"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control bg-light border-0 py-2" placeholder="Buscar...">
+                            </div>
+                            <button class="btn btn-outline-secondary px-4 text-nowrap">Ordenar por ↓</button>
+                            <button class="btn btn-outline-secondary px-4 text-nowrap"><i class="bi bi-sliders"></i> Filtrar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTENEDOR: Lista de Noticias + Sidebar -->
+                <div class="row">
+                    <!-- Lista Izquierda -->
+                    <div class="col-lg-8" id="contenedor-noticias-lista">
+                        <div class="skeleton-box rounded w-100 mb-3" style="height: 120px;"></div>
+                        <div class="skeleton-box rounded w-100 mb-3" style="height: 120px;"></div>
+                    </div>
+
+                    <!-- Sidebar Derecha (Placeholder Rojo) -->
+                    <div class="col-lg-4 ps-lg-4 mt-4 mt-lg-0">
+                        <div class="p-4 bg-white" style="border: 3px solid hsl(0, 0%, 100%);">
+                            <h4 class="fw-bold mb-4" style="font-family: Georgia, serif; color: #1a202c;">Te damos la bienvenida a nuestro nuevo INTEGRATE</h4>
+                            <div class="d-flex mb-3 align-items-start">
+                                <div class="bg-primary text-white text-center p-2 rounded me-3 shadow-sm" style="min-width: 60px;">
+                                    <small class="d-block text-uppercase" style="font-size: 0.6rem;">HASTA</small>
+                                    <span class="fs-4 fw-bold">15</span>
+                                    <small class="d-block" style="font-size: 0.7rem;">OCT</small>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-bold" style="font-size: 0.95rem;">Conferencia Internacional: Empleabilidad, IA y competencias...</p>
+                                </div>
+                            </div>
+                            <a href="#" class="text-dark text-decoration-none fw-bold mt-2 d-inline-block">Ver mas... <i class="bi bi-arrow-right-circle ms-1"></i></a>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- ========================================== -->
-            <!-- SECCIÓN 3: ENSAYOS & DEBATES (Encuestas) -->
+            <!-- SECCIÓN 2: INVESTIGACIÓN & PAPERS (Igual que antes) -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade" id="investigacion" role="tabpanel">
+                <div class="admin-only d-none mb-4">
+                    <button class="btn btn-primary btn-sm shadow-sm px-3 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#colArticulo"><i class="bi bi-cloud-arrow-up me-1"></i> Subir Paper</button>
+                    <div class="collapse" id="colArticulo">
+                        <div class="card border-0 shadow-sm p-3 bg-white">
+                            <div class="row g-2">
+                                <div class="col-md-6"><input type="text" id="art-titulo" class="form-control form-control-sm bg-light" placeholder="Título"></div>
+                                <div class="col-md-6"><input type="url" id="art-link" class="form-control form-control-sm bg-light" placeholder="Enlace de Google Drive"></div>
+                                <div class="col-12"><textarea id="art-resumen" class="form-control form-control-sm bg-light" rows="2" placeholder="Resumen..."></textarea></div>
+                                <div class="col-12 text-end mt-2"><button id="btn-pub-articulo" class="btn btn-primary btn-sm px-4">Publicar</button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" id="contenedor-articulos"></div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SECCIÓN 3: ENSAYOS & DEBATES (Igual que antes) -->
             <!-- ========================================== -->
             <div class="tab-pane fade" id="ensayos" role="tabpanel">
-                
-                <!-- Panel Admin Compacto -->
                 <div class="admin-only d-none mb-4">
-                    <button class="btn btn-primary btn-sm shadow-sm px-3 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#colEncuesta">
-                        <i class="bi bi-bar-chart-steps me-1"></i> Crear Debate
-                    </button>
+                    <button class="btn btn-primary btn-sm shadow-sm px-3 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#colEncuesta"><i class="bi bi-bar-chart-steps me-1"></i> Crear Debate</button>
                     <div class="collapse" id="colEncuesta">
                         <div class="card border-0 shadow-sm p-3 bg-white">
-                            <input type="text" id="enc-pregunta" class="form-control form-control-sm bg-light mb-2" placeholder="Pregunta de debate">
+                            <input type="text" id="enc-pregunta" class="form-control form-control-sm bg-light mb-2" placeholder="Pregunta">
                             <div id="opciones-encuesta" class="mb-2">
                                 <input type="text" class="form-control form-control-sm mb-1 opcion-input bg-light" placeholder="Opción 1">
                                 <input type="text" class="form-control form-control-sm mb-1 opcion-input bg-light" placeholder="Opción 2">
                             </div>
                             <div class="d-flex justify-content-between">
-                                <button id="btn-add-opcion" class="btn btn-sm btn-light border text-secondary">+ Opción</button>
-                                <button id="btn-pub-encuesta" class="btn btn-primary btn-sm px-4">Activar Debate</button>
+                                <button id="btn-add-opcion" class="btn btn-sm btn-light border">+ Opción</button>
+                                <button id="btn-pub-encuesta" class="btn btn-primary btn-sm px-4">Activar</button>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="row">
-                    <div class="col-md-8 mx-auto" id="contenedor-encuestas">
-                        <div class="skeleton-box rounded w-100 mb-3" style="height: 150px;"></div>
-                    </div>
-                </div>
+                <div class="row"><div class="col-md-8 mx-auto" id="contenedor-encuestas"></div></div>
             </div>
 
         </div>
