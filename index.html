@@ -54,13 +54,20 @@
                                     <input type="color" id="not-color" class="form-control form-control-color border-0 p-1 bg-light" value="#1976d2">
                                 </div>
                             </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="not-principal">
+                                <label class="form-check-label fw-bold text-primary small">Marcar como Noticia Principal (Tamaño Grande)</label>
+                            </div>
                             <div class="border rounded-3 bg-white overflow-hidden mb-3"><div id="editor-noticias" style="height: 180px;"></div></div>
                             <div class="text-end"><button id="btn-pub-noticia" class="btn btn-success px-5 rounded-pill fw-bold">Publicar Columna</button></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="row mb-4">
+                <!-- CONTENEDOR: Noticia Principal (Grande) -->
+                <div id="contenedor-noticia-principal"></div>
+
+                <div class="row mb-4 mt-2">
                     <div class="col-md-8">
                         <div class="d-flex gap-2">
                             <div class="input-group shadow-sm rounded-3 overflow-hidden">
@@ -77,7 +84,7 @@
                     <div class="col-lg-8" id="contenedor-noticias-lista">
                         <div class="skeleton-box rounded w-100 mb-3" style="height: 200px;"></div>
                     </div>
-                    <!-- Sidebar Exacto a la Imagen 7 -->
+                    <!-- Sidebar Exacto a la Imagen -->
                     <div class="col-lg-4 ps-lg-4 mt-4 mt-lg-0">
                         <div class="p-4 bg-white shadow-sm" style="border: 2px solid #dc3545;">
                             <h4 class="fw-bold mb-4 font-serif" style="color: #1a202c; font-size: 1.4rem; line-height: 1.4;">Te damos la bienvenida a nuestro nuevo INTEGRATE</h4>

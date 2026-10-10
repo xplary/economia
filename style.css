@@ -25,6 +25,8 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 
 /* Truncamiento e Imágenes de la Lista */
 .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.text-truncate-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
 .post-img-rect { width: 100%; height: 180px; object-fit: cover; border-radius: 6px; cursor: pointer; transition: 0.3s ease; }
 .post-img-rect:hover { filter: brightness(0.9); transform: scale(1.02); }
 .cursor-pointer { cursor: pointer; transition: 0.2s; }

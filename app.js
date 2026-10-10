@@ -8,7 +8,6 @@ const app = initializeApp({
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Guardamos datos globalmente para abrirlos en el Modal
 window.postsData = {};
 
 const quillNoticias = new Quill('#editor-noticias', { theme: 'snow', modules: { toolbar: [['bold', 'italic'], [{'color':[]}], ['link'], ['clean']] }});
@@ -26,11 +25,10 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// Funciones Globales
 window.borrarPost = async (coleccion, id) => { if(confirm("¿Eliminar publicación?")) await deleteDoc(doc(db, coleccion, id)); };
 window.compartir = (titulo) => { if (navigator.share) navigator.share({ title: titulo, url: window.location.href }); };
 
-// LÓGICA DEL MODAL DE LECTURA (Fullscreen)
+// LÓGICA DEL MODAL
 window.abrirModal = (id) => {
     const data = window.postsData[id];
     if(!data) return;
@@ -38,18 +36,15 @@ window.abrirModal = (id) => {
     document.getElementById('modal-titulo').innerText = data.titulo;
     document.getElementById('modal-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${data.fecha ? data.fecha.toDate().toLocaleDateString() : ''}`;
     
-    // Dibujar Etiquetas Múltiples y Color
     const tagsArr = data.etiquetas || (data.etiqueta ? [data.etiqueta] : []);
     const color = data.colorTag || '#1976d2';
     document.getElementById('modal-tags').innerHTML = tagsArr.map(t => `<span class="tag-badge" style="background-color: ${color};">${t}</span>`).join('');
     
-    // Control de Imagen
     const imgEl = document.getElementById('modal-imagen');
     if(data.imagen && data.imagen.startsWith('http')) {
         imgEl.src = data.imagen; imgEl.style.display = 'block';
     } else { imgEl.style.display = 'none'; }
     
-    // Control de Botón de Drive (solo Papers)
     const btnDrive = document.getElementById('modal-btn-drive');
     if(data.link) {
         btnDrive.innerHTML = `<a href="${data.link}" target="_blank" class="btn btn-danger fw-bold rounded-pill shadow-sm"><i class="bi bi-file-pdf-fill me-1"></i> Ver PDF Original</a>`;
@@ -68,50 +63,84 @@ document.getElementById('btn-pub-noticia').onclick = async () => {
     const etiquetas = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : ['General'];
     const colorTag = document.getElementById('not-color').value;
     const imagen = document.getElementById('not-imagen').value || '';
+    const principal = document.getElementById('not-principal').checked;
     const contenido = quillNoticias.root.innerHTML;
     
     if (!titulo) return alert("Falta el titular.");
-    await addDoc(collection(db, "noticias"), { titulo, etiquetas, colorTag, imagen, contenido, fecha: serverTimestamp() });
+    await addDoc(collection(db, "noticias"), { titulo, etiquetas, colorTag, imagen, principal, contenido, fecha: serverTimestamp() });
     
-    document.querySelectorAll('#colNoticia input').forEach(i => i.value = '');
+    document.querySelectorAll('#colNoticia input[type="text"], #colNoticia input[type="url"]').forEach(i => i.value = '');
+    document.getElementById('not-principal').checked = false;
     quillNoticias.setContents([]);
     bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide();
 };
 
 onSnapshot(query(collection(db, "noticias"), orderBy("fecha", "desc")), (snap) => {
-    const cont = document.getElementById('contenedor-noticias-lista');
-    if (snap.empty) return cont.innerHTML = '<div class="text-center text-muted">No hay publicaciones.</div>';
+    const contLista = document.getElementById('contenedor-noticias-lista');
+    const contPrincipal = document.getElementById('contenedor-noticia-principal');
     
-    let html = '';
+    if (snap.empty) {
+        contPrincipal.innerHTML = '';
+        contLista.innerHTML = '<div class="text-center text-muted">No hay publicaciones.</div>';
+        return;
+    }
+    
+    let htmlLista = '';
+    let htmlPrincipal = '';
+    let principalEncontrada = false;
+
     snap.forEach(d => {
         const data = d.data();
-        window.postsData[d.id] = data; // Guardamos para el Modal
+        window.postsData[d.id] = data; 
         const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : 'Reciente';
         const imgHTML = data.imagen ? `<img src="${data.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}')"><i class="bi bi-image fs-1"></i></div>`;
         const tagsHTML = (data.etiquetas || []).map(t => `<span class="tag-badge" style="background-color: ${data.colorTag || '#1976d2'}">${t}</span>`).join('');
         
-        // Estructura Grande Rectangular
-        html += `
-        <div class="card border-0 border-bottom rounded-0 mb-4 pb-4">
-            <div class="row g-4 align-items-center">
-                <div class="col-md-5 position-relative">
-                    ${imgHTML}
+        if (data.principal && !principalEncontrada) {
+            principalEncontrada = true;
+            const imgPrincipal = data.imagen ? `<img src="${data.imagen}" class="img-fluid w-100 object-fit-cover rounded-4 shadow-sm cursor-pointer" style="height: 380px; background: #eaeaea;" alt="Noticia Principal" onclick="abrirModal('${d.id}')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height: 380px;" onclick="abrirModal('${d.id}')"><i class="bi bi-image fs-1"></i></div>`;
+            
+            htmlPrincipal = `
+            <div class="row mb-5 border-bottom pb-5 align-items-center">
+                <div class="col-lg-7 position-relative mb-4 mb-lg-0">
+                    ${imgPrincipal}
+                    <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-3 admin-only-inline shadow" onclick="borrarPost('noticias', '${d.id}')" title="Borrar Principal"><i class="bi bi-trash"></i></button>
                 </div>
-                <div class="col-md-7 d-flex flex-column justify-content-center">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>${tagsHTML}</div>
-                        <div class="text-nowrap">
-                           <i class="bi bi-share text-muted me-2" onclick="compartir('${data.titulo}')" style="cursor:pointer"></i>
-                           <i class="bi bi-trash text-danger admin-only-inline" onclick="borrarPost('noticias', '${d.id}')" style="cursor:pointer"></i>
-                        </div>
+                <div class="col-lg-5 ps-lg-4">
+                    <div class="mb-3">${tagsHTML}</div>
+                    <h2 class="fw-bold mb-3 font-serif cursor-pointer" style="font-size: 2.2rem; color: #1a202c; line-height: 1.3;" onclick="abrirModal('${d.id}')">${data.titulo}</h2>
+                    <div class="text-muted mb-4 text-truncate-3 font-inter" style="line-height: 1.6; font-size: 1.1rem;">${data.contenido}</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted fw-semibold font-inter"><i class="bi bi-calendar3 me-1"></i> ${date}</small>
+                        <small class="text-muted fw-semibold font-inter cursor-pointer" onclick="compartir('${data.titulo}')"><i class="bi bi-share me-1"></i> Compartir</small>
                     </div>
-                    <h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif" style="color: #1a202c; line-height: 1.3;" onclick="abrirModal('${d.id}')">${data.titulo}</h3>
-                    <small class="text-muted fw-semibold mt-1"><i class="bi bi-calendar3 me-1"></i> ${date}</small>
                 </div>
-            </div>
-        </div>`;
+            </div>`;
+        } else {
+            htmlLista += `
+            <div class="card border-0 border-bottom rounded-0 mb-4 pb-4">
+                <div class="row g-4 align-items-center">
+                    <div class="col-md-5 position-relative">
+                        ${imgHTML}
+                    </div>
+                    <div class="col-md-7 d-flex flex-column justify-content-center">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>${tagsHTML}</div>
+                            <div class="text-nowrap">
+                               <i class="bi bi-share text-muted me-2 cursor-pointer" onclick="compartir('${data.titulo}')"></i>
+                               <i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i>
+                            </div>
+                        </div>
+                        <h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif" style="color: #1a202c; line-height: 1.3;" onclick="abrirModal('${d.id}')">${data.titulo}</h3>
+                        <small class="text-muted fw-semibold mt-1"><i class="bi bi-calendar3 me-1"></i> ${date}</small>
+                    </div>
+                </div>
+            </div>`;
+        }
     });
-    cont.innerHTML = html;
+    
+    contPrincipal.innerHTML = principalEncontrada ? htmlPrincipal : '';
+    contLista.innerHTML = htmlLista;
 });
 
 // ==========================================
@@ -164,7 +193,7 @@ onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) 
 });
 
 // ==========================================
-// 3. DEBATES (Encuestas) - Mantenido igual
+// 3. DEBATES (Encuestas)
 // ==========================================
 document.getElementById('btn-add-opcion').onclick = () => {
     const i = document.createElement('input'); i.type = 'text'; i.className = 'form-control bg-light border-0 mb-2 opcion-input'; i.placeholder = 'Nueva Opción';
