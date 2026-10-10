@@ -3,85 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FEUNP - Plataforma de Economía</title>
+    <title>FEUNP - Plataforma Académica</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Quill.js (Editor de texto) -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <!-- CSS Personalizado -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-light">
 
-    <!-- Nav -->
+    <!-- Navegación -->
     <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm py-3 mb-4 sticky-top">
-        <div class="container d-flex justify-content-between">
+        <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand brand-gradient m-0 fs-3 fw-bold" href="#">ECONOMIA</a>
-            <ul class="nav nav-underline d-none d-md-flex" id="tabs-secciones" role="tablist">
-                <!-- Se generan dinámicamente en JS para ahorrar espacio -->
+            
+            <ul class="nav nav-underline d-none d-md-flex" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-dark active px-3" data-bs-toggle="pill" data-bs-target="#investigacion" type="button">Investigación & Papers</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-dark px-3" data-bs-toggle="pill" data-bs-target="#columnas" type="button">Columnas de Opinión</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-dark px-3" data-bs-toggle="pill" data-bs-target="#ensayos" type="button">Ensayos & Debates</button>
+                </li>
             </ul>
-            <div>
-                <button id="btn-login" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">Ingresar</button>
-                <button id="btn-logout" class="btn btn-outline-danger rounded-pill px-4 fw-semibold d-none">Salir</button>
+
+            <div class="d-flex align-items-center">
+                <button id="btn-login" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-semibold">Ingresar</button>
+                <button id="btn-logout" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-semibold d-none">Salir</button>
             </div>
         </div>
     </nav>
 
     <div class="container pb-5">
-        
-        <!-- ========================================== -->
-        <!-- PANEL DE ADMINISTRACIÓN GLOBAL (UNIFICADO) -->
-        <!-- ========================================== -->
-        <div class="admin-only d-none mb-5">
-            <button class="btn btn-primary shadow-sm rounded-pill px-4 w-100" data-bs-toggle="collapse" data-bs-target="#panelAdmin">
-                <i class="bi bi-magic me-2"></i> Crear Nueva Publicación Global
-            </button>
+        <div class="tab-content" id="pills-tabContent">
             
-            <div class="collapse mt-3" id="panelAdmin">
-                <div class="card border-0 shadow-sm rounded-4 p-4">
-                    <div class="row g-3">
-                        <div class="col-md-8">
-                            <input type="text" id="p-titulo" class="form-control form-control-lg bg-light border-0" placeholder="Título de la publicación...">
-                        </div>
-                        <div class="col-md-4">
-                            <select id="p-seccion" class="form-select form-select-lg bg-light border-0">
-                                <option value="investigacion">📄 Investigación & Papers</option>
-                                <option value="ensayos">✍️ Ensayos & Debates</option>
-                                <option value="columnas">💭 Columnas de Opinión</option>
-                                <option value="voz">🎙️ Voz FEUNP / Entrevistas</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 d-flex gap-2 align-items-center">
-                            <input type="text" id="p-tags" class="form-control bg-light border-0" placeholder="Etiquetas (ej: Macro, Tesis, UNP)">
-                            <input type="color" id="p-color" class="form-control form-control-color border-0 bg-light" value="#092e6e" title="Color de etiquetas">
-                        </div>
-                        <div class="col-md-6 d-flex align-items-center justify-content-between bg-light rounded-3 px-3">
-                            <div class="form-check form-switch mt-1">
-                                <input class="form-check-input" type="checkbox" id="p-principal">
-                                <label class="form-check-label fw-bold text-primary">Destacar como Principal (Grande)</label>
+            <!-- ========================================== -->
+            <!-- SECCIÓN 1: INVESTIGACIÓN & PAPERS (PDFs) -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade show active" id="investigacion" role="tabpanel">
+                
+                <!-- Panel Admin Compacto -->
+                <div class="admin-only d-none mb-4">
+                    <button class="btn btn-primary btn-sm shadow-sm px-3 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#colArticulo">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> Subir Paper
+                    </button>
+                    <div class="collapse" id="colArticulo">
+                        <div class="card border-0 shadow-sm p-3 bg-white">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <input type="text" id="art-titulo" class="form-control form-control-sm bg-light" placeholder="Título de la investigación">
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="url" id="art-link" class="form-control form-control-sm bg-light" placeholder="Enlace de Google Drive">
+                                </div>
+                                <div class="col-12">
+                                    <textarea id="art-resumen" class="form-control form-control-sm bg-light" rows="2" placeholder="Breve resumen o abstract..."></textarea>
+                                </div>
+                                <div class="col-12 text-end mt-2">
+                                    <button id="btn-pub-articulo" class="btn btn-primary btn-sm px-4">Publicar Paper</button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-12">
-                            <input type="url" id="p-drive" class="form-control bg-light border-0" placeholder="Link a PDF en Google Drive (Opcional)">
-                        </div>
-                        <div class="col-12 mt-3">
-                            <div id="editor-global" class="bg-white border rounded" style="height: 250px;"></div>
-                        </div>
-                        <div class="col-12 text-end mt-3">
-                            <button id="btn-publicar" class="btn btn-success px-5 rounded-pill fw-bold">Publicar Ahora</button>
                         </div>
                     </div>
                 </div>
+
+                <div class="row" id="contenedor-articulos">
+                    <div class="col-12"><div class="skeleton-box rounded w-100 mb-3" style="height: 150px;"></div></div>
+                </div>
             </div>
-        </div>
 
-        <!-- ========================================== -->
-        <!-- CONTENEDORES DE LAS 4 SECCIONES -->
-        <!-- ========================================== -->
-        <div class="tab-content" id="contenido-secciones">
-            <!-- Se generan dinámicamente desde JS -->
-        </div>
+            <!-- ========================================== -->
+            <!-- SECCIÓN 2: COLUMNAS DE OPINIÓN (Noticias) -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade" id="columnas" role="tabpanel">
+                
+                <!-- Panel Admin Compacto -->
+                <div class="admin-only d-none mb-4">
+                    <button class="btn btn-primary btn-sm shadow-sm px-3 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#colNoticia">
+                        <i class="bi bi-pencil-square me-1"></i> Redactar Columna
+                    </button>
+                    <div class="collapse" id="colNoticia">
+                        <div class="card border-0 shadow-sm p-3 bg-white">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-8">
+                                    <input type="text" id="not-titulo" class="form-control form-control-sm bg-light" placeholder="Titular de la columna">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" id="not-etiqueta" class="form-control form-control-sm bg-light" placeholder="Etiqueta (Ej: Nacional)">
+                                </div>
+                            </div>
+                            <div class="border rounded bg-white">
+                                <div id="editor-noticias" style="height: 150px;"></div>
+                            </div>
+                            <div class="text-end mt-2">
+                                <button id="btn-pub-noticia" class="btn btn-primary btn-sm px-4">Publicar Columna</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
+                <div id="contenedor-noticias" class="bg-white p-4 rounded shadow-sm">
+                    <div class="skeleton-box rounded w-100 mb-4" style="height: 200px;"></div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SECCIÓN 3: ENSAYOS & DEBATES (Encuestas) -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade" id="ensayos" role="tabpanel">
+                
+                <!-- Panel Admin Compacto -->
+                <div class="admin-only d-none mb-4">
+                    <button class="btn btn-primary btn-sm shadow-sm px-3 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#colEncuesta">
+                        <i class="bi bi-bar-chart-steps me-1"></i> Crear Debate
+                    </button>
+                    <div class="collapse" id="colEncuesta">
+                        <div class="card border-0 shadow-sm p-3 bg-white">
+                            <input type="text" id="enc-pregunta" class="form-control form-control-sm bg-light mb-2" placeholder="Pregunta de debate">
+                            <div id="opciones-encuesta" class="mb-2">
+                                <input type="text" class="form-control form-control-sm mb-1 opcion-input bg-light" placeholder="Opción 1">
+                                <input type="text" class="form-control form-control-sm mb-1 opcion-input bg-light" placeholder="Opción 2">
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <button id="btn-add-opcion" class="btn btn-sm btn-light border text-secondary">+ Opción</button>
+                                <button id="btn-pub-encuesta" class="btn btn-primary btn-sm px-4">Activar Debate</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8 mx-auto" id="contenedor-encuestas">
+                        <div class="skeleton-box rounded w-100 mb-3" style="height: 150px;"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script type="module" src="app.js"></script>
