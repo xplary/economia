@@ -8,7 +8,7 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 .nav-underline .nav-link { color: #555; transition: 0.2s; border-bottom: 2px solid transparent; padding-bottom: 0.8rem; }
 .nav-underline .nav-link:hover { color: var(--accent-blue) !important; }
 .nav-underline .nav-link.active { color: var(--primary-blue) !important; border-bottom: 2px solid var(--primary-blue); }
-@media (max-width: 767px) { body { padding-bottom: 75px; } .footer-mobile-pad { padding-bottom: 90px !important; } .mobile-nav { height: 70px; } .mobile-tab { color: #6c757d !important; background-color: transparent !important; transition: 0.2s ease; } .mobile-tab.active { color: var(--primary-blue) !important; background-color: transparent !important; transform: scale(1.05); } .mobile-tab i { transition: transform 0.2s ease; } .mobile-tab.active i { color: var(--primary-blue) !important; transform: translateY(-2px); } }
+@media (max-width: 767px) { body { padding-bottom: 75px; } .footer-mobile-pad { padding-bottom: 70px !important; } .mobile-nav { height: 70px; } .mobile-tab { color: #6c757d !important; background-color: transparent !important; transition: 0.2s ease; } .mobile-tab.active { color: var(--primary-blue) !important; background-color: transparent !important; transform: scale(1.05); } .mobile-tab i { transition: transform 0.2s ease; } .mobile-tab.active i { color: var(--primary-blue) !important; transform: translateY(-2px); } }
 .admin-only, .admin-only-inline { display: none !important; }
 .is-owner .admin-only { display: block !important; }
 .is-owner .admin-only-inline { display: inline-block !important; }
@@ -44,3 +44,10 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 .poll-content { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; }
 .poll-text { font-family: 'Inter', sans-serif; font-weight: 600; color: #1e293b; font-size: 1rem; }
 .poll-pct { font-family: 'Inter', sans-serif; font-weight: 700; color: var(--primary-blue); font-size: 1rem; }
+.ls-1 { letter-spacing: 0.5px; }
+.small-text { font-size: 0.85rem; }
+.hover-bg-light:hover { background-color: rgba(255,255,255,0.1); color: white; }
+.hover-bg-gray:hover { background-color: #e2e8f0; }
+
+/* FIX MODAL BACKGROUND PARA QUE LA VENTANA SE VEA CENTRADA Y 100% ANCHO */
+#modalNoticia { background-color: rgba(0, 0, 0, 0.5); }

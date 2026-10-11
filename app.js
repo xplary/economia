@@ -80,7 +80,6 @@ window.abrirModal = (id, col) => {
 
 const checkDeepLink = (id, col) => { if(autoOpenDone) return; const urlP = new URLSearchParams(window.location.search); if(urlP.get('p') === id && urlP.get('t') === col) { autoOpenDone = true; setTimeout(() => { abrirModal(id, col); }, 500); } }; let autoOpenDone = false;
 
-// COMPRESIÓN OPTIMIZADA: Mantener gran tamaño original y hasta 95% de calidad (Mejora visual garantizada)
 const compressImg = (file) => new Promise((res) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = (e) => { const img = new Image(); img.src = e.target.result; img.onload = () => { const canvas = document.createElement('canvas'); const MAX = 2000; const scale = img.width > MAX ? MAX / img.width : 1; canvas.width = img.width * scale; canvas.height = img.height * scale; canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); res(canvas.toDataURL('image/jpeg', 0.95)); }; }; });
 
 window.cancelarEdicion = () => { window.editandoId = null; document.querySelectorAll('input:not([type="color"]), textarea').forEach(i => i.value = ''); if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(''); document.getElementById('not-principal').checked = false; document.getElementById('not-form-title').innerText = "Editor de Columnas"; bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide(); };
@@ -88,10 +87,22 @@ window.cancelarEdicion = () => { window.editandoId = null; document.querySelecto
 onSnapshot(doc(db, "config", "sidebar"), (s) => { if(s.exists()){ const d = s.data(); if(d.t) document.getElementById('sb-titulo').innerText = d.t; if(d.desc) document.getElementById('sb-desc').innerText = d.desc; } });
 window.editarSidebar = async () => { const t = prompt("Título:", document.getElementById('sb-titulo').innerText) || document.getElementById('sb-titulo').innerText; const desc = prompt("Descripción:", document.getElementById('sb-desc').innerText) || document.getElementById('sb-desc').innerText; await setDoc(doc(db, "config", "sidebar"), {t, desc}, {merge:true}); };
 
-onSnapshot(doc(db, "config", "footer"), (s) => { if(s.exists()){ const d = s.data(); if(d.desc) document.getElementById('footer-desc').innerText = d.desc; } else { document.getElementById('footer-desc').innerText = "Somos CAFE UNP, una plataforma dedicada a la divulgación académica, investigación y el libre debate de ideas. Creemos en el conocimiento compartido como motor de progreso."; } });
-window.editarFooter = async () => { const desc = prompt("Descripción de ¿Quiénes somos?:", document.getElementById('footer-desc').innerText) || document.getElementById('footer-desc').innerText; await setDoc(doc(db, "config", "footer"), {desc}, {merge:true}); };
+// NUEVO: Edición del Footer Dinámico
+onSnapshot(doc(db, "config", "footer"), (s) => { 
+    if(s.exists()){ 
+        const d = s.data(); 
+        if(d.ubicacion) document.getElementById('f-ubicacion').innerHTML = d.ubicacion.replace(/\n/g, "<br>"); 
+        if(d.contacto) document.getElementById('f-contacto').innerHTML = d.contacto.replace(/\n/g, "<br>");
+        if(d.sobre) document.getElementById('f-sobre').innerHTML = d.sobre.replace(/\n/g, "<br>");
+    } 
+});
+window.editarFooter = async () => { 
+    const u = prompt("Ubicación (Usa Enter para saltos de línea):", document.getElementById('f-ubicacion').innerText);
+    const c = prompt("Contacto:", document.getElementById('f-contacto').innerText);
+    const s = prompt("Sobre la Universidad:", document.getElementById('f-sobre').innerText);
+    if(u && c && s) await setDoc(doc(db, "config", "footer"), {ubicacion: u, contacto: c, sobre: s}, {merge:true}); 
+};
 
-// RESOLUCIÓN DEL MENÚ MÓVIL (Pestañas nativas funcionales)
 document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => { btn.addEventListener('shown.bs.tab', (e) => { const target = e.target.getAttribute('data-bs-target'); document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(b => b.classList.remove('active')); document.querySelectorAll(`button[data-bs-target="${target}"]`).forEach(tBtn => tBtn.classList.add('active')); }); });
 
 let noticiasData = []; let qBuscar = ''; let ordDesc = true;
