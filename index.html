@@ -6,11 +6,11 @@
     <title>FEUNP - Plataforma Académica</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
     
-    <!-- NUEVA TECNOLOGÍA: TinyMCE (El estándar de la industria para compatibilidad con MS Word) -->
+    <!-- FUENTES PROFESIONALES: Inter (Cuerpo) y Lora (Títulos - Estilo Periodístico/Académico) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -27,11 +27,11 @@
 
     <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm py-3 mb-4 sticky-top">
         <div class="container d-flex justify-content-between align-items-center">
-            <a class="navbar-brand brand-gradient m-0 fs-3 fw-bold" href="index.html">ECONOMIA</a>
+            <a class="navbar-brand brand-gradient m-0 fs-3 fw-bold font-serif" href="index.html">ECONOMIA</a>
             <ul class="nav nav-underline d-none d-md-flex" id="pills-tab" role="tablist">
-                <li class="nav-item"><button class="nav-link text-dark active px-3 fw-semibold" data-bs-toggle="pill" data-bs-target="#columnas">Columnas de Opinión</button></li>
-                <li class="nav-item"><button class="nav-link text-dark px-3 fw-semibold" data-bs-toggle="pill" data-bs-target="#investigacion">Investigación & Papers</button></li>
-                <li class="nav-item"><button class="nav-link text-dark px-3 fw-semibold" data-bs-toggle="pill" data-bs-target="#ensayos">Debates y Encuestas</button></li>
+                <li class="nav-item"><button class="nav-link text-dark active px-3 fw-semibold font-inter" data-bs-toggle="pill" data-bs-target="#columnas">Columnas de Opinión</button></li>
+                <li class="nav-item"><button class="nav-link text-dark px-3 fw-semibold font-inter" data-bs-toggle="pill" data-bs-target="#investigacion">Investigación & Papers</button></li>
+                <li class="nav-item"><button class="nav-link text-dark px-3 fw-semibold font-inter" data-bs-toggle="pill" data-bs-target="#ensayos">Debates y Encuestas</button></li>
             </ul>
             <div>
                 <button id="btn-login" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-bold shadow-sm">Ingresar</button>
@@ -51,14 +51,13 @@
                         <div class="card border-0 shadow rounded-4 p-4 mb-4 bg-white">
                             <h5 class="fw-bold text-primary mb-3" id="not-form-title">Editor de Columnas</h5>
                             <div class="row g-3 mb-3">
-                                <div class="col-md-12"><input type="text" id="not-titulo" class="form-control form-control-lg bg-light border-0" placeholder="Titular de la columna"></div>
+                                <div class="col-md-12"><input type="text" id="not-titulo" class="form-control form-control-lg bg-light border-0 font-serif fw-bold" placeholder="Titular de la columna"></div>
                                 <div class="col-md-5"><label class="small fw-bold text-muted mb-1">Subir Imagen:</label><input type="file" id="not-imagen" class="form-control bg-light border-0" accept="image/*"></div>
                                 <div class="col-md-5"><label class="small fw-bold text-muted mb-1">Etiquetas (comas):</label><input type="text" id="not-tags" class="form-control bg-light border-0" placeholder="Ej: UNP, Política"></div>
                                 <div class="col-md-2"><label class="small fw-bold text-muted mb-1">Color Tag:</label><input type="color" id="not-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#1976d2"></div>
                             </div>
                             <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="not-principal"><label class="form-check-label fw-bold text-primary small">Marcar como Principal (Grande)</label></div>
                             
-                            <!-- CAJA DEL NUEVO EDITOR TINYMCE -->
                             <div class="mb-3"><textarea id="editor-noticias"></textarea></div>
                             
                             <div class="text-end">
@@ -76,9 +75,9 @@
                         <div class="d-flex gap-2">
                             <div class="input-group shadow-sm rounded-3 overflow-hidden">
                                 <span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-search"></i></span>
-                                <input type="text" id="input-buscar" class="form-control border-0 py-2" placeholder="Buscar columnas...">
+                                <input type="text" id="input-buscar" class="form-control border-0 py-2 font-inter" placeholder="Buscar columnas...">
                             </div>
-                            <button id="btn-ordenar" class="btn btn-white border shadow-sm px-3 text-nowrap fw-semibold">Ordenar: Recientes ↓</button>
+                            <button id="btn-ordenar" class="btn btn-white border shadow-sm px-3 text-nowrap fw-semibold font-inter">Ordenar: Recientes ↓</button>
                         </div>
                     </div>
                 </div>
@@ -105,11 +104,11 @@
                         <div class="card border-0 shadow rounded-4 p-4 mb-4 bg-white">
                             <h5 class="fw-bold text-primary mb-3">Subir Investigación</h5>
                             <div class="row g-3">
-                                <div class="col-md-6"><input type="text" id="art-titulo" class="form-control bg-light border-0" placeholder="Título completo"></div>
+                                <div class="col-md-6"><input type="text" id="art-titulo" class="form-control bg-light border-0 font-serif fw-bold" placeholder="Título completo"></div>
                                 <div class="col-md-6"><input type="url" id="art-link" class="form-control bg-light border-0" placeholder="Enlace del PDF (Drive)"></div>
                                 <div class="col-md-9"><input type="text" id="art-tags" class="form-control bg-light border-0" placeholder="Etiquetas (Ej: Tesis, Macro)"></div>
                                 <div class="col-md-3"><input type="color" id="art-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#dc3545"></div>
-                                <div class="col-12"><textarea id="art-resumen" class="form-control bg-light border-0" rows="3" placeholder="Resumen o Abstract..."></textarea></div>
+                                <div class="col-12"><textarea id="art-resumen" class="form-control bg-light border-0 font-inter" rows="3" placeholder="Resumen o Abstract..."></textarea></div>
                                 <div class="col-12 text-end">
                                     <button class="btn btn-light rounded-pill px-4 me-2 fw-bold" onclick="cancelarEdicion()">Cancelar</button>
                                     <button id="btn-pub-articulo" class="btn btn-success px-5 rounded-pill fw-bold">Publicar Paper</button>
@@ -118,6 +117,7 @@
                         </div>
                     </div>
                 </div>
+                <!-- Ahora los papers serán una lista vertical limpia, sin cuadrados -->
                 <div class="row" id="contenedor-articulos"></div>
             </div>
 
@@ -128,21 +128,21 @@
                     <div class="collapse" id="colEncuesta">
                         <div class="card border-0 shadow rounded-4 p-4 mb-4 bg-white">
                             <h5 class="fw-bold text-primary mb-3">Nuevo Debate</h5>
-                            <input type="text" id="enc-pregunta" class="form-control form-control-lg bg-light border-0 mb-3" placeholder="Pregunta central del debate (Título)">
-                            <textarea id="enc-desc" class="form-control bg-light border-0 mb-3" rows="2" placeholder="Contexto o descripción breve del debate..."></textarea>
+                            <input type="text" id="enc-pregunta" class="form-control form-control-lg bg-light border-0 mb-3 font-serif fw-bold" placeholder="Pregunta central del debate (Título)">
+                            <textarea id="enc-desc" class="form-control bg-light border-0 mb-3 font-inter" rows="2" placeholder="Contexto o descripción breve del debate..."></textarea>
                             
                             <div class="p-3 bg-light rounded-3 mb-3 border">
-                                <label class="fw-bold small text-muted mb-2">Opciones de votación:</label>
+                                <label class="fw-bold small text-muted mb-2 font-inter">Opciones de votación:</label>
                                 <div id="opciones-encuesta">
-                                    <input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input" placeholder="Opción 1">
-                                    <input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input" placeholder="Opción 2">
+                                    <input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input font-inter" placeholder="Opción 1">
+                                    <input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input font-inter" placeholder="Opción 2">
                                 </div>
                                 <button id="btn-add-opcion" class="btn btn-sm btn-outline-secondary fw-bold rounded-pill px-3 mt-1">+ Añadir otra opción</button>
                             </div>
 
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" id="enc-ocultar-pct">
-                                <label class="form-check-label fw-bold text-primary small">Ocultar porcentajes al público (Solo dueños verán los resultados en vivo)</label>
+                                <label class="form-check-label fw-bold text-primary small">Ocultar porcentajes al público</label>
                             </div>
 
                             <div class="text-end"><button id="btn-pub-encuesta" class="btn btn-success px-5 rounded-pill fw-bold">Activar Debate</button></div>
@@ -163,7 +163,7 @@
                 <div class="modal-body px-4 px-md-5 pb-5 pt-2">
                     <div id="modal-tags" class="mb-3"></div>
                     <h1 id="modal-titulo" class="fw-bold mb-3 font-serif" style="color: #1a202c; font-size: 2.5rem; line-height: 1.2;"></h1>
-                    <div class="text-muted small mb-4 border-bottom pb-3 d-flex justify-content-between align-items-center">
+                    <div class="text-muted small mb-4 border-bottom pb-3 d-flex justify-content-between align-items-center font-inter">
                         <div>
                             <span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span>
                             <span id="modal-promedio-estrellas" class="fw-bold text-warning fs-6"></span>
@@ -181,16 +181,16 @@
                         <h4 class="fw-bold mb-3 font-serif">Comentarios y Opiniones</h4>
                         <div class="bg-light p-3 rounded-4 mb-4 border">
                             <div class="d-flex align-items-center mb-2 text-warning fs-5" id="estrellas-input">
-                                <span class="text-dark small fw-bold me-2 fs-6">Tu calificación:</span>
+                                <span class="text-dark small fw-bold me-2 fs-6 font-inter">Tu calificación:</span>
                                 <i class="bi bi-star cursor-pointer star-btn" data-val="1"></i>
                                 <i class="bi bi-star cursor-pointer star-btn" data-val="2"></i>
                                 <i class="bi bi-star cursor-pointer star-btn" data-val="3"></i>
                                 <i class="bi bi-star cursor-pointer star-btn" data-val="4"></i>
                                 <i class="bi bi-star cursor-pointer star-btn" data-val="5"></i>
-                                <span class="text-muted fs-6 ms-2" id="rating-text"></span>
+                                <span class="text-muted fs-6 ms-2 font-inter" id="rating-text"></span>
                             </div>
-                            <textarea id="comentario-texto" class="form-control border-0 shadow-sm mb-2" rows="2" placeholder="Escribe un comentario..."></textarea>
-                            <div class="text-end"><button class="btn btn-primary rounded-pill fw-bold px-4" id="btn-enviar-comentario">Enviar</button></div>
+                            <textarea id="comentario-texto" class="form-control border-0 shadow-sm mb-2 font-inter" rows="2" placeholder="Escribe un comentario..."></textarea>
+                            <div class="text-end"><button class="btn btn-primary rounded-pill fw-bold px-4 font-inter" id="btn-enviar-comentario">Enviar</button></div>
                         </div>
                         <div id="lista-comentarios"></div>
                     </div>

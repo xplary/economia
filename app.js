@@ -24,7 +24,7 @@ const splashInterval = setInterval(() => {
 }, 200);
 
 // =====================================
-// CONFIGURACIÓN DE TINYMCE (El mejor para compatibilidad con Word)
+// CONFIGURACIÓN DE TINYMCE
 // =====================================
 tinymce.init({
     selector: '#editor-noticias',
@@ -33,7 +33,7 @@ tinymce.init({
     plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table wordcount',
     toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link image | removeformat',
     content_style: 'body { font-family: "Inter", sans-serif; font-size: 16px; text-align: justify; line-height: 1.6; }',
-    paste_data_images: true // Permite pegar imágenes directo de word o recortes
+    paste_data_images: true
 });
 
 // =====================================
@@ -126,14 +126,14 @@ const renderComentarios = (comentarios) => {
 };
 
 const generarHTMLOpcionesEncuesta = (id, data) => {
-    let h = `<div class="d-grid gap-2 border-start border-4 border-primary ps-3">`;
+    let h = `<div class="d-grid gap-2 border-start border-4 border-primary ps-3 mt-3">`;
     const isOwner = document.body.classList.contains('is-owner');
     data.opciones.forEach((o, i) => {
         const pct = data.totalVotos === 0 ? 0 : Math.round((o.votos / data.totalVotos) * 100);
         const hidePct = data.ocultarPct && !isOwner;
         const txtPct = hidePct ? '?' : pct;
         const width = hidePct ? 0 : pct;
-        h += `<button class="btn btn-light text-start position-relative border-0 rounded-3 py-2 shadow-sm" onclick="votar('${id}', ${i})"><div class="position-absolute top-0 start-0 h-100 bg-primary opacity-25 rounded-3" style="width: ${width}%;"></div><span class="position-relative z-1 d-flex justify-content-between px-2"><span class="small fw-semibold text-dark">${o.texto}</span><span class="fw-bold text-primary small">${txtPct}%</span></span></button>`;
+        h += `<button class="btn btn-light text-start position-relative border-0 rounded-3 py-2 shadow-sm" onclick="votar('${id}', ${i})"><div class="position-absolute top-0 start-0 h-100 bg-primary opacity-25 rounded-3" style="width: ${width}%;"></div><span class="position-relative z-1 d-flex justify-content-between px-2 font-inter"><span class="small fw-semibold text-dark">${o.texto}</span><span class="fw-bold text-primary small">${txtPct}%</span></span></button>`;
     });
     return h + `</div>`;
 };
@@ -147,7 +147,6 @@ const formatEmbedUrl = (url) => {
     return url;
 };
 
-// ABRIR EL MODAL (Integrado con el estilo APA global de TinyMCE)
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return;
     window.modalActual = { id, col };
@@ -170,9 +169,8 @@ window.abrirModal = (id, col) => {
     }
     
     if(col === 'encuestas') {
-        document.getElementById('modal-contenido').innerHTML = `<p class="mb-4">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
+        document.getElementById('modal-contenido').innerHTML = `<p class="mb-4 font-inter text-dark" style="font-size: 1.15rem;">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
     } else {
-        // Usa la clase .contenido-apa configurada en tu style.css
         document.getElementById('modal-contenido').innerHTML = `<div class="contenido-apa">${d.contenido || d.resumen || ''}</div>`;
     }
     
@@ -228,7 +226,7 @@ window.editarSidebar = async () => {
 };
 
 // =====================================
-// 1. NOTICIAS Y COLUMNAS (Actualizado para TinyMCE)
+// 1. NOTICIAS Y COLUMNAS
 // =====================================
 let noticiasData = []; let qBuscar = ''; let ordDesc = true;
 document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); });
@@ -240,7 +238,6 @@ document.getElementById('btn-pub-noticia').onclick = async () => {
     let imgFinal = ''; const imgFile = document.getElementById('not-imagen').files[0];
     if (imgFile) imgFinal = await compressImg(imgFile); else if (window.editandoId && window.postsData[window.editandoId].imagen) imgFinal = window.postsData[window.editandoId].imagen;
     
-    // Obtenemos el contenido directamente de TinyMCE
     const editorContent = tinymce.get('editor-noticias').getContent();
     
     const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: document.getElementById('not-principal').checked, contenido: editorContent };
@@ -270,7 +267,7 @@ function renderNoticias() {
     let filtradas = noticiasData.filter(n => (n.titulo||'').toLowerCase().includes(qBuscar) || (n.contenido||'').toLowerCase().includes(qBuscar));
     filtradas.sort((a,b) => { let tA = a.fecha?.toMillis()||0; let tB = b.fecha?.toMillis()||0; return ordDesc ? tB - tA : tA - tB; });
     const cLista = document.getElementById('contenedor-noticias-lista'); const cPrinc = document.getElementById('contenedor-noticia-principal');
-    if (filtradas.length === 0) { cPrinc.innerHTML=''; cLista.innerHTML='<div class="text-center text-muted">No hay resultados.</div>'; return; }
+    if (filtradas.length === 0) { cPrinc.innerHTML=''; cLista.innerHTML='<div class="text-center text-muted font-inter">No hay resultados.</div>'; return; }
     
     let hLista = ''; let hPrinc = ''; let pFound = false;
     filtradas.forEach(d => {
@@ -281,35 +278,45 @@ function renderNoticias() {
 
         if (d.principal && !pFound) {
             pFound = true;
-            const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-4 shadow-sm cursor-pointer" style="height:380px; object-fit: contain; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
+            // DISEÑO PRINCIPAL: Líneas limpias en lugar de cuadrados cerrados
+            const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-4 cursor-pointer" style="height:400px; object-fit: contain; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:400px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
             hPrinc = `
-            <div class="row mb-5 border-bottom pb-5 align-items-center">
-                <div class="col-lg-7 mb-4 mb-lg-0">${imgP}</div>
-                <div class="col-lg-5 ps-lg-4">
-                    <div class="mb-3">${tHTML}</div>
-                    <h2 class="fw-bold mb-3 font-serif cursor-pointer" style="font-size: 2.2rem; color: #1a202c; line-height: 1.3;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h2>
-                    <div class="text-muted mb-4 text-truncate-3 font-inter" style="font-size: 1.1rem;">${textoLimpioPreview}</div>
-                    <div class="d-flex justify-content-between">
-                        <small class="text-muted fw-semibold"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
-                        <small class="text-muted fw-semibold cursor-pointer" onclick="compartir('${d.titulo}', '${d.id}', 'noticias')"><i class="bi bi-share me-1"></i> Compartir</small>
+            <article class="mb-5 pb-5 border-bottom border-light-subtle align-items-center">
+                <div class="row">
+                    <div class="col-lg-7 mb-4 mb-lg-0">${imgP}</div>
+                    <div class="col-lg-5 ps-lg-4 d-flex flex-column justify-content-center">
+                        <div class="mb-3">${tHTML}</div>
+                        <h2 class="fw-bold mb-3 font-serif cursor-pointer text-dark" style="font-size: 2.3rem; line-height: 1.25;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h2>
+                        <div class="text-muted mb-4 text-truncate-3 font-inter" style="font-size: 1.1rem; line-height: 1.7;">${textoLimpioPreview}</div>
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <small class="text-muted fw-semibold font-inter"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
+                            <small class="text-muted fw-semibold cursor-pointer font-inter" onclick="compartir('${d.titulo}', '${d.id}', 'noticias')"><i class="bi bi-share me-1"></i> Compartir</small>
+                        </div>
                     </div>
                 </div>
-            </div>`;
+            </article>`;
         }
+        
+        // LISTA REGULAR: Artículos elegantes separados por líneas
         hLista += `
-        <div class="card border-0 border-bottom rounded-0 mb-4 pb-4">
+        <article class="mb-4 pb-4 border-bottom border-light-subtle">
             <div class="row g-4 align-items-center">
-                <div class="col-md-5">${imgH}</div>
-                <div class="col-md-7 d-flex flex-column">
+                <div class="col-md-4">${imgH}</div>
+                <div class="col-md-8 d-flex flex-column">
                     <div class="d-flex justify-content-between mb-2">
                         <div>${tHTML}</div>
-                        <div><i class="bi bi-share text-muted me-2 cursor-pointer" onclick="compartir('${d.titulo}', '${d.id}', 'noticias')"></i><i class="bi bi-pencil-fill text-warning me-2 admin-only-inline cursor-pointer" onclick="editarNoticia('${d.id}')"></i><i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i></div>
+                        <div>
+                            <i class="bi bi-share text-muted me-3 cursor-pointer" onclick="compartir('${d.titulo}', '${d.id}', 'noticias')"></i>
+                            <i class="bi bi-pencil-fill text-warning me-3 admin-only-inline cursor-pointer" onclick="editarNoticia('${d.id}')"></i>
+                            <i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i>
+                        </div>
                     </div>
-                    <h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif" style="color: #1a202c;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h3>
-                    <small class="text-muted fw-semibold mt-1"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
+                    <h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif text-dark" onclick="abrirModal('${d.id}', 'noticias')" style="font-size: 1.5rem;">${d.titulo}</h3>
+                    <div class="text-muted mb-3 text-truncate-2 font-inter small" style="line-height: 1.6;">${textoLimpioPreview}</div>
+                    <small class="text-muted fw-semibold font-inter"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
                 </div>
             </div>
-        </div>`;
+        </article>`;
     });
     cPrinc.innerHTML = pFound ? hPrinc : ''; cLista.innerHTML = hLista;
 }
@@ -335,28 +342,31 @@ document.getElementById('btn-pub-articulo').onclick = async () => {
 };
 
 onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) => {
-    const cont = document.getElementById('contenedor-articulos'); if(snap.empty) return cont.innerHTML = '<div class="col-12 text-center text-muted">No hay papers.</div>';
+    const cont = document.getElementById('contenedor-articulos'); if(snap.empty) return cont.innerHTML = '<div class="col-12 text-center text-muted font-inter">No hay papers.</div>';
     let h = ''; snap.forEach(d => {
         const data = d.data(); window.postsData[d.id] = data; checkDeepLink(d.id, 'articulos');
         const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios);
         const tHTML = (data.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${data.colorTag||'#dc3545'}">${t}</span>`).join('');
+        
+        // DISEÑO PAPERS: Lista vertical limpia, sin cuadrados (Cards eliminadas)
         h += `
-        <div class="col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden">
-                <div class="card-body p-4 d-flex flex-column">
-                    <div class="d-flex justify-content-between"><div class="mb-2">${tHTML}</div><div>
-                        <i class="bi bi-pencil-fill text-warning me-2 admin-only-inline cursor-pointer" onclick="editarArt('${d.id}')"></i>
+        <article class="col-12 mb-4 pb-4 border-bottom border-light-subtle">
+            <div class="d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>${tHTML}</div>
+                    <div class="text-nowrap ms-3">
+                        <i class="bi bi-share-fill text-primary cursor-pointer me-3" onclick="compartir('${data.titulo}', '${d.id}', 'articulos')"></i>
+                        <i class="bi bi-pencil-fill text-warning me-3 admin-only-inline cursor-pointer" onclick="editarArt('${d.id}')"></i>
                         <i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('articulos', '${d.id}')"></i>
-                    </div></div>
-                    <h5 class="fw-bold font-serif text-dark mb-2 cursor-pointer" onclick="abrirModal('${d.id}', 'articulos')">${data.titulo}</h5>
-                    <p class="text-muted small mb-4 text-truncate-2 flex-grow-1">${data.resumen}</p>
-                    <div class="d-flex justify-content-between border-top pt-3">
-                        <small class="text-muted fw-semibold"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-1 text-warning fw-bold">${avgStr}</span></small>
-                        <i class="bi bi-share-fill text-primary cursor-pointer" onclick="compartir('${data.titulo}', '${d.id}', 'articulos')"></i>
                     </div>
                 </div>
+                <h4 class="fw-bold font-serif text-dark mb-2 cursor-pointer" style="font-size: 1.4rem;" onclick="abrirModal('${d.id}', 'articulos')">${data.titulo}</h4>
+                <p class="text-muted mb-3 font-inter" style="font-size: 1.05rem; line-height: 1.6;">${data.resumen}</p>
+                <div class="d-flex justify-content-between pt-1">
+                    <small class="text-muted fw-semibold font-inter"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
+                </div>
             </div>
-        </div>`;
+        </article>`;
     }); cont.innerHTML = h;
     if(window.modalActual.col === 'articulos' && window.modalActual.id) abrirModal(window.modalActual.id, 'articulos');
 });
@@ -373,7 +383,7 @@ window.editarArt = (id) => {
 // 3. DEBATES Y ENCUESTAS
 // ==========================================
 document.getElementById('btn-add-opcion').onclick = () => {
-    const i = document.createElement('input'); i.type = 'text'; i.className = 'form-control border-0 shadow-sm mb-2 opcion-input'; i.placeholder = 'Nueva Opción';
+    const i = document.createElement('input'); i.type = 'text'; i.className = 'form-control border-0 shadow-sm mb-2 opcion-input font-inter'; i.placeholder = 'Nueva Opción';
     document.getElementById('opciones-encuesta').appendChild(i);
 };
 
@@ -403,35 +413,34 @@ onSnapshot(query(collection(db, "encuestas"), orderBy("fecha", "desc")), (snap) 
 
 function renderEncuestas() {
     const cont = document.getElementById('contenedor-encuestas'); 
-    if(encuestasDataCache.length === 0) return cont.innerHTML = '<div class="text-center text-muted">No hay debates.</div>';
+    if(encuestasDataCache.length === 0) return cont.innerHTML = '<div class="text-center text-muted font-inter">No hay debates.</div>';
     
     let h = ''; 
     encuestasDataCache.forEach(data => {
         const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; 
         const avgStr = getPromedioStars(data.comentarios);
         
+        // DISEÑO DEBATES: Artículos separados por líneas inferiores, más limpios (Cards eliminadas)
         h += `
-        <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" id="encuesta-${data.id}">
-            <div class="card-body p-4 p-md-5">
-                <div class="d-flex justify-content-between mb-3">
-                    <div class="cursor-pointer" onclick="abrirModal('${data.id}', 'encuestas')">
-                        <span class="tag-badge bg-primary">DEBATE</span>
-                        <h4 class="fw-bold font-serif mt-2" style="color: #1a202c;">${data.pregunta}</h4>
-                    </div>
-                    <div>
-                        <i class="bi bi-share-fill text-primary cursor-pointer me-2" onclick="compartir('${data.pregunta}', '${data.id}', 'encuestas')"></i>
-                        <i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('encuestas', '${data.id}')"></i>
-                    </div>
+        <article class="mb-5 pb-5 border-bottom border-light-subtle" id="encuesta-${data.id}">
+            <div class="d-flex justify-content-between mb-3">
+                <div class="cursor-pointer" onclick="abrirModal('${data.id}', 'encuestas')">
+                    <span class="tag-badge bg-primary mb-2">DEBATE</span>
+                    <h3 class="fw-bold font-serif text-dark" style="font-size: 1.6rem; line-height: 1.35;">${data.pregunta}</h3>
                 </div>
-                <p class="text-muted font-inter mb-4 cursor-pointer" onclick="abrirModal('${data.id}', 'encuestas')">${data.resumen||''}</p>
-                ${generarHTMLOpcionesEncuesta(data.id, data)}
-                <div class="mt-4 pt-3 border-top d-flex justify-content-between">
-                    <small class="text-muted fw-semibold"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
-                    <small class="text-muted fw-bold">${data.totalVotos} votos</small>
+                <div class="text-nowrap ms-3">
+                    <i class="bi bi-share-fill text-primary cursor-pointer me-3" onclick="compartir('${data.pregunta}', '${data.id}', 'encuestas')"></i>
+                    <i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('encuestas', '${data.id}')"></i>
                 </div>
-                <div class="mt-3 admin-only w-100 d-flex justify-content-center"><div style="width:250px;"><canvas id="chart-${data.id}"></canvas></div></div>
             </div>
-        </div>`;
+            <p class="text-muted font-inter mb-4 cursor-pointer" style="font-size: 1.05rem;" onclick="abrirModal('${data.id}', 'encuestas')">${data.resumen||''}</p>
+            ${generarHTMLOpcionesEncuesta(data.id, data)}
+            <div class="mt-4 pt-3 d-flex justify-content-between align-items-center">
+                <small class="text-muted fw-semibold font-inter"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
+                <small class="text-muted fw-bold font-inter">${data.totalVotos} votos</small>
+            </div>
+            <div class="mt-3 admin-only w-100 d-flex justify-content-center"><div style="width:250px;"><canvas id="chart-${data.id}"></canvas></div></div>
+        </article>`;
     }); 
     cont.innerHTML = h;
 
