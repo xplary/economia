@@ -6,23 +6,18 @@
     <title>CAFE UNP - Plataforma Académica</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">
 
     <!-- SPLASH SCREEN CAFE UNP -->
     <div id="splash-screen" class="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-white" style="z-index: 9999; transition: opacity 0.5s ease;">
-        <div class="d-flex align-items-center mb-3">
-            <svg width="65" height="65" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
-                <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/>
-                <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/>
-            </svg>
+        <div class="d-flex align-items-center mb-4">
+            <svg width="65" height="65" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg>
             <h1 class="m-0 fw-bold brand-text" style="font-size: 3.5rem;">CAFE UNP</h1>
         </div>
-        <p class="text-muted small mb-4 fw-semibold" style="letter-spacing: 0.5px;">Creado por Gifted Studios</p>
         <div class="progress rounded-pill bg-light border shadow-sm" style="width: 250px; height: 8px;">
             <div id="splash-progress" class="progress-bar rounded-pill" role="progressbar" style="width: 0%; transition: width 0.3s ease; background: linear-gradient(90deg, #009668 0%, #004b79 100%);"></div>
         </div>
@@ -32,10 +27,7 @@
     <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm py-3 mb-4 sticky-top">
         <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand m-0 d-flex align-items-center" href="index.html">
-                <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
-                    <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/>
-                    <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/>
-                </svg>
+                <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg>
                 <span class="fs-4 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span>
             </a>
             <ul class="nav nav-underline d-none d-md-flex" id="pills-tab" role="tablist">
@@ -50,26 +42,14 @@
         </div>
     </nav>
 
-    <!-- NAVEGACIÓN INFERIOR MÓVIL (NUEVO) -->
+    <!-- NAVEGACIÓN INFERIOR MÓVIL -->
     <ul class="nav nav-pills nav-justified mobile-nav d-md-none fixed-bottom bg-white shadow-lg z-3 m-0 p-0 border-top" id="pills-tab-mobile" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#columnas" type="button" role="tab">
-                <i class="bi bi-newspaper fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Opinión</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#investigacion" type="button" role="tab">
-                <i class="bi bi-journal-text fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Papers</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#ensayos" type="button" role="tab">
-                <i class="bi bi-chat-square-text fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Debates</span>
-            </button>
-        </li>
+        <li class="nav-item" role="presentation"><button class="nav-link active mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#columnas" type="button" role="tab"><i class="bi bi-newspaper fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Opinión</span></button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#investigacion" type="button" role="tab"><i class="bi bi-journal-text fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Papers</span></button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#ensayos" type="button" role="tab"><i class="bi bi-chat-square-text fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Debates</span></button></li>
     </ul>
 
-    <div class="container pb-2">
+    <div class="container pb-2 flex-grow-1">
         <div class="tab-content" id="pills-tabContent">
             
             <!-- 1. COLUMNAS DE OPINIÓN -->
@@ -87,31 +67,21 @@
                             </div>
                             <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="not-principal"><label class="form-check-label fw-bold text-primary small">Marcar como Principal (Grande)</label></div>
                             <div class="mb-3"><textarea id="editor-noticias"></textarea></div>
-                            <div class="text-end">
-                                <button class="btn btn-light rounded-pill px-4 me-2 fw-bold" onclick="cancelarEdicion()">Cancelar</button>
-                                <button id="btn-pub-noticia" class="btn btn-success px-5 rounded-pill fw-bold" style="background-color: #009668; border-color:#009668;">Publicar Columna</button>
-                            </div>
+                            <div class="text-end"><button class="btn btn-light rounded-pill px-4 me-2 fw-bold" onclick="cancelarEdicion()">Cancelar</button><button id="btn-pub-noticia" class="btn btn-success px-5 rounded-pill fw-bold" style="background-color: #009668; border-color:#009668;">Publicar Columna</button></div>
                         </div>
                     </div>
                 </div>
-
                 <div id="contenedor-noticia-principal"></div>
-
                 <div class="row mb-4 mt-2">
                     <div class="col-md-8">
                         <div class="d-flex gap-2">
-                            <div class="input-group shadow-sm rounded-3 overflow-hidden">
-                                <span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-search"></i></span>
-                                <input type="text" id="input-buscar" class="form-control border-0 py-2 font-inter" placeholder="Buscar columnas...">
-                            </div>
+                            <div class="input-group shadow-sm rounded-3 overflow-hidden"><span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-search"></i></span><input type="text" id="input-buscar" class="form-control border-0 py-2 font-inter" placeholder="Buscar columnas..."></div>
                             <button id="btn-ordenar" class="btn btn-white border shadow-sm px-3 text-nowrap fw-semibold font-inter">Ordenar: Recientes ↓</button>
                         </div>
                     </div>
                 </div>
-
                 <div class="row">
                     <div class="col-lg-8" id="contenedor-noticias-lista"><div class="skeleton-box w-100 mb-3" style="height: 200px;"></div></div>
-                    
                     <div class="col-lg-4 ps-lg-4 mt-4 mt-lg-0">
                         <div class="p-4 bg-white shadow-sm position-relative rounded-4" style="border: 2px solid #ffffff;">
                             <button class="btn btn-sm btn-warning position-absolute top-0 end-0 m-2 admin-only-inline shadow-sm" onclick="editarSidebar()"><i class="bi bi-pencil-fill"></i></button>
@@ -136,10 +106,7 @@
                                 <div class="col-md-9"><input type="text" id="art-tags" class="form-control bg-light border-0" placeholder="Etiquetas (Ej: Tesis, Macro)"></div>
                                 <div class="col-md-3"><input type="color" id="art-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#004b79"></div>
                                 <div class="col-12"><textarea id="art-resumen" class="form-control bg-light border-0 font-inter" rows="3" placeholder="Resumen o Abstract..."></textarea></div>
-                                <div class="col-12 text-end">
-                                    <button class="btn btn-light rounded-pill px-4 me-2 fw-bold" onclick="cancelarEdicion()">Cancelar</button>
-                                    <button id="btn-pub-articulo" class="btn btn-success px-5 rounded-pill fw-bold" style="background-color: #009668; border-color:#009668;">Publicar Paper</button>
-                                </div>
+                                <div class="col-12 text-end"><button class="btn btn-light rounded-pill px-4 me-2 fw-bold" onclick="cancelarEdicion()">Cancelar</button><button id="btn-pub-articulo" class="btn btn-success px-5 rounded-pill fw-bold" style="background-color: #009668; border-color:#009668;">Publicar Paper</button></div>
                             </div>
                         </div>
                     </div>
@@ -156,107 +123,89 @@
                             <h5 class="fw-bold text-primary mb-3">Nuevo Debate</h5>
                             <input type="text" id="enc-pregunta" class="form-control form-control-lg bg-light border-0 mb-3 font-serif fw-bold" placeholder="Pregunta central del debate (Título)">
                             <textarea id="enc-desc" class="form-control bg-light border-0 mb-3 font-inter" rows="2" placeholder="Contexto o descripción breve del debate..."></textarea>
-                            
                             <div class="p-3 bg-light rounded-3 mb-3 border">
                                 <label class="fw-bold small text-muted mb-2 font-inter">Opciones de votación:</label>
-                                <div id="opciones-encuesta">
-                                    <input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input font-inter" placeholder="Opción 1">
-                                    <input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input font-inter" placeholder="Opción 2">
-                                </div>
+                                <div id="opciones-encuesta"><input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input font-inter" placeholder="Opción 1"><input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input font-inter" placeholder="Opción 2"></div>
                                 <button id="btn-add-opcion" class="btn btn-sm btn-outline-secondary fw-bold rounded-pill px-3 mt-1">+ Añadir otra opción</button>
                             </div>
-
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" id="enc-ocultar-pct">
-                                <label class="form-check-label fw-bold text-primary small">Ocultar porcentajes al público</label>
-                            </div>
-
+                            <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="enc-ocultar-pct"><label class="form-check-label fw-bold text-primary small">Ocultar porcentajes al público</label></div>
                             <div class="text-end"><button id="btn-pub-encuesta" class="btn btn-success px-5 rounded-pill fw-bold" style="background-color: #009668; border-color:#009668;">Activar Debate</button></div>
                         </div>
                     </div>
                 </div>
                 <div class="row"><div class="col-lg-7 col-md-9 mx-auto" id="contenedor-encuestas"></div></div>
             </div>
-
         </div>
     </div>
     
     <!-- FOOTER: QUIÉNES SOMOS -->
-    <footer class="mt-5 pt-5 pb-4 bg-white border-top footer-mobile-pad">
+    <footer class="mt-auto pt-5 pb-4 bg-white border-top footer-mobile-pad">
         <div class="container position-relative">
             <button class="btn btn-sm btn-warning position-absolute top-0 end-0 mt-2 admin-only-inline shadow-sm" onclick="editarFooter()"><i class="bi bi-pencil-fill"></i></button>
             <div class="row justify-content-center text-center mb-4">
                 <div class="col-lg-8">
                     <h5 class="fw-bold font-serif text-dark mb-3" style="font-size: 1.4rem;">¿QUIÉNES SOMOS?</h5>
-                    <p id="footer-desc" class="text-muted font-inter mb-0" style="line-height: 1.8; font-size: 1.05rem;">
-                        Cargando información...
-                    </p>
+                    <p id="footer-desc" class="text-muted font-inter mb-0" style="line-height: 1.8; font-size: 1.05rem;">Cargando información...</p>
                 </div>
             </div>
             <hr class="text-muted opacity-25">
-            <div class="text-center text-muted small font-inter fw-medium mt-3">
-                &copy; <span id="current-year"></span> CAFE UNP. Todos los derechos reservados.
-            </div>
+            <div class="text-center text-muted small font-inter fw-medium mt-3">&copy; <span id="current-year"></span> CAFE UNP. Todos los derechos reservados.</div>
         </div>
     </footer>
 
-    <!-- 🌟 MODAL CLÁSICO (SOLO PARA COLUMNAS DE OPINIÓN) - MÁS ANCHO -->
+    <!-- 🌟 MODAL PANTALLA COMPLETA CENTRADO (COLUMNAS DE OPINIÓN) -->
     <div class="modal fade" id="modalNoticia" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable" style="max-width: 960px;">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header border-0 pb-0 mt-2 px-4 px-md-5">
-                    <div class="d-flex align-items-center">
-                        <svg width="24" height="24" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
-                            <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/>
-                            <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/>
-                        </svg>
-                        <span class="fs-5 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span>
-                    </div>
-                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body px-4 px-md-5 pb-5 pt-3">
-                    <div id="mn-tags" class="mb-3"></div>
-                    <h1 id="mn-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2.3rem; line-height: 1.25;"></h1>
-                    
-                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom text-muted small font-inter">
-                        <span id="mn-fecha" class="fw-semibold"></span>
-                        <span id="mn-promedio-estrellas" class="text-warning fw-bold fs-6"></span>
-                    </div>
-                    
-                    <img id="mn-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 450px; object-fit: cover; display: none;">
-                    <div id="mn-contenido" class="contenido-apa mb-5 text-dark" style="font-size: 1.15rem;"></div>
-
-                    <h4 class="fw-bold mb-4 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color: #009668;"></i> Comentarios</h4>
-                    <div class="bg-light p-4 rounded-4 mb-4 border shadow-sm">
-                        <div class="d-flex align-items-center mb-3 text-warning fs-5">
-                            <span class="text-dark small fw-bold me-2 fs-6 font-inter">Tu calificación:</span>
-                            <i class="bi bi-star cursor-pointer star-btn-mn" data-val="1"></i>
-                            <i class="bi bi-star cursor-pointer star-btn-mn" data-val="2"></i>
-                            <i class="bi bi-star cursor-pointer star-btn-mn" data-val="3"></i>
-                            <i class="bi bi-star cursor-pointer star-btn-mn" data-val="4"></i>
-                            <i class="bi bi-star cursor-pointer star-btn-mn" data-val="5"></i>
-                            <span class="text-muted small ms-2 font-inter" id="rating-text-mn"></span>
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content bg-white">
+                <div class="modal-header border-bottom py-3 px-4 shadow-sm z-1">
+                    <div class="d-flex align-items-center w-100 justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg>
+                            <span class="fs-4 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span>
                         </div>
-                        <textarea id="mn-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión sobre esta columna..."></textarea>
-                        <div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-2 font-inter shadow-sm" id="btn-enviar-comentario-mn">Publicar Comentario</button></div>
+                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div id="mn-lista-comentarios"></div>
+                </div>
+                <div class="modal-body overflow-y-auto px-4 py-4 d-flex flex-column bg-light">
+                    <div class="mx-auto w-100 bg-white p-4 p-md-5 rounded-4 shadow-sm border" style="max-width: 900px;">
+                        <div id="mn-tags" class="mb-3"></div>
+                        <h1 id="mn-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2.5rem; line-height: 1.25;"></h1>
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom text-muted small font-inter">
+                            <span id="mn-fecha" class="fw-semibold"></span>
+                            <span id="mn-promedio-estrellas" class="text-warning fw-bold fs-6"></span>
+                        </div>
+                        <img id="mn-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 550px; object-fit: contain; background: #f8f9fa; display: none;">
+                        <div id="mn-contenido" class="contenido-apa mb-5 text-dark" style="font-size: 1.15rem;"></div>
+
+                        <h4 class="fw-bold mb-4 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color: #009668;"></i> Comentarios</h4>
+                        <div class="bg-light p-4 rounded-4 mb-4 border shadow-sm">
+                            <div class="d-flex align-items-center mb-3 text-warning fs-5">
+                                <span class="text-dark small fw-bold me-2 fs-6 font-inter">Tu calificación:</span>
+                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="1"></i>
+                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="2"></i>
+                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="3"></i>
+                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="4"></i>
+                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="5"></i>
+                                <span class="text-muted small ms-2 font-inter" id="rating-text-mn"></span>
+                            </div>
+                            <textarea id="mn-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión sobre esta columna..."></textarea>
+                            <div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-2 font-inter shadow-sm" id="btn-enviar-comentario-mn">Publicar Comentario</button></div>
+                        </div>
+                        <div id="mn-lista-comentarios"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 🌟 MODAL PANTALLA COMPLETA (SOLO PARA PAPERS Y DEBATES) -->
+    <!-- 🌟 MODAL PANTALLA COMPLETA 2 COLUMNAS (PAPERS Y DEBATES) -->
     <div class="modal fade" id="modalLectura" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content bg-white">
                 <div class="modal-header border-bottom py-3 px-4 shadow-sm z-1">
                     <div class="d-flex align-items-center w-100 justify-content-between">
                         <div class="d-flex align-items-center">
-                            <svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
-                                <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/>
-                                <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/>
-                            </svg>
+                            <svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg>
                             <span class="fs-4 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span>
                         </div>
                         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -264,43 +213,27 @@
                 </div>
                 <div class="modal-body p-0">
                     <div class="row h-100 g-0">
-                        <!-- IZQUIERDA: PDF o Imagen -->
                         <div class="col-lg-7 border-end h-100 overflow-y-auto px-4 py-4 bg-light d-flex flex-column align-items-center justify-content-start" id="modal-left-col">
                             <img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 85vh; object-fit: contain; background-color: #fff; display: none;">
                             <iframe id="modal-iframe" src="" class="w-100 rounded-3 shadow-sm bg-white" style="height: 85vh; border: 1px solid #dee2e6; display: none;"></iframe>
                         </div>
-
-                        <!-- DERECHA: Resumen y Comentarios -->
                         <div class="col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column" id="modal-right-col">
                             <div id="modal-tags" class="mb-2"></div>
                             <h2 id="modal-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2rem; line-height: 1.25;"></h2>
-                            
                             <div class="text-muted small mb-3 pb-3 d-flex justify-content-between align-items-center border-bottom font-inter">
-                                <div>
-                                    <span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span>
-                                    <span id="modal-promedio-estrellas" class="fw-bold text-warning fs-6"></span>
-                                </div>
+                                <div><span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span><span id="modal-promedio-estrellas" class="fw-bold text-warning fs-6"></span></div>
                             </div>
-                            
                             <div id="modal-contenido" class="text-secondary mb-4" style="font-size: 1.1rem; line-height: 1.8;"></div>
-                            
-                            <!-- Zona de Discusión -->
                             <h5 class="fw-bold mb-3 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color:#009668;"></i> Discusión y Aportes</h5>
-                            
                             <div class="bg-light p-3 rounded-4 mb-4 border shadow-sm">
                                 <div class="d-flex align-items-center mb-2 text-warning fs-6">
                                     <span class="text-dark small fw-bold me-2 font-inter">Tu calificación:</span>
-                                    <i class="bi bi-star cursor-pointer star-btn-ml" data-val="1"></i>
-                                    <i class="bi bi-star cursor-pointer star-btn-ml" data-val="2"></i>
-                                    <i class="bi bi-star cursor-pointer star-btn-ml" data-val="3"></i>
-                                    <i class="bi bi-star cursor-pointer star-btn-ml" data-val="4"></i>
-                                    <i class="bi bi-star cursor-pointer star-btn-ml" data-val="5"></i>
+                                    <i class="bi bi-star cursor-pointer star-btn-ml" data-val="1"></i><i class="bi bi-star cursor-pointer star-btn-ml" data-val="2"></i><i class="bi bi-star cursor-pointer star-btn-ml" data-val="3"></i><i class="bi bi-star cursor-pointer star-btn-ml" data-val="4"></i><i class="bi bi-star cursor-pointer star-btn-ml" data-val="5"></i>
                                     <span class="text-muted small ms-2 font-inter" id="rating-text-ml"></span>
                                 </div>
                                 <textarea id="ml-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="2" placeholder="Escribe tu opinión académica o comentario..."></textarea>
                                 <div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-1 font-inter shadow-sm" id="btn-enviar-comentario-ml">Publicar</button></div>
                             </div>
-                            
                             <div id="ml-lista-comentarios" class="flex-grow-1 pe-2 comments-scrollbar"></div>
                         </div>
                     </div>
