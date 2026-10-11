@@ -77,18 +77,18 @@ window.borrarComentario = async (cid) => {
 
 const renderComentarios = (comentarios) => {
     const box = document.getElementById('lista-comentarios');
-    if(!comentarios || comentarios.length===0) return box.innerHTML = '<div class="text-center mt-5 text-muted"><i class="bi bi-chat-dots fs-1"></i><p class="mt-2">Sé el primero en comentar.</p></div>';
+    if(!comentarios || comentarios.length===0) return box.innerHTML = '<div class="text-center mt-4 text-muted"><i class="bi bi-chat-dots fs-3"></i><p class="mt-2 small">Sé el primero en comentar.</p></div>';
     box.innerHTML = comentarios.map(c => `
         <div class="mb-4 pb-3 border-bottom">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <strong class="font-inter text-dark">${c.autor}</strong>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong class="font-inter text-dark small">${c.autor}</strong>
                 <div>
-                    <span class="text-warning small">${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)}</span>
+                    <span class="text-warning" style="font-size: 0.75rem;">${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)}</span>
                     <i class="bi bi-trash text-danger ms-2 cursor-pointer admin-only-inline" onclick="borrarComentario(${c.id})"></i>
                 </div>
             </div>
             <p class="text-secondary font-inter mb-1" style="font-size: 0.95rem;">${c.texto}</p>
-            <div class="text-muted small font-inter text-end">${c.date}</div>
+            <div class="text-muted small font-inter text-end" style="font-size: 0.75rem;">${c.date}</div>
         </div>`).join('');
 };
 
@@ -110,7 +110,7 @@ const formatEmbedUrl = (url) => {
 };
 
 // =====================================
-// ABRIR MODAL (DISEÑO 2 COLUMNAS)
+// ABRIR MODAL (DISEÑO 2 COLUMNAS INTELIGENTE)
 // =====================================
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return;
@@ -120,13 +120,30 @@ window.abrirModal = (id, col) => {
     document.getElementById('modal-promedio-estrellas').innerText = getPromedioStars(d.comentarios);
     document.getElementById('modal-tags').innerHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#1976d2'};">${t}</span>`).join('');
     
-    const imgEl = document.getElementById('modal-imagen'); const iframeEl = document.getElementById('modal-iframe'); const contEl = document.getElementById('modal-contenido');
+    const imgEl = document.getElementById('modal-imagen'); 
+    const iframeEl = document.getElementById('modal-iframe'); 
+    const contEl = document.getElementById('modal-contenido');
+    const leftCol = document.getElementById('modal-left-col');
+    const rightCol = document.getElementById('modal-right-col');
     
-    if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
-    if(d.link) { iframeEl.src = formatEmbedUrl(d.link); iframeEl.style.display = 'block'; } else { iframeEl.style.display = 'none'; iframeEl.src = ''; }
+    let hasLeftContent = false;
+
+    if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; hasLeftContent = true; } else { imgEl.style.display = 'none'; }
+    if(d.link) { iframeEl.src = formatEmbedUrl(d.link); iframeEl.style.display = 'block'; hasLeftContent = true; } else { iframeEl.style.display = 'none'; iframeEl.src = ''; }
+    
+    // Si no hay PDF ni Imagen, oculta la columna izquierda para que quede centrado
+    if(hasLeftContent) {
+        leftCol.style.display = 'flex';
+        rightCol.className = 'col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column';
+        rightCol.style.maxWidth = 'none';
+    } else {
+        leftCol.style.display = 'none';
+        rightCol.className = 'col-12 h-100 overflow-y-auto bg-white px-4 px-md-5 py-4 d-flex flex-column mx-auto';
+        rightCol.style.maxWidth = '900px';
+    }
     
     if(col === 'encuestas') {
-        contEl.innerHTML = `<p class="mb-4 font-inter text-dark" style="font-size: 1.15rem;">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
+        contEl.innerHTML = `<p class="mb-3 font-inter text-dark" style="font-size: 1.15rem;">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
     } else {
         contEl.innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${d.resumen||''}</div>`;
     }
@@ -169,7 +186,7 @@ window.editarSidebar = async () => {
 };
 
 // =====================================
-// 1. NOTICIAS Y COLUMNAS
+// 1. NOTICIAS Y COLUMNAS (REVERTIDO A DISEÑO ANTERIOR CON TARJETAS)
 // =====================================
 let noticiasData = []; let qBuscar = ''; let ordDesc = true;
 document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); });
@@ -201,7 +218,7 @@ function renderNoticias() {
     let filtradas = noticiasData.filter(n => (n.titulo||'').toLowerCase().includes(qBuscar) || (n.contenido||'').toLowerCase().includes(qBuscar));
     filtradas.sort((a,b) => { let tA = a.fecha?.toMillis()||0; let tB = b.fecha?.toMillis()||0; return ordDesc ? tB - tA : tA - tB; });
     const cLista = document.getElementById('contenedor-noticias-lista'); const cPrinc = document.getElementById('contenedor-noticia-principal');
-    if (filtradas.length === 0) { cPrinc.innerHTML=''; cLista.innerHTML='<div class="text-center text-muted font-inter">No hay resultados.</div>'; return; }
+    if (filtradas.length === 0) { cPrinc.innerHTML=''; cLista.innerHTML='<div class="text-center text-muted">No hay resultados.</div>'; return; }
     
     let hLista = ''; let hPrinc = ''; let pFound = false;
     filtradas.forEach(d => {
@@ -212,52 +229,50 @@ function renderNoticias() {
 
         if (d.principal && !pFound) {
             pFound = true;
-            const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-4 cursor-pointer" style="height:400px; object-fit: contain; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:400px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
+            const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-4 shadow-sm cursor-pointer" style="height:380px; object-fit: contain; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
             hPrinc = `
-            <article class="mb-5 pb-5 border-bottom border-light-subtle align-items-center">
-                <div class="row">
-                    <div class="col-lg-7 mb-4 mb-lg-0">${imgP}</div>
-                    <div class="col-lg-5 ps-lg-4 d-flex flex-column justify-content-center">
-                        <div class="mb-3">${tHTML}</div>
-                        <h2 class="fw-bold mb-3 font-serif cursor-pointer text-dark" style="font-size: 2.3rem; line-height: 1.25;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h2>
-                        <div class="text-muted mb-4 text-truncate-3 font-inter" style="font-size: 1.1rem; line-height: 1.7;">${textoLimpioPreview}</div>
-                        <div class="d-flex justify-content-between align-items-center mt-auto">
-                            <small class="text-muted fw-semibold font-inter"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
-                            <button class="btn btn-sm btn-outline-primary fw-bold font-inter rounded-pill px-3" onclick="abrirModal('${d.id}', 'noticias')">Leer columna <i class="bi bi-arrow-right"></i></button>
-                        </div>
+            <div class="row mb-5 border-bottom pb-5 align-items-center">
+                <div class="col-lg-7 mb-4 mb-lg-0">${imgP}</div>
+                <div class="col-lg-5 ps-lg-4">
+                    <div class="mb-3">${tHTML}</div>
+                    <h2 class="fw-bold mb-3 font-serif cursor-pointer" style="font-size: 2.2rem; color: #1a202c; line-height: 1.3;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h2>
+                    <div class="text-muted mb-4 text-truncate-3 font-inter" style="font-size: 1.1rem;">${textoLimpioPreview}</div>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted fw-semibold"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
+                        <small class="text-muted fw-semibold cursor-pointer" onclick="compartir('${d.titulo}', '${d.id}', 'noticias')"><i class="bi bi-share me-1"></i> Compartir</small>
                     </div>
                 </div>
-            </article>`;
+            </div>`;
         }
-        
         hLista += `
-        <article class="mb-4 pb-4 border-bottom border-light-subtle">
+        <div class="card border-0 border-bottom rounded-0 mb-4 pb-4 bg-transparent">
             <div class="row g-4 align-items-center">
-                <div class="col-md-4">${imgH}</div>
-                <div class="col-md-8 d-flex flex-column">
+                <div class="col-md-5">${imgH}</div>
+                <div class="col-md-7 d-flex flex-column">
                     <div class="d-flex justify-content-between mb-2">
                         <div>${tHTML}</div>
-                        <div>
-                            <i class="bi bi-share text-muted me-3 cursor-pointer" onclick="compartir('${d.titulo}', '${d.id}', 'noticias')"></i>
-                            <i class="bi bi-pencil-fill text-warning me-3 admin-only-inline cursor-pointer" onclick="editarNoticia('${d.id}')"></i>
-                            <i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i>
-                        </div>
+                        <div><i class="bi bi-share text-muted me-2 cursor-pointer" onclick="compartir('${d.titulo}', '${d.id}', 'noticias')"></i><i class="bi bi-pencil-fill text-warning me-2 admin-only-inline cursor-pointer" onclick="editarNoticia('${d.id}')"></i><i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i></div>
                     </div>
-                    <h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif text-dark" onclick="abrirModal('${d.id}', 'noticias')" style="font-size: 1.5rem;">${d.titulo}</h3>
-                    <div class="text-muted mb-3 text-truncate-2 font-inter small" style="line-height: 1.6;">${textoLimpioPreview}</div>
-                    <div class="d-flex justify-content-between align-items-center mt-auto">
-                        <small class="text-muted fw-semibold font-inter"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
-                        <button class="btn btn-sm btn-light text-primary fw-bold font-inter rounded-pill px-3" onclick="abrirModal('${d.id}', 'noticias')">Leer más</button>
-                    </div>
+                    <h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif text-dark" style="font-size: 1.5rem;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h3>
+                    <small class="text-muted fw-semibold mt-1"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
                 </div>
             </div>
-        </article>`;
+        </div>`;
     });
     cPrinc.innerHTML = pFound ? hPrinc : ''; cLista.innerHTML = hLista;
 }
 
+window.editarNoticia = (id) => {
+    const d = window.postsData[id];
+    document.getElementById('not-titulo').value = d.titulo; document.getElementById('not-tags').value = (d.etiquetas||[]).join(', ');
+    document.getElementById('not-color').value = d.colorTag || '#1976d2'; document.getElementById('not-principal').checked = d.principal;
+    if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(d.contenido || ''); window.editandoId = id;
+    document.getElementById('not-form-title').innerText = "Editando Columna"; document.getElementById('btn-pub-noticia').innerText = "Guardar";
+    bootstrap.Collapse.getOrCreateInstance(document.getElementById('colNoticia')).show(); window.scrollTo(0,0);
+};
+
 // ==========================================
-// 2. INVESTIGACIÓN & PAPERS (ESTILO REPOSITORIO ACADÉMICO)
+// 2. INVESTIGACIÓN & PAPERS
 // ==========================================
 document.getElementById('btn-pub-articulo').onclick = async () => {
     const t = document.getElementById('art-titulo').value; const l = document.getElementById('art-link').value; if(!t||!l) return alert("Falta Título o Link.");
@@ -274,7 +289,6 @@ onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) 
         const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios);
         const tHTML = (data.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${data.colorTag||'#dc3545'}">${t}</span>`).join('');
         
-        // DISEÑO REPOSITORIO (PORTADA IZQUIERDA, TEXTO DERECHA)
         h += `
         <article class="col-12 mb-5 pb-4 border-bottom border-light-subtle">
             <div class="row align-items-start">
@@ -321,7 +335,7 @@ window.editarArt = (id) => {
 };
 
 // ==========================================
-// 3. DEBATES Y ENCUESTAS (ESTILO INTERACTIVO CLARO)
+// 3. DEBATES Y ENCUESTAS
 // ==========================================
 document.getElementById('btn-add-opcion').onclick = () => {
     const i = document.createElement('input'); i.type = 'text'; i.className = 'form-control border-0 shadow-sm mb-2 opcion-input font-inter'; i.placeholder = 'Nueva Opción';

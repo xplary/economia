@@ -156,17 +156,25 @@
             <div class="modal-content bg-white">
                 <div class="modal-header border-bottom py-3 px-4 shadow-sm z-1">
                     <div class="d-flex align-items-center w-100 justify-content-between">
-                        <a class="navbar-brand brand-gradient m-0 fs-4 fw-bold font-serif" href="#">VISOR ACADÉMICO</a>
+                        <a class="navbar-brand brand-gradient m-0 fs-4 fw-bold font-serif" href="#">ECONOMIA</a>
                         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                 </div>
                 <div class="modal-body p-0">
                     <div class="row h-100 g-0">
-                        <!-- IZQUIERDA: PDF / Contenido Principal -->
-                        <div class="col-lg-8 border-end h-100 overflow-y-auto px-4 px-md-5 py-4 bg-light" id="modal-left-col">
-                            <div id="modal-tags" class="mb-3"></div>
-                            <h1 id="modal-titulo" class="fw-bold mb-3 font-serif" style="color: #1a202c; font-size: 2.2rem; line-height: 1.2;"></h1>
-                            <div class="text-muted small mb-4 pb-3 d-flex justify-content-between align-items-center border-bottom font-inter">
+                        <!-- IZQUIERDA: PDF o Imagen (Solo recursos visuales) -->
+                        <div class="col-lg-7 border-end h-100 overflow-y-auto px-4 py-4 bg-light d-flex flex-column align-items-center justify-content-start" id="modal-left-col">
+                            <img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 85vh; object-fit: contain; background-color: #fff; display: none;">
+                            <iframe id="modal-iframe" src="" class="w-100 rounded-3 shadow-sm bg-white" style="height: 85vh; border: 1px solid #dee2e6; display: none;"></iframe>
+                        </div>
+
+                        <!-- DERECHA: Título, Resumen, y Comentarios -->
+                        <div class="col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column" id="modal-right-col">
+                            
+                            <div id="modal-tags" class="mb-2"></div>
+                            <h2 id="modal-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2rem; line-height: 1.25;"></h2>
+                            
+                            <div class="text-muted small mb-3 pb-3 d-flex justify-content-between align-items-center border-bottom font-inter">
                                 <div>
                                     <span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span>
                                     <span id="modal-promedio-estrellas" class="fw-bold text-warning fs-6"></span>
@@ -174,29 +182,24 @@
                                 <div id="modal-btn-drive"></div>
                             </div>
                             
-                            <img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 500px; object-fit: contain; background-color: #fff; display: none;">
+                            <!-- Contenido o Abstract -->
+                            <div id="modal-contenido" class="text-secondary mb-4" style="font-size: 1.1rem; line-height: 1.8;"></div>
                             
-                            <iframe id="modal-iframe" src="" class="w-100 rounded-3 shadow-sm bg-white" style="height: 75vh; border: 1px solid #dee2e6; display: none;"></iframe>
+                            <!-- Zona de Discusión -->
+                            <h5 class="fw-bold mb-3 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2 text-primary"></i> Discusión y Aportes</h5>
                             
-                            <div id="modal-contenido" class="text-secondary bg-white p-4 rounded-4 shadow-sm border" style="font-size: 1.15rem; line-height: 1.8;"></div>
-                        </div>
-
-                        <!-- DERECHA: Comentarios y Opciones -->
-                        <div class="col-lg-4 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column" id="modal-right-col">
-                            <h4 class="fw-bold mb-4 font-serif text-dark border-bottom pb-3"><i class="bi bi-chat-square-text me-2 text-primary"></i> Discusión y Aportes</h4>
-                            
-                            <div class="bg-light p-4 rounded-4 mb-4 border shadow-sm">
-                                <div class="d-flex align-items-center mb-3 text-warning fs-5" id="estrellas-input">
-                                    <span class="text-dark small fw-bold me-2 fs-6 font-inter">Tu calificación:</span>
+                            <div class="bg-light p-3 rounded-4 mb-4 border shadow-sm">
+                                <div class="d-flex align-items-center mb-2 text-warning fs-6" id="estrellas-input">
+                                    <span class="text-dark small fw-bold me-2 font-inter">Tu calificación:</span>
                                     <i class="bi bi-star cursor-pointer star-btn" data-val="1"></i>
                                     <i class="bi bi-star cursor-pointer star-btn" data-val="2"></i>
                                     <i class="bi bi-star cursor-pointer star-btn" data-val="3"></i>
                                     <i class="bi bi-star cursor-pointer star-btn" data-val="4"></i>
                                     <i class="bi bi-star cursor-pointer star-btn" data-val="5"></i>
-                                    <span class="text-muted fs-6 ms-2 font-inter" id="rating-text"></span>
+                                    <span class="text-muted small ms-2 font-inter" id="rating-text"></span>
                                 </div>
-                                <textarea id="comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión académica o comentario..."></textarea>
-                                <div class="text-end"><button class="btn btn-primary rounded-pill fw-bold px-5 py-2 font-inter shadow-sm" id="btn-enviar-comentario">Publicar Aporte</button></div>
+                                <textarea id="comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="2" placeholder="Escribe tu opinión académica o comentario..."></textarea>
+                                <div class="text-end"><button class="btn btn-primary rounded-pill fw-bold px-4 py-1 font-inter shadow-sm" id="btn-enviar-comentario">Publicar</button></div>
                             </div>
                             
                             <div id="lista-comentarios" class="flex-grow-1 pe-2 comments-scrollbar"></div>
