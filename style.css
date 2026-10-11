@@ -49,11 +49,8 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 .hover-bg-light:hover { background-color: rgba(255,255,255,0.1); color: white; }
 .hover-bg-gray:hover { background-color: #e2e8f0; }
 #modalNoticia { background-color: rgba(0, 0, 0, 0.5); }
-
-/* ANIMACIÓN RESPIRACIÓN SPLASH SCREEN */
-@keyframes breathe {
-    0% { transform: scale(0.98); opacity: 0.85; }
-    50% { transform: scale(1.02); opacity: 1; }
-    100% { transform: scale(0.98); opacity: 0.85; }
-}
+@keyframes breathe { 0% { transform: scale(0.98); opacity: 0.85; } 50% { transform: scale(1.02); opacity: 1; } 100% { transform: scale(0.98); opacity: 0.85; } }
 .breathe-anim { animation: breathe 3s ease-in-out infinite; }
+
+/* ESTRELLAS PERSONALIZADAS */
+.star-gradient { background: linear-gradient(90deg, #009668 0%, #004b79 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
