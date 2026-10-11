@@ -7,9 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
-    <!-- FUENTES PROFESIONALES: Inter (Cuerpo) y Lora (Títulos - Estilo Periodístico/Académico) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -57,9 +55,7 @@
                                 <div class="col-md-2"><label class="small fw-bold text-muted mb-1">Color Tag:</label><input type="color" id="not-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#1976d2"></div>
                             </div>
                             <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="not-principal"><label class="form-check-label fw-bold text-primary small">Marcar como Principal (Grande)</label></div>
-                            
                             <div class="mb-3"><textarea id="editor-noticias"></textarea></div>
-                            
                             <div class="text-end">
                                 <button class="btn btn-light rounded-pill px-4 me-2 fw-bold" onclick="cancelarEdicion()">Cancelar</button>
                                 <button id="btn-pub-noticia" class="btn btn-success px-5 rounded-pill fw-bold">Publicar Columna</button>
@@ -117,7 +113,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Ahora los papers serán una lista vertical limpia, sin cuadrados -->
                 <div class="row" id="contenedor-articulos"></div>
             </div>
 
@@ -149,50 +144,63 @@
                         </div>
                     </div>
                 </div>
-                <div class="row"><div class="col-md-9 mx-auto" id="contenedor-encuestas"></div></div>
+                <div class="row"><div class="col-md-10 mx-auto" id="contenedor-encuestas"></div></div>
             </div>
 
         </div>
     </div>
 
-    <!-- MODAL LECTURA COMPLETA -->
+    <!-- MODAL LECTURA COMPLETA (DISEÑO DIVIDIDO 2 COLUMNAS) -->
     <div class="modal fade" id="modalLectura" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header border-0 pb-0"><button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body px-4 px-md-5 pb-5 pt-2">
-                    <div id="modal-tags" class="mb-3"></div>
-                    <h1 id="modal-titulo" class="fw-bold mb-3 font-serif" style="color: #1a202c; font-size: 2.5rem; line-height: 1.2;"></h1>
-                    <div class="text-muted small mb-4 border-bottom pb-3 d-flex justify-content-between align-items-center font-inter">
-                        <div>
-                            <span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span>
-                            <span id="modal-promedio-estrellas" class="fw-bold text-warning fs-6"></span>
-                        </div>
-                        <div id="modal-btn-drive"></div>
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content bg-white">
+                <div class="modal-header border-bottom py-3 px-4 shadow-sm z-1">
+                    <div class="d-flex align-items-center w-100 justify-content-between">
+                        <a class="navbar-brand brand-gradient m-0 fs-4 fw-bold font-serif" href="#">VISOR ACADÉMICO</a>
+                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    
-                    <img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 500px; object-fit: contain; background-color: #f1f3f5; display: none;">
-                    
-                    <iframe id="modal-iframe" src="" class="w-100 rounded-4 mb-4 shadow-sm" style="height: 70vh; border: none; display: none;"></iframe>
-                    
-                    <div id="modal-contenido" class="text-secondary" style="font-size: 1.15rem; line-height: 1.8;"></div>
-                    
-                    <div class="mt-5 pt-4 border-top">
-                        <h4 class="fw-bold mb-3 font-serif">Comentarios y Opiniones</h4>
-                        <div class="bg-light p-3 rounded-4 mb-4 border">
-                            <div class="d-flex align-items-center mb-2 text-warning fs-5" id="estrellas-input">
-                                <span class="text-dark small fw-bold me-2 fs-6 font-inter">Tu calificación:</span>
-                                <i class="bi bi-star cursor-pointer star-btn" data-val="1"></i>
-                                <i class="bi bi-star cursor-pointer star-btn" data-val="2"></i>
-                                <i class="bi bi-star cursor-pointer star-btn" data-val="3"></i>
-                                <i class="bi bi-star cursor-pointer star-btn" data-val="4"></i>
-                                <i class="bi bi-star cursor-pointer star-btn" data-val="5"></i>
-                                <span class="text-muted fs-6 ms-2 font-inter" id="rating-text"></span>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="row h-100 g-0">
+                        <!-- IZQUIERDA: PDF / Contenido Principal -->
+                        <div class="col-lg-8 border-end h-100 overflow-y-auto px-4 px-md-5 py-4 bg-light" id="modal-left-col">
+                            <div id="modal-tags" class="mb-3"></div>
+                            <h1 id="modal-titulo" class="fw-bold mb-3 font-serif" style="color: #1a202c; font-size: 2.2rem; line-height: 1.2;"></h1>
+                            <div class="text-muted small mb-4 pb-3 d-flex justify-content-between align-items-center border-bottom font-inter">
+                                <div>
+                                    <span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span>
+                                    <span id="modal-promedio-estrellas" class="fw-bold text-warning fs-6"></span>
+                                </div>
+                                <div id="modal-btn-drive"></div>
                             </div>
-                            <textarea id="comentario-texto" class="form-control border-0 shadow-sm mb-2 font-inter" rows="2" placeholder="Escribe un comentario..."></textarea>
-                            <div class="text-end"><button class="btn btn-primary rounded-pill fw-bold px-4 font-inter" id="btn-enviar-comentario">Enviar</button></div>
+                            
+                            <img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 500px; object-fit: contain; background-color: #fff; display: none;">
+                            
+                            <iframe id="modal-iframe" src="" class="w-100 rounded-3 shadow-sm bg-white" style="height: 75vh; border: 1px solid #dee2e6; display: none;"></iframe>
+                            
+                            <div id="modal-contenido" class="text-secondary bg-white p-4 rounded-4 shadow-sm border" style="font-size: 1.15rem; line-height: 1.8;"></div>
                         </div>
-                        <div id="lista-comentarios"></div>
+
+                        <!-- DERECHA: Comentarios y Opciones -->
+                        <div class="col-lg-4 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column" id="modal-right-col">
+                            <h4 class="fw-bold mb-4 font-serif text-dark border-bottom pb-3"><i class="bi bi-chat-square-text me-2 text-primary"></i> Discusión y Aportes</h4>
+                            
+                            <div class="bg-light p-4 rounded-4 mb-4 border shadow-sm">
+                                <div class="d-flex align-items-center mb-3 text-warning fs-5" id="estrellas-input">
+                                    <span class="text-dark small fw-bold me-2 fs-6 font-inter">Tu calificación:</span>
+                                    <i class="bi bi-star cursor-pointer star-btn" data-val="1"></i>
+                                    <i class="bi bi-star cursor-pointer star-btn" data-val="2"></i>
+                                    <i class="bi bi-star cursor-pointer star-btn" data-val="3"></i>
+                                    <i class="bi bi-star cursor-pointer star-btn" data-val="4"></i>
+                                    <i class="bi bi-star cursor-pointer star-btn" data-val="5"></i>
+                                    <span class="text-muted fs-6 ms-2 font-inter" id="rating-text"></span>
+                                </div>
+                                <textarea id="comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión académica o comentario..."></textarea>
+                                <div class="text-end"><button class="btn btn-primary rounded-pill fw-bold px-5 py-2 font-inter shadow-sm" id="btn-enviar-comentario">Publicar Aporte</button></div>
+                            </div>
+                            
+                            <div id="lista-comentarios" class="flex-grow-1 pe-2 comments-scrollbar"></div>
+                        </div>
                     </div>
                 </div>
             </div>

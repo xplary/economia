@@ -1,7 +1,6 @@
 :root { --primary-blue: #092e6e; --accent-blue: #1976d2; --accent-green: #00c853; }
 body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa; }
 
-/* NUEVA FUENTE PROFESIONAL Y EDITORIAL PARA TÍTULOS */
 .font-serif { font-family: 'Lora', serif; }
 .font-inter { font-family: 'Inter', sans-serif; }
 
@@ -29,6 +28,13 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 
 .tag-badge { padding: 4px 12px; border-radius: 6px; color: white; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-right: 6px; margin-bottom: 6px; display: inline-block; letter-spacing: 0.5px; }
 
+/* ESTILO REPOSITORIO ACADÉMICO PARA PAPERS (Inspirado en la imagen) */
+.paper-cover { width: 100%; max-width: 130px; aspect-ratio: 1 / 1.4; background-color: #fff; border: 1px solid #ced4da; box-shadow: 2px 2px 8px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; transition: 0.2s ease; }
+.paper-cover:hover { transform: translateY(-3px); box-shadow: 4px 4px 12px rgba(0,0,0,0.12); }
+.paper-cover::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 8px; background-color: var(--primary-blue); }
+.paper-title-link { color: #1f7a8c; transition: 0.2s; text-decoration: none; display: block; }
+.paper-title-link:hover { color: #095a6b; text-decoration: underline; }
+
 /* FORMATO PROFESIONAL DE LECTURA TIPO WORD/APA */
 .contenido-apa p { margin-bottom: 1.2em; line-height: 1.8; text-align: justify; }
 .contenido-apa h1, .contenido-apa h2, .contenido-apa h3 { font-family: 'Lora', serif; color: #1a202c; font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
@@ -37,3 +43,9 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 .contenido-apa ul, .contenido-apa ol { margin-bottom: 1.2em; padding-left: 2em; line-height: 1.8; }
 .contenido-apa table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
 .contenido-apa table, .contenido-apa th, .contenido-apa td { border: 1px solid #cbd5e0; padding: 0.75rem; text-align: left; }
+
+/* SCROLLBAR PARA COMENTARIOS */
+.comments-scrollbar::-webkit-scrollbar { width: 6px; }
+.comments-scrollbar::-webkit-scrollbar-track { background: #f8f9fa; border-radius: 4px; }
+.comments-scrollbar::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 4px; }
+.comments-scrollbar::-webkit-scrollbar-thumb:hover { background: #ced4da; }
