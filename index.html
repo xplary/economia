@@ -45,7 +45,8 @@
                                 <div class="col-md-2"><label class="small fw-bold text-muted mb-1">Color Tag:</label><input type="color" id="not-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#1976d2"></div>
                             </div>
                             <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="not-principal"><label class="form-check-label fw-bold text-primary small">Marcar como Principal (Grande)</label></div>
-                            <div class="border rounded-3 bg-white overflow-hidden mb-3"><div id="editor-noticias" style="height: 180px;"></div></div>
+                            <!-- Aumentado el tamaño a 350px para modo Word APA -->
+                            <div class="border rounded-3 bg-white overflow-hidden mb-3"><div id="editor-noticias" style="height: 350px; font-size: 1.1rem;"></div></div>
                             <div class="text-end">
                                 <button class="btn btn-light rounded-pill px-4 me-2 fw-bold" onclick="cancelarEdicion()">Cancelar</button>
                                 <button id="btn-pub-noticia" class="btn btn-success px-5 rounded-pill fw-bold">Publicar Columna</button>
@@ -163,7 +164,9 @@
                         <div id="modal-btn-drive"></div>
                     </div>
                     <img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm object-fit-cover" style="max-height: 500px; display: none;">
-                    <div id="modal-contenido" class="font-inter text-secondary" style="font-size: 1.15rem; line-height: 1.8;"></div>
+                    
+                    <!-- Contenedor del contenido -->
+                    <div id="modal-contenido" class="text-secondary" style="font-size: 1.15rem; line-height: 1.8;"></div>
                     
                     <!-- SECCIÓN DE COMENTARIOS -->
                     <div class="mt-5 pt-4 border-top">
