@@ -183,16 +183,19 @@ const checkDeepLink = (id, col) => {
 };
 
 // =====================================
-// OTRAS FUNCIONES (Compresor, Sidebar)
+// COMPRESOR DE IMÁGENES MEJORADO (No pierde tanta calidad)
 // =====================================
 const compressImg = (file) => new Promise((res) => {
     const reader = new FileReader(); reader.readAsDataURL(file);
     reader.onload = (e) => {
         const img = new Image(); img.src = e.target.result;
         img.onload = () => {
-            const canvas = document.createElement('canvas'); const MAX = 800; const scale = MAX / img.width;
-            canvas.width = MAX; canvas.height = img.height * scale;
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); res(canvas.toDataURL('image/jpeg', 0.6));
+            const canvas = document.createElement('canvas'); 
+            const MAX = 1600; // Resolución alta para que se vea claro y no pixelado
+            const scale = img.width > MAX ? MAX / img.width : 1;
+            canvas.width = img.width * scale; canvas.height = img.height * scale;
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); 
+            res(canvas.toDataURL('image/jpeg', 0.85)); // 85% de calidad (excelente compresión visual)
         };
     };
 });
@@ -205,7 +208,6 @@ window.cancelarEdicion = () => {
     bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide();
 };
 
-// ACTUALIZACIÓN DE SIDEBAR (Solo pide Título y Descripción)
 onSnapshot(doc(db, "config", "sidebar"), (s) => {
     if(s.exists()){
         const d = s.data();
@@ -257,7 +259,8 @@ function renderNoticias() {
 
         if (d.principal && !pFound && ordDesc) {
             pFound = true;
-            const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 object-fit-cover rounded-4 shadow-sm cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
+            // object-fit: contain añadido en la noticia principal también para no cortar
+            const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-4 shadow-sm cursor-pointer" style="height:380px; object-fit: contain; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
             hPrinc = `
             <div class="row mb-5 border-bottom pb-5 align-items-center">
                 <div class="col-lg-7 mb-4 mb-lg-0">${imgP}</div>
