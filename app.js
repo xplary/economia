@@ -24,9 +24,7 @@ const quill = new Quill('#editor-noticias', {
             ['link', 'image', 'video'],
             ['clean']
         ],
-        clipboard: {
-            matchVisual: false 
-        }
+        clipboard: { matchVisual: false }
     } 
 });
 
@@ -60,7 +58,7 @@ window.compartir = (tit, id, col) => {
 };
 
 // =====================================
-// ESTRELLAS Y COMENTARIOS EN MODAL
+// ESTRELLAS Y COMENTARIOS
 // =====================================
 let currentRating = 0;
 document.querySelectorAll('.star-btn').forEach(st => {
@@ -132,18 +130,17 @@ const generarHTMLOpcionesEncuesta = (id, data) => {
     return h + `</div>`;
 };
 
-// TRANSFORMADOR DE ENLACES PARA VISOR PDF (Extracción exacta del ID)
+// TRANSFORMADOR DE ENLACES BLINDADO
 const formatEmbedUrl = (url) => {
     if(!url) return '';
-    // Extrae mágicamente el ID de cualquier formato de link de Drive
-    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+    const match = url.match(/\/(?:d|file\/d)\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
     if (match && match[1]) {
         return `https://drive.google.com/file/d/${match[1]}/preview`;
     }
     return url;
 };
 
-// ABRIR EL MODAL (Con inyección de clases Quill para formato APA)
+// ABRIR EL MODAL
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return;
     window.modalActual = { id, col };
@@ -152,11 +149,9 @@ window.abrirModal = (id, col) => {
     document.getElementById('modal-promedio-estrellas').innerText = getPromedioStars(d.comentarios);
     document.getElementById('modal-tags').innerHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#1976d2'};">${t}</span>`).join('');
     
-    // Imagen
     const imgEl = document.getElementById('modal-imagen');
     if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
     
-    // PDF Iframe directamente
     document.getElementById('modal-btn-drive').innerHTML = ''; 
     const iframeEl = document.getElementById('modal-iframe');
     if(d.link) {
@@ -167,11 +162,9 @@ window.abrirModal = (id, col) => {
         iframeEl.src = '';
     }
     
-    // Contenido
     if(col === 'encuestas') {
         document.getElementById('modal-contenido').innerHTML = `<p class="mb-4">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
     } else {
-        // Envolver el contenido en ql-snow y ql-editor para formato APA
         document.getElementById('modal-contenido').innerHTML = `<div class="ql-snow"><div class="ql-editor font-inter" style="padding:0;">${d.contenido || d.resumen || ''}</div></div>`;
     }
     
@@ -212,21 +205,18 @@ window.cancelarEdicion = () => {
     bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide();
 };
 
+// ACTUALIZACIÓN DE SIDEBAR (Solo pide Título y Descripción)
 onSnapshot(doc(db, "config", "sidebar"), (s) => {
     if(s.exists()){
         const d = s.data();
         if(d.t) document.getElementById('sb-titulo').innerText = d.t;
-        if(d.dia) document.getElementById('sb-dia').innerText = d.dia;
-        if(d.m) document.getElementById('sb-mes').innerText = d.m;
         if(d.desc) document.getElementById('sb-desc').innerText = d.desc;
     }
 });
 window.editarSidebar = async () => {
     const t = prompt("Título:", document.getElementById('sb-titulo').innerText) || document.getElementById('sb-titulo').innerText;
-    const dia = prompt("Día:", document.getElementById('sb-dia').innerText) || document.getElementById('sb-dia').innerText;
-    const m = prompt("Mes:", document.getElementById('sb-mes').innerText) || document.getElementById('sb-mes').innerText;
     const desc = prompt("Descripción:", document.getElementById('sb-desc').innerText) || document.getElementById('sb-desc').innerText;
-    await setDoc(doc(db, "config", "sidebar"), {t, dia, m, desc}, {merge:true});
+    await setDoc(doc(db, "config", "sidebar"), {t, desc}, {merge:true});
 };
 
 // =====================================

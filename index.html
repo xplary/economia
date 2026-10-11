@@ -71,19 +71,13 @@
                 <div class="row">
                     <div class="col-lg-8" id="contenedor-noticias-lista"><div class="skeleton-box w-100 mb-3" style="height: 200px;"></div></div>
                     
+                    <!-- SIDEBAR EDITADO -->
                     <div class="col-lg-4 ps-lg-4 mt-4 mt-lg-0">
-                        <div class="p-4 bg-white shadow-sm position-relative" style="border: 2px solid #dc3545;">
+                        <div class="p-4 bg-white shadow-sm position-relative rounded-4" style="border: 2px solid #ffffff;">
                             <button class="btn btn-sm btn-warning position-absolute top-0 end-0 m-2 admin-only-inline shadow-sm" onclick="editarSidebar()"><i class="bi bi-pencil-fill"></i></button>
-                            <h4 id="sb-titulo" class="fw-bold mb-4 font-serif" style="color: #1a202c; font-size: 1.4rem; line-height: 1.4;">Te damos la bienvenida a nuestro nuevo INTEGRATE</h4>
-                            <div class="d-flex mb-3 align-items-start">
-                                <div class="bg-primary text-white text-center p-2 rounded-2 me-3 shadow-sm" style="min-width: 60px;">
-                                    <small class="d-block text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.5px;">HASTA</small>
-                                    <span id="sb-dia" class="fs-4 fw-bold lh-1 d-block my-1">15</span>
-                                    <small id="sb-mes" class="d-block text-uppercase" style="font-size: 0.65rem;">OCT</small>
-                                </div>
-                                <p id="sb-desc" class="mb-0 fw-bold font-inter" style="font-size: 0.9rem; color: #2d3748;">Conferencia Internacional: Empleabilidad, IA y competencias...</p>
-                            </div>
-                            <a href="#" class="text-dark text-decoration-none fw-bold mt-2 d-inline-block font-inter" style="font-size: 0.95rem;">Ver mas... <i class="bi bi-arrow-right-circle ms-1 text-muted"></i></a>
+                            <h4 id="sb-titulo" class="fw-bold mb-3 font-serif" style="color: #1a202c; font-size: 1.4rem; line-height: 1.4;">Te damos la bienvenida a nuestro nuevo INTEGRATE</h4>
+                            <p id="sb-desc" class="mb-3 fw-bold font-inter" style="font-size: 0.95rem; color: #2d3748; line-height: 1.6;">Conferencia Internacional: Empleabilidad, IA y competencias...</p>
+                            <a href="#" class="text-dark text-decoration-none fw-bold d-inline-block font-inter" style="font-size: 0.95rem;">Ver mas... <i class="bi bi-arrow-right-circle ms-1 text-muted"></i></a>
                         </div>
                     </div>
                 </div>
@@ -160,18 +154,15 @@
                             <span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span>
                             <span id="modal-promedio-estrellas" class="fw-bold text-warning fs-6"></span>
                         </div>
-                        <div id="modal-btn-drive"></div> <!-- Se mantiene vacío ahora -->
+                        <div id="modal-btn-drive"></div>
                     </div>
                     
                     <img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm object-fit-cover" style="max-height: 500px; display: none;">
                     
-                    <!-- VISOR DE PDF INCRUSTADO -->
                     <iframe id="modal-iframe" src="" class="w-100 rounded-4 mb-4 shadow-sm" style="height: 70vh; border: none; display: none;"></iframe>
                     
-                    <!-- Contenedor del contenido -->
                     <div id="modal-contenido" class="text-secondary" style="font-size: 1.15rem; line-height: 1.8;"></div>
                     
-                    <!-- SECCIÓN DE COMENTARIOS -->
                     <div class="mt-5 pt-4 border-top">
                         <h4 class="fw-bold mb-3 font-serif">Comentarios y Opiniones</h4>
                         <div class="bg-light p-3 rounded-4 mb-4 border">
