@@ -29,3 +29,7 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 .cursor-pointer:hover { color: var(--accent-blue) !important; }
 
 .tag-badge { padding: 4px 12px; border-radius: 6px; color: white; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-right: 6px; margin-bottom: 6px; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+/* Para que el texto APA mantenga su margen y tipo de letra correctamente */
+.ql-editor p { margin-bottom: 1em; line-height: 1.8; }
+.ql-editor { font-family: 'Inter', sans-serif; }
