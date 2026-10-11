@@ -19,29 +19,21 @@ const splash = document.getElementById('splash-screen');
 
 const splashInterval = setInterval(() => {
     progress += Math.random() * 15 + 5;
-    if(progress > 85) progress = 85; // Se pausa en 85% esperando los datos
+    if(progress > 85) progress = 85; 
     if(progBar) progBar.style.width = progress + '%';
 }, 200);
 
 // =====================================
-// CONFIGURACIÓN FULL DE QUILL (APA)
+// CONFIGURACIÓN DE TINYMCE (El mejor para compatibilidad con Word)
 // =====================================
-const quill = new Quill('#editor-noticias', { 
-    theme: 'snow', 
-    modules: { 
-        toolbar: [
-            [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ 'color': [] }, { 'background': [] }],
-            [{ 'script': 'sub'}, { 'script': 'super' }],
-            [{ 'header': [1, 2, 3, 4, 5, 6, false] }, 'blockquote'],
-            [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
-            [{ 'align': [] }],
-            ['link', 'image', 'video'],
-            ['clean']
-        ],
-        clipboard: { matchVisual: false }
-    } 
+tinymce.init({
+    selector: '#editor-noticias',
+    height: 450,
+    menubar: false,
+    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table wordcount',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link image | removeformat',
+    content_style: 'body { font-family: "Inter", sans-serif; font-size: 16px; text-align: justify; line-height: 1.6; }',
+    paste_data_images: true // Permite pegar imágenes directo de word o recortes
 });
 
 // =====================================
@@ -146,7 +138,6 @@ const generarHTMLOpcionesEncuesta = (id, data) => {
     return h + `</div>`;
 };
 
-// TRANSFORMADOR DE ENLACES BLINDADO
 const formatEmbedUrl = (url) => {
     if(!url) return '';
     const match = url.match(/\/(?:d|file\/d)\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
@@ -156,7 +147,7 @@ const formatEmbedUrl = (url) => {
     return url;
 };
 
-// ABRIR EL MODAL
+// ABRIR EL MODAL (Integrado con el estilo APA global de TinyMCE)
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return;
     window.modalActual = { id, col };
@@ -181,7 +172,8 @@ window.abrirModal = (id, col) => {
     if(col === 'encuestas') {
         document.getElementById('modal-contenido').innerHTML = `<p class="mb-4">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
     } else {
-        document.getElementById('modal-contenido').innerHTML = `<div class="ql-snow"><div class="ql-editor font-inter" style="padding:0;">${d.contenido || d.resumen || ''}</div></div>`;
+        // Usa la clase .contenido-apa configurada en tu style.css
+        document.getElementById('modal-contenido').innerHTML = `<div class="contenido-apa">${d.contenido || d.resumen || ''}</div>`;
     }
     
     renderComentarios(d.comentarios);
@@ -198,9 +190,6 @@ const checkDeepLink = (id, col) => {
     }
 };
 
-// =====================================
-// COMPRESOR DE IMÁGENES
-// =====================================
 const compressImg = (file) => new Promise((res) => {
     const reader = new FileReader(); reader.readAsDataURL(file);
     reader.onload = (e) => {
@@ -219,7 +208,8 @@ const compressImg = (file) => new Promise((res) => {
 window.cancelarEdicion = () => {
     window.editandoId = null;
     document.querySelectorAll('input:not([type="color"]), textarea').forEach(i => i.value = '');
-    quill.setContents([]); document.getElementById('not-principal').checked = false;
+    if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(''); 
+    document.getElementById('not-principal').checked = false;
     document.getElementById('not-form-title').innerText = "Editor de Columnas";
     bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide();
 };
@@ -238,7 +228,7 @@ window.editarSidebar = async () => {
 };
 
 // =====================================
-// 1. NOTICIAS Y COLUMNAS
+// 1. NOTICIAS Y COLUMNAS (Actualizado para TinyMCE)
 // =====================================
 let noticiasData = []; let qBuscar = ''; let ordDesc = true;
 document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); });
@@ -249,7 +239,11 @@ document.getElementById('btn-pub-noticia').onclick = async () => {
     const etiquetas = document.getElementById('not-tags').value ? document.getElementById('not-tags').value.split(',').map(t=>t.trim()).filter(Boolean) : ['Opinión'];
     let imgFinal = ''; const imgFile = document.getElementById('not-imagen').files[0];
     if (imgFile) imgFinal = await compressImg(imgFile); else if (window.editandoId && window.postsData[window.editandoId].imagen) imgFinal = window.postsData[window.editandoId].imagen;
-    const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: document.getElementById('not-principal').checked, contenido: quill.root.innerHTML };
+    
+    // Obtenemos el contenido directamente de TinyMCE
+    const editorContent = tinymce.get('editor-noticias').getContent();
+    
+    const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: document.getElementById('not-principal').checked, contenido: editorContent };
     if (window.editandoId) await updateDoc(doc(db, "noticias", window.editandoId), data); else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "noticias"), data); }
     cancelarEdicion();
 };
@@ -259,7 +253,6 @@ onSnapshot(collection(db, "noticias"), (snap) => {
     renderNoticias();
     if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); 
     
-    // --- FINALIZAR EL SPLASH SCREEN AL CARGAR DATOS ---
     if(isFirstLoad) {
         isFirstLoad = false;
         clearInterval(splashInterval);
@@ -269,7 +262,7 @@ onSnapshot(collection(db, "noticias"), (snap) => {
                 splash.style.opacity = '0';
                 setTimeout(() => splash.remove(), 500);
             }
-        }, 600); // 600ms para darle tiempo de mostrar el 100% de carga al usuario
+        }, 600); 
     }
 });
 
@@ -286,7 +279,6 @@ function renderNoticias() {
         const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
         const textoLimpioPreview = d.contenido.replace(/<[^>]*>?/gm, '');
 
-        // AQUÍ SE ARREGLA EL BUG: Se eliminó el "&& ordDesc", ahora nunca desaparece
         if (d.principal && !pFound) {
             pFound = true;
             const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-4 shadow-sm cursor-pointer" style="height:380px; object-fit: contain; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
@@ -326,7 +318,7 @@ window.editarNoticia = (id) => {
     const d = window.postsData[id];
     document.getElementById('not-titulo').value = d.titulo; document.getElementById('not-tags').value = (d.etiquetas||[]).join(', ');
     document.getElementById('not-color').value = d.colorTag || '#1976d2'; document.getElementById('not-principal').checked = d.principal;
-    quill.root.innerHTML = d.contenido; window.editandoId = id;
+    if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(d.contenido || ''); window.editandoId = id;
     document.getElementById('not-form-title').innerText = "Editando Columna"; document.getElementById('btn-pub-noticia').innerText = "Guardar";
     bootstrap.Collapse.getOrCreateInstance(document.getElementById('colNoticia')).show(); window.scrollTo(0,0);
 };
