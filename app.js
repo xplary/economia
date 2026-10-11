@@ -1,11 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, query, serverTimestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+// Aquí faltaba importar orderBy, ya está corregido
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 const app = initializeApp({
     apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1"
 });
-const auth = getAuth(app); const db = getFirestore(app);
+const auth = getAuth(app); 
+const db = getFirestore(app);
 
 window.postsData = {}; window.editandoId = null; 
 const quill = new Quill('#editor-noticias', { theme: 'snow', modules: { toolbar: [['bold', 'italic'], [{'color':[]}], ['link'], ['clean']] }});
@@ -107,9 +109,14 @@ document.getElementById('btn-pub-noticia').onclick = async () => {
     else if (window.editandoId && window.postsData[window.editandoId].imagen) imgFinal = window.postsData[window.editandoId].imagen;
     
     const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: document.getElementById('not-principal').checked, contenido: quill.root.innerHTML };
-    if (window.editandoId) await updateDoc(doc(db, "noticias", window.editandoId), data);
-    else { data.fecha = serverTimestamp(); await addDoc(collection(db, "noticias"), data); }
-    cancelarEdicion();
+    
+    try {
+        if (window.editandoId) await updateDoc(doc(db, "noticias", window.editandoId), data);
+        else { data.fecha = serverTimestamp(); await addDoc(collection(db, "noticias"), data); }
+        cancelarEdicion();
+    } catch(e) {
+        alert("Error al publicar la columna. Revisa tu conexión a Firebase.");
+    }
 };
 
 onSnapshot(collection(db, "noticias"), (snap) => {
@@ -131,7 +138,7 @@ function renderNoticias() {
         const tHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#1976d2'}">${t}</span>`).join('');
         const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}')"><i class="bi bi-image fs-1"></i></div>`;
         
-        if (d.principal && !pFound && ordDesc) { // Solo muestra el principal arriba si el orden es descendente
+        if (d.principal && !pFound && ordDesc) {
             pFound = true;
             const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 object-fit-cover rounded-4 shadow-sm cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}')"><i class="bi bi-image fs-1"></i></div>`;
             hPrinc = `
@@ -186,9 +193,14 @@ document.getElementById('btn-pub-articulo').onclick = async () => {
     const t = document.getElementById('art-titulo').value; const l = document.getElementById('art-link').value; if(!t||!l) return alert("Falta Título o Link.");
     const et = document.getElementById('art-tags').value ? document.getElementById('art-tags').value.split(',').map(x=>x.trim()).filter(Boolean) : ['Paper'];
     const data = { titulo: t, link: l, resumen: document.getElementById('art-resumen').value, etiquetas: et, colorTag: document.getElementById('art-color').value };
-    if(window.editandoId) await updateDoc(doc(db, "articulos", window.editandoId), data);
-    else { data.fecha = serverTimestamp(); await addDoc(collection(db, "articulos"), data); }
-    cancelarEdicion();
+    
+    try {
+        if(window.editandoId) await updateDoc(doc(db, "articulos", window.editandoId), data);
+        else { data.fecha = serverTimestamp(); await addDoc(collection(db, "articulos"), data); }
+        cancelarEdicion();
+    } catch(e) {
+        alert("Error al publicar el documento.");
+    }
 };
 
 onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) => {
@@ -217,7 +229,7 @@ onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) 
 });
 
 // ==========================================
-// 3. DEBATES Y ENCUESTAS (Estilo Publicación)
+// 3. DEBATES Y ENCUESTAS
 // ==========================================
 document.getElementById('btn-add-opcion').onclick = () => {
     const i = document.createElement('input'); i.type = 'text'; i.className = 'form-control border-0 shadow-sm mb-2 opcion-input'; i.placeholder = 'Nueva Opción';
@@ -230,10 +242,14 @@ document.getElementById('btn-pub-encuesta').onclick = async () => {
     let opc = []; document.querySelectorAll('.opcion-input').forEach(i => { if(i.value.trim()) opc.push({ texto: i.value, votos: 0 }); });
     if(opc.length < 2) return alert("Mínimo 2 opciones.");
     
-    await addDoc(collection(db, "encuestas"), { pregunta: p, resumen: d, opciones: opc, totalVotos: 0, fecha: serverTimestamp() });
-    document.getElementById('enc-pregunta').value=''; document.getElementById('enc-desc').value='';
-    document.querySelectorAll('.opcion-input').forEach(i => i.value='');
-    bootstrap.Collapse.getInstance(document.getElementById('colEncuesta'))?.hide();
+    try {
+        await addDoc(collection(db, "encuestas"), { pregunta: p, resumen: d, opciones: opc, totalVotos: 0, fecha: serverTimestamp() });
+        document.getElementById('enc-pregunta').value=''; document.getElementById('enc-desc').value='';
+        document.querySelectorAll('.opcion-input').forEach(i => i.value='');
+        bootstrap.Collapse.getInstance(document.getElementById('colEncuesta'))?.hide();
+    } catch(e) {
+        alert("Error al publicar la encuesta.");
+    }
 };
 
 onSnapshot(query(collection(db, "encuestas"), orderBy("fecha", "desc")), (snap) => {
