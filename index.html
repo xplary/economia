@@ -23,8 +23,8 @@
         </div>
     </div>
 
-    <!-- NAVBAR ESCRITORIO -->
-    <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm py-3 mb-4 sticky-top">
+    <!-- NAVBAR ESCRITORIO (z-index alto para flotar sobre modals) -->
+    <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm py-3 mb-4 sticky-top" style="z-index: 1060;">
         <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand m-0 d-flex align-items-center" href="index.html">
                 <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg>
@@ -42,8 +42,8 @@
         </div>
     </nav>
 
-    <!-- NAVEGACIÓN INFERIOR MÓVIL -->
-    <ul class="nav nav-pills nav-justified mobile-nav d-md-none fixed-bottom bg-white shadow-lg z-3 m-0 p-0 border-top" id="pills-tab-mobile" role="tablist">
+    <!-- NAVEGACIÓN INFERIOR MÓVIL (Flotando siempre arriba) -->
+    <ul class="nav nav-pills nav-justified mobile-nav d-md-none fixed-bottom bg-white shadow-lg m-0 p-0 border-top" style="z-index: 1060;" id="pills-tab-mobile" role="tablist">
         <li class="nav-item" role="presentation"><button class="nav-link active mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#columnas" type="button" role="tab"><i class="bi bi-newspaper fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Opinión</span></button></li>
         <li class="nav-item" role="presentation"><button class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#investigacion" type="button" role="tab"><i class="bi bi-journal-text fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Papers</span></button></li>
         <li class="nav-item" role="presentation"><button class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#ensayos" type="button" role="tab"><i class="bi bi-chat-square-text fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Debates</span></button></li>
@@ -138,67 +138,64 @@
         </div>
     </div>
     
-    <!-- FOOTER: QUIÉNES SOMOS -->
-    <footer class="mt-auto pt-5 pb-4 bg-white border-top footer-mobile-pad">
-        <div class="container position-relative">
+    <!-- FOOTER: QUIÉNES SOMOS Y DERECHOS -->
+    <footer class="mt-auto bg-white border-top footer-mobile-pad d-flex flex-column">
+        <div class="container position-relative pt-5 pb-4 flex-grow-1">
             <button class="btn btn-sm btn-warning position-absolute top-0 end-0 mt-2 admin-only-inline shadow-sm" onclick="editarFooter()"><i class="bi bi-pencil-fill"></i></button>
-            <div class="row justify-content-center text-center mb-4">
+            <div class="row justify-content-center text-center">
                 <div class="col-lg-8">
                     <h5 class="fw-bold font-serif text-dark mb-3" style="font-size: 1.4rem;">¿QUIÉNES SOMOS?</h5>
                     <p id="footer-desc" class="text-muted font-inter mb-0" style="line-height: 1.8; font-size: 1.05rem;">Cargando información...</p>
                 </div>
             </div>
-            <hr class="text-muted opacity-25">
-            <div class="text-center text-muted small font-inter fw-medium mt-3">&copy; <span id="current-year"></span> CAFE UNP. Todos los derechos reservados.</div>
+        </div>
+        <!-- Esta barra se iluminará siempre por encima del modal -->
+        <div class="text-center text-muted small font-inter fw-medium py-3 bg-white position-relative" style="z-index: 1060; border-top: 1px solid #e9ecef;">
+            &copy; <span id="current-year"></span> CAFE UNP. Todos los derechos reservados.
         </div>
     </footer>
 
-    <!-- 🌟 MODAL PANTALLA COMPLETA CENTRADO (COLUMNAS DE OPINIÓN) -->
+    <!-- 🌟 MODAL VENTANA FLOTANTE CENTRADA (COLUMNAS DE OPINIÓN) -->
+    <!-- Se mantiene entre el Navbar y los Derechos Reservados -->
     <div class="modal fade" id="modalNoticia" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content bg-white">
-                <div class="modal-header border-bottom py-3 px-4 shadow-sm z-1">
-                    <div class="d-flex align-items-center w-100 justify-content-between">
-                        <div class="d-flex align-items-center">
-                            <svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg>
-                            <span class="fs-4 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span>
-                        </div>
-                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
+        <div class="modal-dialog modal-dialog-scrollable mx-auto" style="max-width: 900px; margin-top: 5.5rem;">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0 pt-3 px-4 px-md-5">
+                    <button type="button" class="btn-close shadow-none ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body overflow-y-auto px-4 py-4 d-flex flex-column bg-light">
-                    <div class="mx-auto w-100 bg-white p-4 p-md-5 rounded-4 shadow-sm border" style="max-width: 900px;">
-                        <div id="mn-tags" class="mb-3"></div>
-                        <h1 id="mn-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2.5rem; line-height: 1.25;"></h1>
-                        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom text-muted small font-inter">
-                            <span id="mn-fecha" class="fw-semibold"></span>
-                            <span id="mn-promedio-estrellas" class="text-warning fw-bold fs-6"></span>
-                        </div>
-                        <img id="mn-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 550px; object-fit: contain; background: #f8f9fa; display: none;">
-                        <div id="mn-contenido" class="contenido-apa mb-5 text-dark" style="font-size: 1.15rem;"></div>
-
-                        <h4 class="fw-bold mb-4 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color: #009668;"></i> Comentarios</h4>
-                        <div class="bg-light p-4 rounded-4 mb-4 border shadow-sm">
-                            <div class="d-flex align-items-center mb-3 text-warning fs-5">
-                                <span class="text-dark small fw-bold me-2 fs-6 font-inter">Tu calificación:</span>
-                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="1"></i>
-                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="2"></i>
-                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="3"></i>
-                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="4"></i>
-                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="5"></i>
-                                <span class="text-muted small ms-2 font-inter" id="rating-text-mn"></span>
-                            </div>
-                            <textarea id="mn-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión sobre esta columna..."></textarea>
-                            <div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-2 font-inter shadow-sm" id="btn-enviar-comentario-mn">Publicar Comentario</button></div>
-                        </div>
-                        <div id="mn-lista-comentarios"></div>
+                <div class="modal-body px-4 px-md-5 pb-5 pt-2">
+                    <div id="mn-tags" class="mb-3"></div>
+                    <h1 id="mn-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2.5rem; line-height: 1.25;"></h1>
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom text-muted small font-inter">
+                        <span id="mn-fecha" class="fw-semibold"></span>
+                        <span id="mn-promedio-estrellas" class="text-warning fw-bold fs-6"></span>
                     </div>
+                    <!-- IMAGEN EN ALTA CALIDAD Y SIN RECORTE -->
+                    <img id="mn-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 550px; object-fit: contain; background: #f8f9fa; display: none;">
+                    <div id="mn-contenido" class="contenido-apa mb-5 text-dark" style="font-size: 1.15rem;"></div>
+
+                    <h4 class="fw-bold mb-4 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color: #009668;"></i> Comentarios</h4>
+                    <div class="bg-light p-4 rounded-4 mb-4 border shadow-sm">
+                        <div class="d-flex align-items-center mb-3 text-warning fs-5">
+                            <span class="text-dark small fw-bold me-2 fs-6 font-inter">Tu calificación:</span>
+                            <i class="bi bi-star cursor-pointer star-btn-mn" data-val="1"></i>
+                            <i class="bi bi-star cursor-pointer star-btn-mn" data-val="2"></i>
+                            <i class="bi bi-star cursor-pointer star-btn-mn" data-val="3"></i>
+                            <i class="bi bi-star cursor-pointer star-btn-mn" data-val="4"></i>
+                            <i class="bi bi-star cursor-pointer star-btn-mn" data-val="5"></i>
+                            <span class="text-muted small ms-2 font-inter" id="rating-text-mn"></span>
+                        </div>
+                        <textarea id="mn-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión sobre esta columna..."></textarea>
+                        <div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-2 font-inter shadow-sm" id="btn-enviar-comentario-mn">Publicar Comentario</button></div>
+                    </div>
+                    <div id="mn-lista-comentarios"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- 🌟 MODAL PANTALLA COMPLETA 2 COLUMNAS (PAPERS Y DEBATES) -->
+    <!-- Este sigue siendo pantalla completa según lo acordado -->
     <div class="modal fade" id="modalLectura" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content bg-white">
