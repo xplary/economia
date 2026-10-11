@@ -40,14 +40,22 @@ window.compartir = (tit, id, col) => {
     if(navigator.share) navigator.share({ title: tit, url: url }); else { navigator.clipboard.writeText(url); alert("Link copiado: " + url); }
 };
 
+// =====================================
+// MANEJO DE COMENTARIOS Y ESTRELLAS (AMBOS MODALES)
+// =====================================
 let currentRating = 0;
-document.querySelectorAll('.star-btn').forEach(st => {
-    st.onclick = function() {
-        currentRating = parseInt(this.getAttribute('data-val'));
-        document.querySelectorAll('.star-btn').forEach(s => s.className = parseInt(s.getAttribute('data-val')) <= currentRating ? 'bi bi-star-fill text-warning cursor-pointer star-btn' : 'bi bi-star cursor-pointer star-btn');
-        document.getElementById('rating-text').innerText = `(${currentRating} Estrellas)`;
-    }
-});
+const setupStars = (selector, textId) => {
+    document.querySelectorAll(selector).forEach(st => {
+        st.onclick = function() {
+            currentRating = parseInt(this.getAttribute('data-val'));
+            const cleanClass = selector.replace('.', '');
+            document.querySelectorAll(selector).forEach(s => s.className = parseInt(s.getAttribute('data-val')) <= currentRating ? `bi bi-star-fill text-warning cursor-pointer ${cleanClass}` : `bi bi-star cursor-pointer ${cleanClass}`);
+            document.getElementById(textId).innerText = `(${currentRating} Estrellas)`;
+        }
+    });
+};
+setupStars('.star-btn-mn', 'rating-text-mn'); // Modal de Noticias (Clásico)
+setupStars('.star-btn-ml', 'rating-text-ml'); // Modal de Lectura (Fullscreen)
 
 const getPromedioStars = (comentarios) => {
     if(!comentarios || comentarios.length === 0) return '';
@@ -57,17 +65,21 @@ const getPromedioStars = (comentarios) => {
     return `⭐ ${avg.toFixed(1)} (${valid.length})`;
 };
 
-document.getElementById('btn-enviar-comentario').onclick = async () => {
-    const txt = document.getElementById('comentario-texto').value; if(!txt) return alert("Escribe un comentario");
+const enviarComentario = async (txtId, selector, textId) => {
+    const txt = document.getElementById(txtId).value; if(!txt) return alert("Escribe un comentario");
     const ref = doc(db, window.modalActual.col, window.modalActual.id); const snap = await getDoc(ref);
     if(snap.exists()) {
         const arr = snap.data().comentarios || [];
         arr.push({ id: Date.now(), autor: auth.currentUser ? auth.currentUser.displayName || "Usuario" : "Anónimo", texto: txt, rating: currentRating, date: new Date().toLocaleDateString() });
         await updateDoc(ref, { comentarios: arr });
-        document.getElementById('comentario-texto').value = ''; currentRating = 0;
-        document.querySelectorAll('.star-btn').forEach(s => s.className = 'bi bi-star cursor-pointer star-btn'); document.getElementById('rating-text').innerText = '';
+        document.getElementById(txtId).value = ''; currentRating = 0;
+        document.querySelectorAll(selector).forEach(s => s.className = `bi bi-star cursor-pointer ${selector.replace('.','')}`); 
+        document.getElementById(textId).innerText = '';
     }
 };
+
+document.getElementById('btn-enviar-comentario-mn').onclick = () => enviarComentario('mn-comentario-texto', '.star-btn-mn', 'rating-text-mn');
+document.getElementById('btn-enviar-comentario-ml').onclick = () => enviarComentario('ml-comentario-texto', '.star-btn-ml', 'rating-text-ml');
 
 window.borrarComentario = async (cid) => {
     if(!confirm("¿Borrar comentario?")) return;
@@ -75,9 +87,10 @@ window.borrarComentario = async (cid) => {
     if(snap.exists()) { const arr = snap.data().comentarios || []; await updateDoc(ref, { comentarios: arr.filter(c => c.id !== cid) }); }
 };
 
-const renderComentarios = (comentarios) => {
-    const box = document.getElementById('lista-comentarios');
-    if(!comentarios || comentarios.length===0) return box.innerHTML = '<div class="text-center mt-4 text-muted"><i class="bi bi-chat-dots fs-3"></i><p class="mt-2 small">Sé el primero en comentar.</p></div>';
+const renderComentarios = (comentarios, containerId) => {
+    const box = document.getElementById(containerId);
+    if(!box) return;
+    if(!comentarios || comentarios.length===0) return box.innerHTML = '<div class="text-center mt-4 text-muted"><i class="bi bi-chat-dots fs-3"></i><p class="mt-2 small">Sé el primero en aportar.</p></div>';
     box.innerHTML = comentarios.map(c => `
         <div class="mb-4 pb-3 border-bottom">
             <div class="d-flex justify-content-between align-items-center mb-1">
@@ -93,12 +106,27 @@ const renderComentarios = (comentarios) => {
 };
 
 const generarHTMLOpcionesEncuesta = (id, data) => {
-    let h = `<div class="d-grid gap-2 border-start border-4 border-primary ps-3 mt-3">`;
+    let h = `<div class="mt-3 w-100">`;
     const isOwner = document.body.classList.contains('is-owner');
+    const uid = getUid();
+    const yaVoto = data.votantes && data.votantes.includes(uid);
+
     data.opciones.forEach((o, i) => {
         const pct = data.totalVotos === 0 ? 0 : Math.round((o.votos / data.totalVotos) * 100);
-        const hidePct = data.ocultarPct && !isOwner; const txtPct = hidePct ? '?' : pct; const width = hidePct ? 0 : pct;
-        h += `<button class="btn btn-white border text-start position-relative rounded-3 py-2 shadow-sm" onclick="votar('${id}', ${i})"><div class="position-absolute top-0 start-0 h-100 bg-primary opacity-10 rounded-3" style="width: ${width}%;"></div><span class="position-relative z-1 d-flex justify-content-between px-2 font-inter"><span class="small fw-semibold text-dark">${o.texto}</span><span class="fw-bold text-primary small">${txtPct}%</span></span></button>`;
+        const hidePct = data.ocultarPct && !isOwner;
+        const showResults = yaVoto || isOwner;
+        const width = showResults && !hidePct ? pct : 0;
+        const txtPct = hidePct ? '?' : pct;
+        const votedClass = yaVoto ? 'voted' : '';
+        
+        h += `
+        <button class="poll-btn ${votedClass}" onclick="votar('${id}', ${i})">
+            <div class="poll-fill" style="width: ${width}%;"></div>
+            <div class="poll-content">
+                <span class="poll-text">${o.texto}</span>
+                ${showResults ? `<span class="poll-pct">${txtPct}%</span>` : ''}
+            </div>
+        </button>`;
     }); return h + `</div>`;
 };
 
@@ -110,46 +138,64 @@ const formatEmbedUrl = (url) => {
 };
 
 // =====================================
-// ABRIR MODAL (DISEÑO 2 COLUMNAS INTELIGENTE)
+// ABRIR MODAL (SEPARADOR INTELIGENTE DE DISEÑOS)
 // =====================================
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return;
     window.modalActual = { id, col };
-    document.getElementById('modal-titulo').innerText = d.titulo || d.pregunta;
-    document.getElementById('modal-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`;
-    document.getElementById('modal-promedio-estrellas').innerText = getPromedioStars(d.comentarios);
-    document.getElementById('modal-tags').innerHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#1976d2'};">${t}</span>`).join('');
-    
-    const imgEl = document.getElementById('modal-imagen'); 
-    const iframeEl = document.getElementById('modal-iframe'); 
-    const contEl = document.getElementById('modal-contenido');
-    const leftCol = document.getElementById('modal-left-col');
-    const rightCol = document.getElementById('modal-right-col');
-    
-    let hasLeftContent = false;
+    const isNoticia = (col === 'noticias');
 
-    if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; hasLeftContent = true; } else { imgEl.style.display = 'none'; }
-    if(d.link) { iframeEl.src = formatEmbedUrl(d.link); iframeEl.style.display = 'block'; hasLeftContent = true; } else { iframeEl.style.display = 'none'; iframeEl.src = ''; }
-    
-    // Si no hay PDF ni Imagen, oculta la columna izquierda para que quede centrado
-    if(hasLeftContent) {
-        leftCol.style.display = 'flex';
-        rightCol.className = 'col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column';
-        rightCol.style.maxWidth = 'none';
+    if (isNoticia) {
+        // DISEÑO CLÁSICO (SOLO COLUMNAS DE OPINIÓN)
+        document.getElementById('mn-titulo').innerText = d.titulo;
+        document.getElementById('mn-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`;
+        document.getElementById('mn-promedio-estrellas').innerText = getPromedioStars(d.comentarios);
+        document.getElementById('mn-tags').innerHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#1976d2'};">${t}</span>`).join('');
+        
+        const imgEl = document.getElementById('mn-imagen');
+        if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
+        
+        document.getElementById('mn-contenido').innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${d.resumen||''}</div>`;
+        
+        renderComentarios(d.comentarios, 'mn-lista-comentarios');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNoticia')).show();
+
     } else {
-        leftCol.style.display = 'none';
-        rightCol.className = 'col-12 h-100 overflow-y-auto bg-white px-4 px-md-5 py-4 d-flex flex-column mx-auto';
-        rightCol.style.maxWidth = '900px';
+        // DISEÑO PANTALLA COMPLETA 2 COLUMNAS (PAPERS Y DEBATES)
+        document.getElementById('modal-titulo').innerText = d.titulo || d.pregunta;
+        document.getElementById('modal-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`;
+        document.getElementById('modal-promedio-estrellas').innerText = getPromedioStars(d.comentarios);
+        document.getElementById('modal-tags').innerHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#dc3545'};">${t}</span>`).join('');
+        
+        const imgEl = document.getElementById('modal-imagen'); 
+        const iframeEl = document.getElementById('modal-iframe'); 
+        const contEl = document.getElementById('modal-contenido');
+        const leftCol = document.getElementById('modal-left-col');
+        const rightCol = document.getElementById('modal-right-col');
+        
+        let hasLeftContent = false;
+        if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; hasLeftContent = true; } else { imgEl.style.display = 'none'; }
+        if(d.link) { iframeEl.src = formatEmbedUrl(d.link); iframeEl.style.display = 'block'; hasLeftContent = true; } else { iframeEl.style.display = 'none'; iframeEl.src = ''; }
+        
+        if(hasLeftContent) {
+            leftCol.style.display = 'flex';
+            rightCol.className = 'col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column';
+            rightCol.style.maxWidth = 'none';
+        } else {
+            leftCol.style.display = 'none';
+            rightCol.className = 'col-12 h-100 overflow-y-auto bg-white px-4 px-md-5 py-4 d-flex flex-column mx-auto';
+            rightCol.style.maxWidth = '900px';
+        }
+        
+        if(col === 'encuestas') {
+            contEl.innerHTML = `<p class="mb-4 font-inter text-dark" style="font-size: 1.15rem;">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
+        } else {
+            contEl.innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${d.resumen||''}</div>`;
+        }
+        
+        renderComentarios(d.comentarios, 'ml-lista-comentarios');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLectura')).show();
     }
-    
-    if(col === 'encuestas') {
-        contEl.innerHTML = `<p class="mb-3 font-inter text-dark" style="font-size: 1.15rem;">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
-    } else {
-        contEl.innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${d.resumen||''}</div>`;
-    }
-    
-    renderComentarios(d.comentarios);
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLectura')).show();
 };
 
 const checkDeepLink = (id, col) => {
@@ -186,7 +232,7 @@ window.editarSidebar = async () => {
 };
 
 // =====================================
-// 1. NOTICIAS Y COLUMNAS (REVERTIDO A DISEÑO ANTERIOR CON TARJETAS)
+// 1. NOTICIAS Y COLUMNAS
 // =====================================
 let noticiasData = []; let qBuscar = ''; let ordDesc = true;
 document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); });
@@ -335,7 +381,7 @@ window.editarArt = (id) => {
 };
 
 // ==========================================
-// 3. DEBATES Y ENCUESTAS
+// 3. DEBATES Y ENCUESTAS (DISEÑO PROFESIONAL RED SOCIAL)
 // ==========================================
 document.getElementById('btn-add-opcion').onclick = () => {
     const i = document.createElement('input'); i.type = 'text'; i.className = 'form-control border-0 shadow-sm mb-2 opcion-input font-inter'; i.placeholder = 'Nueva Opción';
@@ -353,7 +399,7 @@ document.getElementById('btn-pub-encuesta').onclick = async () => {
     bootstrap.Collapse.getInstance(document.getElementById('colEncuesta'))?.hide();
 };
 
-let chartInstances = {}; let encuestasDataCache = [];
+let encuestasDataCache = [];
 onSnapshot(query(collection(db, "encuestas"), orderBy("fecha", "desc")), (snap) => {
     encuestasDataCache = []; snap.forEach(d => { encuestasDataCache.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'encuestas'); });
     renderEncuestas();
@@ -361,43 +407,39 @@ onSnapshot(query(collection(db, "encuestas"), orderBy("fecha", "desc")), (snap) 
 
 function renderEncuestas() {
     const cont = document.getElementById('contenedor-encuestas'); 
-    if(encuestasDataCache.length === 0) return cont.innerHTML = '<div class="text-center text-muted font-inter">No hay debates.</div>';
+    if(encuestasDataCache.length === 0) return cont.innerHTML = '<div class="text-center text-muted font-inter mt-5"><i class="bi bi-chat-square-text fs-1"></i><p class="mt-3">No hay debates activos.</p></div>';
     
     let h = ''; 
     encuestasDataCache.forEach(data => {
         const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios);
         
         h += `
-        <article class="mb-5 pb-5 border-bottom border-light-subtle row" id="encuesta-${data.id}">
-            <div class="col-md-8 d-flex flex-column">
-                <div class="d-flex justify-content-between mb-2">
-                    <div class="cursor-pointer" onclick="abrirModal('${data.id}', 'encuestas')">
-                        <span class="tag-badge bg-primary mb-2">DEBATE ABIERTO</span>
+        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" id="encuesta-${data.id}">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge bg-primary rounded-pill px-3 py-2 fw-semibold" style="letter-spacing: 0.5px;">DEBATE ABIERTO</span>
+                    <div class="text-nowrap">
+                        <i class="bi bi-share-fill text-muted cursor-pointer me-3" onclick="compartir('${data.pregunta}', '${data.id}', 'encuestas')"></i>
+                        <i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('encuestas', '${data.id}')"></i>
                     </div>
                 </div>
-                <h3 class="fw-bold font-serif text-dark cursor-pointer mb-3" style="font-size: 1.6rem; line-height: 1.35;" onclick="abrirModal('${data.id}', 'encuestas')">${data.pregunta}</h3>
-                <p class="text-muted font-inter mb-4 cursor-pointer text-truncate-3" style="font-size: 1.05rem;" onclick="abrirModal('${data.id}', 'encuestas')">${data.resumen||''}</p>
-                <div class="mt-auto d-flex align-items-center">
-                    <button class="btn btn-primary btn-sm fw-bold rounded-pill px-4 me-4 shadow-sm" onclick="abrirModal('${data.id}', 'encuestas')">Participar y Votar <i class="bi bi-chat-text ms-1"></i></button>
-                    <small class="text-muted fw-semibold font-inter"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
-                    <small class="text-muted fw-bold font-inter ms-3">${data.totalVotos} votos</small>
+                <h3 class="fw-bold font-inter text-dark mb-2 cursor-pointer" style="font-size: 1.5rem;" onclick="abrirModal('${data.id}', 'encuestas')">${data.pregunta}</h3>
+                <p class="text-muted font-inter mb-4 cursor-pointer" style="font-size: 1.05rem;" onclick="abrirModal('${data.id}', 'encuestas')">${data.resumen||''}</p>
+                
+                ${generarHTMLOpcionesEncuesta(data.id, data)}
+                
+                <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                    <small class="text-muted fw-semibold font-inter"><i class="bi bi-people-fill me-1"></i> ${data.totalVotos} votos</small>
+                    <div class="d-flex align-items-center">
+                        <span class="text-warning fw-bold small me-3">${avgStr}</span>
+                        <button class="btn btn-sm btn-light text-primary fw-bold font-inter rounded-pill px-3" onclick="abrirModal('${data.id}', 'encuestas')">Participar</button>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-4 mt-4 mt-md-0 d-flex flex-column align-items-end justify-content-between">
-                <div class="text-nowrap mb-3 w-100 text-end">
-                    <i class="bi bi-share-fill text-primary cursor-pointer me-3" onclick="compartir('${data.pregunta}', '${data.id}', 'encuestas')"></i>
-                    <i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('encuestas', '${data.id}')"></i>
-                </div>
-                <div class="admin-only w-100 d-flex justify-content-end"><div style="width:180px;"><canvas id="chart-${data.id}"></canvas></div></div>
-            </div>
-        </article>`;
-    }); cont.innerHTML = h;
+        </div>`;
+    }); 
+    cont.innerHTML = h;
 
-    encuestasDataCache.forEach(d => {
-        if(chartInstances[d.id]) chartInstances[d.id].destroy(); 
-        const ctx = document.getElementById('chart-'+d.id);
-        if(ctx) chartInstances[d.id] = new Chart(ctx, { type: 'pie', data: { labels: d.opciones.map(o=>o.texto), datasets: [{ data: d.opciones.map(o=>o.votos), backgroundColor: ['#092e6e', '#1976d2', '#00c853', '#ffc107', '#dc3545'] }] }, options: { plugins: { legend: { display: false } }, responsive: true } });
-    });
     if(window.modalActual.col === 'encuestas' && window.modalActual.id) abrirModal(window.modalActual.id, 'encuestas'); 
 }
 
@@ -405,7 +447,7 @@ window.votar = async (id, idx) => {
     const uid = getUid(); const ref = doc(db, "encuestas", id); const snap = await getDoc(ref);
     if(snap.exists()){ 
         let d = snap.data(); if(!d.votantes) d.votantes = [];
-        if(d.votantes.includes(uid)) return alert("Ya registramos tu voto, gracias por participar.");
+        if(d.votantes.includes(uid)) return alert("Tu voto ya ha sido registrado.");
         d.votantes.push(uid); d.opciones[idx].votos++; d.totalVotos++; 
         await updateDoc(ref, { opciones: d.opciones, totalVotos: d.totalVotos, votantes: d.votantes }); 
     }
