@@ -37,18 +37,34 @@ const setupStars = (selector, textId) => { document.querySelectorAll(selector).f
 setupStars('.star-btn-mn', 'rating-text-mn'); setupStars('.star-btn-ml', 'rating-text-ml'); 
 const getPromedioStars = (comentarios) => { if(!comentarios || comentarios.length === 0) return ''; const valid = comentarios.filter(c => c.rating > 0); if(valid.length === 0) return ''; return `⭐ ${(valid.reduce((acc, c) => acc + c.rating, 0) / valid.length).toFixed(1)} (${valid.length})`; };
 
-// FILTRO DE SEGURIDAD XSS: Evita inyección de código malicioso en los comentarios
 const escapeHTML = (str) => str.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t));
 
 const enviarComentario = async (txtId, selector, textId) => {
     const txt = document.getElementById(txtId).value; if(!txt) return alert("Escribe un comentario");
+    
+    // SISTEMA ANTI-SPAM: Cooldown de 2 minutos (120000 ms)
+    const isOwner = document.body.classList.contains('is-owner');
+    if (!isOwner) { // Los dueños no tienen límite de tiempo
+        const lastTime = localStorage.getItem('last_comment_time'); const now = Date.now();
+        if (lastTime && now - parseInt(lastTime) < 120000) { 
+            const wait = Math.ceil((120000 - (now - parseInt(lastTime))) / 1000); 
+            return alert(`Anti-Spam: Por favor, espera ${wait} segundos para comentar de nuevo.`); 
+        }
+    }
+    
     const ref = doc(db, window.modalActual.col, window.modalActual.id); const snap = await getDoc(ref);
     if(snap.exists()) {
         const arr = snap.data().comentarios || []; 
         arr.push({ id: Date.now(), autor: auth.currentUser ? auth.currentUser.displayName || "Usuario" : "Anónimo", texto: escapeHTML(txt), rating: currentRating, date: new Date().toLocaleDateString() });
-        await updateDoc(ref, { comentarios: arr }); document.getElementById(txtId).value = ''; currentRating = 0; document.querySelectorAll(selector).forEach(s => s.className = `bi bi-star cursor-pointer ${selector.replace('.','')}`); document.getElementById(textId).innerText = '';
+        await updateDoc(ref, { comentarios: arr }); 
+        
+        // Guardar la hora del último comentario enviado
+        if (!isOwner) localStorage.setItem('last_comment_time', Date.now());
+        
+        document.getElementById(txtId).value = ''; currentRating = 0; document.querySelectorAll(selector).forEach(s => s.className = `bi bi-star cursor-pointer ${selector.replace('.','')}`); document.getElementById(textId).innerText = '';
     }
 };
+
 document.getElementById('btn-enviar-comentario-mn').onclick = () => enviarComentario('mn-comentario-texto', '.star-btn-mn', 'rating-text-mn');
 document.getElementById('btn-enviar-comentario-ml').onclick = () => enviarComentario('ml-comentario-texto', '.star-btn-ml', 'rating-text-ml');
 window.borrarComentario = async (cid) => { if(!confirm("¿Borrar comentario?")) return; const ref = doc(db, window.modalActual.col, window.modalActual.id); const snap = await getDoc(ref); if(snap.exists()) { const arr = snap.data().comentarios || []; await updateDoc(ref, { comentarios: arr.filter(c => c.id !== cid) }); } };
