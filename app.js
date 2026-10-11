@@ -132,16 +132,18 @@ const generarHTMLOpcionesEncuesta = (id, data) => {
     return h + `</div>`;
 };
 
-// TRANSFORMADOR DE ENLACES PARA VISOR PDF
+// TRANSFORMADOR DE ENLACES PARA VISOR PDF (Extracción exacta del ID)
 const formatEmbedUrl = (url) => {
     if(!url) return '';
-    if(url.includes('drive.google.com/file/d/')) {
-        return url.replace(/\/view.*$/, '/preview'); // Obliga a Drive a mostrar en visor web
+    // Extrae mágicamente el ID de cualquier formato de link de Drive
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+        return `https://drive.google.com/file/d/${match[1]}/preview`;
     }
     return url;
 };
 
-// ABRIR EL MODAL (Ahora con soporte de iframe en vivo)
+// ABRIR EL MODAL (Con inyección de clases Quill para formato APA)
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return;
     window.modalActual = { id, col };
@@ -155,7 +157,7 @@ window.abrirModal = (id, col) => {
     if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
     
     // PDF Iframe directamente
-    document.getElementById('modal-btn-drive').innerHTML = ''; // Quitamos el botón "Ver PDF"
+    document.getElementById('modal-btn-drive').innerHTML = ''; 
     const iframeEl = document.getElementById('modal-iframe');
     if(d.link) {
         iframeEl.src = formatEmbedUrl(d.link);
@@ -169,6 +171,7 @@ window.abrirModal = (id, col) => {
     if(col === 'encuestas') {
         document.getElementById('modal-contenido').innerHTML = `<p class="mb-4">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
     } else {
+        // Envolver el contenido en ql-snow y ql-editor para formato APA
         document.getElementById('modal-contenido').innerHTML = `<div class="ql-snow"><div class="ql-editor font-inter" style="padding:0;">${d.contenido || d.resumen || ''}</div></div>`;
     }
     
