@@ -48,6 +48,3 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 .small-text { font-size: 0.85rem; }
 .hover-bg-light:hover { background-color: rgba(255,255,255,0.1); color: white; }
 .hover-bg-gray:hover { background-color: #e2e8f0; }
-
-/* FIX MODAL BACKGROUND PARA QUE LA VENTANA SE VEA CENTRADA Y 100% ANCHO */
-#modalNoticia { background-color: rgba(0, 0, 0, 0.5); }

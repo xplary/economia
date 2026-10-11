@@ -138,7 +138,7 @@
         </div>
     </div>
     
-    <!-- NUEVO FOOTER: DISEÑO OSCURO PUCP ADAPTADO A UNP -->
+    <!-- FOOTER: DISEÑO OSCURO PUCP ADAPTADO A UNP -->
     <footer class="mt-auto footer-dark position-relative z-1" style="background-color: #004b79; color: #ffffff;">
         <button class="btn btn-sm btn-warning position-absolute top-0 end-0 m-3 admin-only-inline shadow-sm z-3" onclick="editarFooter()"><i class="bi bi-pencil-fill"></i></button>
         <div class="container pt-5 pb-4">
@@ -159,15 +159,11 @@
                 <div class="col-md-4">
                     <h6 class="fw-bold mb-4 ls-1">CONTACTO</h6>
                     <p class="mb-4 small-text text-light" id="f-contacto" style="line-height: 1.6;">Central telefónica (073) 284500<br>Atención al estudiante<br>(servicio gratuito)</p>
-                    
                     <a href="#" class="btn btn-outline-light rounded-0 w-100 py-3 mb-3 d-flex flex-column align-items-center justify-content-center border-opacity-50 hover-bg-light">
-                        <span class="fw-semibold mb-1 small">Enviar mensaje</span>
-                        <i class="bi bi-envelope fs-4"></i>
+                        <span class="fw-semibold mb-1 small">Enviar mensaje</span><i class="bi bi-envelope fs-4"></i>
                     </a>
-                    
                     <a href="#" class="btn btn-light rounded-0 w-100 py-3 d-flex flex-column align-items-center justify-content-center text-dark hover-bg-gray">
-                        <span class="fw-bold mb-1 small" style="color: #004b79;">Libro de Reclamaciones</span>
-                        <i class="bi bi-book fs-4" style="color: #004b79;"></i>
+                        <span class="fw-bold mb-1 small" style="color: #004b79;">Libro de Reclamaciones</span><i class="bi bi-book fs-4" style="color: #004b79;"></i>
                     </a>
                 </div>
 
@@ -175,7 +171,6 @@
                 <div class="col-md-4">
                     <h6 class="fw-bold mb-4 ls-1">SOBRE LA UNP</h6>
                     <p class="mb-4 small-text text-light" id="f-sobre" style="line-height: 1.6;">UNIVERSIDAD NACIONAL DE PIURA<br>FACULTAD DE ECONOMÍA<br>RUC: 20172606346</p>
-                    
                     <div class="border-top border-light-subtle border-opacity-25 py-2">
                         <a href="#" class="text-white text-decoration-none small fw-medium d-flex align-items-center">Mapa del sitio <i class="bi bi-chevron-right ms-auto small"></i></a>
                     </div>
@@ -191,20 +186,19 @@
                 </div>
             </div>
         </div>
-        <!-- Derechos Reservados (Z-INDEX 1060 PARA ESTAR SOBRE EL MODAL) -->
+        <!-- Derechos Reservados (Z-INDEX 1060) -->
         <div class="text-center text-white small font-inter py-3 position-relative" style="background-color: #003657; z-index: 1060;">
             &copy; <span id="current-year"></span> CAFE UNP. Todos los derechos reservados.
         </div>
     </footer>
 
-    <!-- 🌟 MODAL VENTANA FLOTANTE 100% ANCHO (COLUMNAS DE OPINIÓN) -->
-    <!-- Se quitó z-index extra, se apoya en el z-index 1055 natural de Bootstrap. Navbar y Footer Derechos son 1060 -->
+    <!-- 🌟 MODAL PANTALLA COMPLETA FONDO BLANCO (COLUMNAS DE OPINIÓN) -->
+    <!-- bg-white en modal-content garantiza que llene los espacios vacíos laterales -->
     <div class="modal fade" id="modalNoticia" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen m-0">
-            <!-- Fondo gris semitransparente detrás del contenedor blanco central -->
-            <div class="modal-content border-0 bg-transparent rounded-0">
+            <div class="modal-content border-0 bg-white rounded-0">
                 <div class="modal-body p-0 d-flex justify-content-center align-items-start" style="padding-top: 5.5rem !important; padding-bottom: 3.5rem !important;">
-                    <div class="bg-white p-4 p-md-5 shadow position-relative" style="width: 100%; max-width: 900px; min-height: 100vh;">
+                    <div class="p-4 p-md-5 position-relative" style="width: 100%; max-width: 900px; min-height: 100vh;">
                         <button type="button" class="btn-close shadow-none position-absolute top-0 end-0 m-4" data-bs-dismiss="modal" aria-label="Close"></button>
                         
                         <div id="mn-tags" class="mb-3 mt-3"></div>
@@ -220,11 +214,7 @@
                         <div class="bg-light p-4 rounded-4 mb-4 border shadow-sm">
                             <div class="d-flex align-items-center mb-3 text-warning fs-5">
                                 <span class="text-dark small fw-bold me-2 fs-6 font-inter">Tu calificación:</span>
-                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="1"></i>
-                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="2"></i>
-                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="3"></i>
-                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="4"></i>
-                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="5"></i>
+                                <i class="bi bi-star cursor-pointer star-btn-mn" data-val="1"></i><i class="bi bi-star cursor-pointer star-btn-mn" data-val="2"></i><i class="bi bi-star cursor-pointer star-btn-mn" data-val="3"></i><i class="bi bi-star cursor-pointer star-btn-mn" data-val="4"></i><i class="bi bi-star cursor-pointer star-btn-mn" data-val="5"></i>
                                 <span class="text-muted small ms-2 font-inter" id="rating-text-mn"></span>
                             </div>
                             <textarea id="mn-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión sobre esta columna..."></textarea>
@@ -237,7 +227,7 @@
         </div>
     </div>
 
-    <!-- 🌟 MODAL PANTALLA COMPLETA 2 COLUMNAS (PAPERS Y DEBATES) - Z-INDEX ALTO -->
+    <!-- 🌟 MODAL PANTALLA COMPLETA 2 COLUMNAS (PAPERS Y DEBATES) -->
     <div class="modal fade" id="modalLectura" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content bg-white">
