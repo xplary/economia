@@ -14,12 +14,15 @@
 
     <!-- SPLASH SCREEN CAFE UNP -->
     <div id="splash-screen" class="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-white" style="z-index: 9999; transition: opacity 0.5s ease;">
-        <div class="d-flex align-items-center mb-4">
-            <svg width="65" height="65" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg>
-            <h1 class="m-0 fw-bold brand-text" style="font-size: 3.5rem;">CAFE UNP</h1>
-        </div>
-        <div class="progress rounded-pill bg-light border shadow-sm" style="width: 250px; height: 8px;">
-            <div id="splash-progress" class="progress-bar rounded-pill" role="progressbar" style="width: 0%; transition: width 0.3s ease; background: linear-gradient(90deg, #009668 0%, #004b79 100%);"></div>
+        <div class="breathe-anim d-flex flex-column align-items-center">
+            <div class="d-flex align-items-center mb-4">
+                <svg width="65" height="65" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg>
+                <h1 class="m-0 fw-bold brand-text" style="font-size: 3.5rem;">CAFE UNP</h1>
+            </div>
+            <div class="progress rounded-pill bg-light border shadow-sm" style="width: 250px; height: 8px;">
+                <!-- Barra de carga gris (#8c98a4) -->
+                <div id="splash-progress" class="progress-bar rounded-pill" role="progressbar" style="width: 0%; transition: width 0.3s ease; background-color: #8c98a4;"></div>
+            </div>
         </div>
     </div>
 
@@ -193,7 +196,6 @@
     </footer>
 
     <!-- 🌟 MODAL PANTALLA COMPLETA FONDO BLANCO (COLUMNAS DE OPINIÓN) -->
-    <!-- bg-white en modal-content garantiza que llene los espacios vacíos laterales -->
     <div class="modal fade" id="modalNoticia" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen m-0">
             <div class="modal-content border-0 bg-white rounded-0">
