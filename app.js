@@ -8,7 +8,27 @@ const app = initializeApp({
 const auth = getAuth(app); const db = getFirestore(app);
 
 window.postsData = {}; window.editandoId = null; window.modalActual = { id: null, col: null };
-const quill = new Quill('#editor-noticias', { theme: 'snow', modules: { toolbar: [['bold', 'italic'], [{'color':[]}], ['link'], ['clean']] }});
+
+// CONFIGURACIÓN FULL DE QUILL PARA MODO APA Y WORD
+const quill = new Quill('#editor-noticias', { 
+    theme: 'snow', 
+    modules: { 
+        toolbar: [
+            [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'script': 'sub'}, { 'script': 'super' }],
+            [{ 'header': [1, 2, 3, 4, 5, 6, false] }, 'blockquote'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+            [{ 'align': [] }],
+            ['link', 'image', 'video'],
+            ['clean']
+        ],
+        clipboard: {
+            matchVisual: false // Crucial para que respete los espaciados originales al pegar de Word
+        }
+    } 
+});
 
 // =====================================
 // UTILIDADES GLOBALES Y AUTO-LOGIN
@@ -27,7 +47,7 @@ onAuthStateChanged(auth, async (u) => {
         const d = await getDoc(doc(db, "usuarios", u.uid)); 
         if(d.exists() && d.data().owner) {
             document.body.classList.add('is-owner'); 
-            renderEncuestas(); // Recarga debates para mostrar gráficos y porcentajes a los dueños
+            renderEncuestas();
         }
     }
 });
@@ -99,7 +119,6 @@ const renderComentarios = (comentarios) => {
         </div>`).join('');
 };
 
-// GENERADOR DE HTML PARA DEBATES (Aplica ocultamiento si no es dueño)
 const generarHTMLOpcionesEncuesta = (id, data) => {
     let h = `<div class="d-grid gap-2 border-start border-4 border-primary ps-3">`;
     const isOwner = document.body.classList.contains('is-owner');
@@ -113,7 +132,7 @@ const generarHTMLOpcionesEncuesta = (id, data) => {
     return h + `</div>`;
 };
 
-// ABRIR EL MODAL (Soluciona Bug de Pantalla Negra usando getInstance)
+// ABRIR EL MODAL (Con inyección de clases Quill para formato APA)
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return;
     window.modalActual = { id, col };
@@ -129,14 +148,14 @@ window.abrirModal = (id, col) => {
     if(col === 'encuestas') {
         document.getElementById('modal-contenido').innerHTML = `<p class="mb-4">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
     } else {
-        document.getElementById('modal-contenido').innerHTML = d.contenido || d.resumen || '';
+        // AQUÍ ESTÁ LA MAGIA PARA APA: Se envuelve el contenido en ql-snow y ql-editor para que aplique los estilos correctos de Quill
+        document.getElementById('modal-contenido').innerHTML = `<div class="ql-snow"><div class="ql-editor font-inter" style="padding:0;">${d.contenido || d.resumen || ''}</div></div>`;
     }
     
     renderComentarios(d.comentarios);
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLectura')).show();
 };
 
-// DEEP LINKING CHECKER (Con retraso de seguridad para evitar fondo negro)
 let autoOpenDone = false;
 const checkDeepLink = (id, col) => {
     if(autoOpenDone) return;
@@ -207,7 +226,7 @@ document.getElementById('btn-pub-noticia').onclick = async () => {
 onSnapshot(collection(db, "noticias"), (snap) => {
     noticiasData = []; snap.forEach(d => { noticiasData.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'noticias'); });
     renderNoticias();
-    if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); // Refresca modal abierto
+    if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); 
 });
 
 function renderNoticias() {
@@ -222,6 +241,9 @@ function renderNoticias() {
         const tHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#1976d2'}">${t}</span>`).join('');
         const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
         
+        // Vista de vista previa, limpiamos las etiquetas HTML para que no se rompa el diseño
+        const textoLimpioPreview = d.contenido.replace(/<[^>]*>?/gm, '');
+
         if (d.principal && !pFound && ordDesc) {
             pFound = true;
             const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 object-fit-cover rounded-4 shadow-sm cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
@@ -231,7 +253,7 @@ function renderNoticias() {
                 <div class="col-lg-5 ps-lg-4">
                     <div class="mb-3">${tHTML}</div>
                     <h2 class="fw-bold mb-3 font-serif cursor-pointer" style="font-size: 2.2rem; color: #1a202c; line-height: 1.3;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h2>
-                    <div class="text-muted mb-4 text-truncate-3 font-inter" style="font-size: 1.1rem;">${d.contenido}</div>
+                    <div class="text-muted mb-4 text-truncate-3 font-inter" style="font-size: 1.1rem;">${textoLimpioPreview}</div>
                     <div class="d-flex justify-content-between">
                         <small class="text-muted fw-semibold"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
                         <small class="text-muted fw-semibold cursor-pointer" onclick="compartir('${d.titulo}', '${d.id}', 'noticias')"><i class="bi bi-share me-1"></i> Compartir</small>
@@ -313,7 +335,7 @@ window.editarArt = (id) => {
 };
 
 // ==========================================
-// 3. DEBATES Y ENCUESTAS (Voto Único y Gráficos Estables)
+// 3. DEBATES Y ENCUESTAS
 // ==========================================
 document.getElementById('btn-add-opcion').onclick = () => {
     const i = document.createElement('input'); i.type = 'text'; i.className = 'form-control border-0 shadow-sm mb-2 opcion-input'; i.placeholder = 'Nueva Opción';
@@ -378,7 +400,6 @@ function renderEncuestas() {
     }); 
     cont.innerHTML = h;
 
-    // Genera siempre los gráficos. Si no es dueño, CSS (.admin-only) lo oculta automáticamente, solucionando el Bug de desaparición.
     encuestasDataCache.forEach(d => {
         if(chartInstances[d.id]) chartInstances[d.id].destroy(); 
         const ctx = document.getElementById('chart-'+d.id);
@@ -388,7 +409,7 @@ function renderEncuestas() {
     });
 
     if(window.modalActual.col === 'encuestas' && window.modalActual.id) {
-        abrirModal(window.modalActual.id, 'encuestas'); // Refresca contenido modal si está abierto
+        abrirModal(window.modalActual.id, 'encuestas'); 
     }
 }
 
