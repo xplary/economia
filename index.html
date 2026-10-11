@@ -13,6 +13,15 @@
 </head>
 <body class="bg-light">
 
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen" class="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-white" style="z-index: 9999; transition: opacity 0.5s ease;">
+        <h1 class="brand-gradient m-0 fw-bold mb-1" style="font-size: 3.5rem;">ECONOMIA</h1>
+        <p class="text-muted small mb-4 fw-semibold" style="letter-spacing: 0.5px;">Creado por Gifted Studios</p>
+        <div class="progress rounded-pill bg-light border shadow-sm" style="width: 250px; height: 8px;">
+            <div id="splash-progress" class="progress-bar rounded-pill" role="progressbar" style="width: 0%; transition: width 0.3s ease; background: linear-gradient(90deg, #092e6e 0%, #1976d2 50%, #00c853 100%);"></div>
+        </div>
+    </div>
+
     <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm py-3 mb-4 sticky-top">
         <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand brand-gradient m-0 fs-3 fw-bold" href="index.html">ECONOMIA</a>
@@ -156,7 +165,6 @@
                         <div id="modal-btn-drive"></div>
                     </div>
                     
-                    <!-- Imagen con object-fit: contain y fondo sutil para evitar cortes -->
                     <img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 500px; object-fit: contain; background-color: #f1f3f5; display: none;">
                     
                     <iframe id="modal-iframe" src="" class="w-100 rounded-4 mb-4 shadow-sm" style="height: 70vh; border: none; display: none;"></iframe>

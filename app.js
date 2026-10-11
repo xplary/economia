@@ -9,7 +9,23 @@ const auth = getAuth(app); const db = getFirestore(app);
 
 window.postsData = {}; window.editandoId = null; window.modalActual = { id: null, col: null };
 
-// CONFIGURACIÓN FULL DE QUILL PARA MODO APA Y WORD
+// =====================================
+// LÓGICA DEL SPLASH SCREEN (CARGA)
+// =====================================
+let progress = 0;
+let isFirstLoad = true;
+const progBar = document.getElementById('splash-progress');
+const splash = document.getElementById('splash-screen');
+
+const splashInterval = setInterval(() => {
+    progress += Math.random() * 15 + 5;
+    if(progress > 85) progress = 85; // Se pausa en 85% esperando los datos
+    if(progBar) progBar.style.width = progress + '%';
+}, 200);
+
+// =====================================
+// CONFIGURACIÓN FULL DE QUILL (APA)
+// =====================================
 const quill = new Quill('#editor-noticias', { 
     theme: 'snow', 
     modules: { 
@@ -183,7 +199,7 @@ const checkDeepLink = (id, col) => {
 };
 
 // =====================================
-// COMPRESOR DE IMÁGENES MEJORADO (No pierde tanta calidad)
+// COMPRESOR DE IMÁGENES
 // =====================================
 const compressImg = (file) => new Promise((res) => {
     const reader = new FileReader(); reader.readAsDataURL(file);
@@ -191,11 +207,11 @@ const compressImg = (file) => new Promise((res) => {
         const img = new Image(); img.src = e.target.result;
         img.onload = () => {
             const canvas = document.createElement('canvas'); 
-            const MAX = 1600; // Resolución alta para que se vea claro y no pixelado
+            const MAX = 1600; 
             const scale = img.width > MAX ? MAX / img.width : 1;
             canvas.width = img.width * scale; canvas.height = img.height * scale;
             canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); 
-            res(canvas.toDataURL('image/jpeg', 0.85)); // 85% de calidad (excelente compresión visual)
+            res(canvas.toDataURL('image/jpeg', 0.85)); 
         };
     };
 });
@@ -242,6 +258,19 @@ onSnapshot(collection(db, "noticias"), (snap) => {
     noticiasData = []; snap.forEach(d => { noticiasData.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'noticias'); });
     renderNoticias();
     if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); 
+    
+    // --- FINALIZAR EL SPLASH SCREEN AL CARGAR DATOS ---
+    if(isFirstLoad) {
+        isFirstLoad = false;
+        clearInterval(splashInterval);
+        if(progBar) progBar.style.width = '100%';
+        setTimeout(() => {
+            if(splash) {
+                splash.style.opacity = '0';
+                setTimeout(() => splash.remove(), 500);
+            }
+        }, 600); // 600ms para darle tiempo de mostrar el 100% de carga al usuario
+    }
 });
 
 function renderNoticias() {
@@ -257,9 +286,9 @@ function renderNoticias() {
         const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
         const textoLimpioPreview = d.contenido.replace(/<[^>]*>?/gm, '');
 
-        if (d.principal && !pFound && ordDesc) {
+        // AQUÍ SE ARREGLA EL BUG: Se eliminó el "&& ordDesc", ahora nunca desaparece
+        if (d.principal && !pFound) {
             pFound = true;
-            // object-fit: contain añadido en la noticia principal también para no cortar
             const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-4 shadow-sm cursor-pointer" style="height:380px; object-fit: contain; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
             hPrinc = `
             <div class="row mb-5 border-bottom pb-5 align-items-center">
