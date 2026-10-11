@@ -1,14 +1,37 @@
-:root { --primary-blue: #092e6e; --accent-blue: #1976d2; --accent-green: #00c853; }
+:root { --primary-blue: #004b79; --accent-blue: #007bb5; --accent-green: #009668; }
 body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa; }
 
 .font-serif { font-family: 'Lora', serif; }
 .font-inter { font-family: 'Inter', sans-serif; }
 
-.brand-gradient { background: linear-gradient(90deg, var(--primary-blue) 0%, var(--accent-blue) 50%, var(--accent-green) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+.brand-text { color: #074768 !important; }
+
+/* NUEVO BOTON INGRESAR (Gradiente verde a azul) */
+.btn-ingresar {
+    background: linear-gradient(90deg, #009668 0%, #004b79 100%);
+    color: white !important;
+    border: none;
+    padding: 8px 26px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: opacity 0.2s, transform 0.2s;
+}
+.btn-ingresar:hover { opacity: 0.92; transform: scale(1.02); }
 
 .nav-underline .nav-link { color: #555; transition: 0.2s; border-bottom: 2px solid transparent; padding-bottom: 0.8rem; }
 .nav-underline .nav-link:hover { color: var(--accent-blue) !important; }
 .nav-underline .nav-link.active { color: var(--primary-blue) !important; border-bottom: 2px solid var(--primary-blue); }
+
+/* DISEÑO APP MÓVIL BOTTOM NAV */
+@media (max-width: 767px) {
+    body { padding-bottom: 75px; } /* Evita que el footer se oculte tras el navbar */
+    .footer-mobile-pad { padding-bottom: 90px !important; }
+    .mobile-nav { height: 70px; }
+    .mobile-tab { color: #6c757d !important; background-color: transparent !important; transition: 0.2s ease; }
+    .mobile-tab.active { color: var(--primary-blue) !important; background-color: transparent !important; transform: scale(1.05); }
+    .mobile-tab i { transition: transform 0.2s ease; }
+    .mobile-tab.active i { color: var(--primary-blue) !important; transform: translateY(-2px); }
+}
 
 .admin-only, .admin-only-inline { display: none !important; }
 .is-owner .admin-only { display: block !important; }
@@ -26,13 +49,26 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 .cursor-pointer { cursor: pointer; transition: 0.2s; }
 .cursor-pointer:hover { color: var(--accent-blue) !important; }
 
-.tag-badge { padding: 4px 12px; border-radius: 6px; color: white; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-right: 6px; margin-bottom: 6px; display: inline-block; letter-spacing: 0.5px; }
+/* NUEVO ESTILO DE TAGS (Fondo blanco, borde gris, letra colorida) */
+.tag-badge { 
+    padding: 2px 10px; 
+    border-radius: 2px; 
+    background-color: #ffffff; 
+    border: 1px solid #d1d5db;
+    font-size: 0.75rem; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    margin-right: 6px; 
+    margin-bottom: 6px; 
+    display: inline-block; 
+    letter-spacing: 0.5px; 
+}
 
 .paper-cover { width: 100%; max-width: 130px; aspect-ratio: 1 / 1.4; background-color: #fff; border: 1px solid #ced4da; box-shadow: 2px 2px 8px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; transition: 0.2s ease; }
 .paper-cover:hover { transform: translateY(-3px); box-shadow: 4px 4px 12px rgba(0,0,0,0.12); }
 .paper-cover::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 8px; background-color: var(--primary-blue); }
-.paper-title-link { color: #1f7a8c; transition: 0.2s; text-decoration: none; display: block; }
-.paper-title-link:hover { color: #095a6b; text-decoration: underline; }
+.paper-title-link { color: #004b79; transition: 0.2s; text-decoration: none; display: block; }
+.paper-title-link:hover { color: #007bb5; text-decoration: underline; }
 
 .contenido-apa p { margin-bottom: 1.2em; line-height: 1.8; text-align: justify; }
 .contenido-apa h1, .contenido-apa h2, .contenido-apa h3 { font-family: 'Lora', serif; color: #1a202c; font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
@@ -47,7 +83,6 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 .comments-scrollbar::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 4px; }
 .comments-scrollbar::-webkit-scrollbar-thumb:hover { background: #ced4da; }
 
-/* NUEVO DISEÑO PARA DEBATES (BARRAS INTERACTIVAS SATISFACTORIAS) */
 .poll-btn { position: relative; display: block; width: 100%; text-align: left; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 18px; margin-bottom: 12px; cursor: pointer; overflow: hidden; transition: border-color 0.2s ease, background-color 0.2s ease; }
 .poll-btn:hover { border-color: var(--accent-blue); background: #f8fafc; }
 .poll-fill { position: absolute; top: 0; left: 0; bottom: 0; background-color: #e0f2fe; z-index: 1; border-radius: 6px; transition: width 1s cubic-bezier(0.22, 1, 0.36, 1); }

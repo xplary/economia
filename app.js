@@ -13,6 +13,9 @@ let progress = 0; let isFirstLoad = true;
 const progBar = document.getElementById('splash-progress'); const splash = document.getElementById('splash-screen');
 const splashInterval = setInterval(() => { progress += Math.random() * 15 + 5; if(progress > 85) progress = 85; if(progBar) progBar.style.width = progress + '%'; }, 200);
 
+// Set Footer Date
+document.getElementById('current-year').innerText = new Date().getFullYear();
+
 tinymce.init({
     selector: '#editor-noticias', height: 450, menubar: false,
     plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table wordcount',
@@ -41,7 +44,7 @@ window.compartir = (tit, id, col) => {
 };
 
 // =====================================
-// MANEJO DE COMENTARIOS Y ESTRELLAS (AMBOS MODALES)
+// MANEJO DE COMENTARIOS Y ESTRELLAS
 // =====================================
 let currentRating = 0;
 const setupStars = (selector, textId) => {
@@ -54,8 +57,8 @@ const setupStars = (selector, textId) => {
         }
     });
 };
-setupStars('.star-btn-mn', 'rating-text-mn'); // Modal de Noticias (Clásico)
-setupStars('.star-btn-ml', 'rating-text-ml'); // Modal de Lectura (Fullscreen)
+setupStars('.star-btn-mn', 'rating-text-mn'); 
+setupStars('.star-btn-ml', 'rating-text-ml'); 
 
 const getPromedioStars = (comentarios) => {
     if(!comentarios || comentarios.length === 0) return '';
@@ -138,19 +141,21 @@ const formatEmbedUrl = (url) => {
 };
 
 // =====================================
-// ABRIR MODAL (SEPARADOR INTELIGENTE DE DISEÑOS)
+// ABRIR MODAL
 // =====================================
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return;
     window.modalActual = { id, col };
     const isNoticia = (col === 'noticias');
 
+    // NUEVO DISEÑO TAGS MODALES
+    const tagsHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${t}</span>`).join('');
+
     if (isNoticia) {
-        // DISEÑO CLÁSICO (SOLO COLUMNAS DE OPINIÓN)
         document.getElementById('mn-titulo').innerText = d.titulo;
         document.getElementById('mn-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`;
         document.getElementById('mn-promedio-estrellas').innerText = getPromedioStars(d.comentarios);
-        document.getElementById('mn-tags').innerHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#1976d2'};">${t}</span>`).join('');
+        document.getElementById('mn-tags').innerHTML = tagsHTML;
         
         const imgEl = document.getElementById('mn-imagen');
         if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
@@ -161,11 +166,10 @@ window.abrirModal = (id, col) => {
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNoticia')).show();
 
     } else {
-        // DISEÑO PANTALLA COMPLETA 2 COLUMNAS (PAPERS Y DEBATES)
         document.getElementById('modal-titulo').innerText = d.titulo || d.pregunta;
         document.getElementById('modal-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`;
         document.getElementById('modal-promedio-estrellas').innerText = getPromedioStars(d.comentarios);
-        document.getElementById('modal-tags').innerHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#dc3545'};">${t}</span>`).join('');
+        document.getElementById('modal-tags').innerHTML = tagsHTML;
         
         const imgEl = document.getElementById('modal-imagen'); 
         const iframeEl = document.getElementById('modal-iframe'); 
@@ -177,16 +181,12 @@ window.abrirModal = (id, col) => {
         if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; hasLeftContent = true; } else { imgEl.style.display = 'none'; }
         if(d.link) { iframeEl.src = formatEmbedUrl(d.link); iframeEl.style.display = 'block'; hasLeftContent = true; } else { iframeEl.style.display = 'none'; iframeEl.src = ''; }
         
-        // CORRECCIÓN DEL BUG DE LA IMAGEN EN BLANCO Y EMPUJE HACIA ABAJO:
-        // Remueve la clase 'd-flex' para que 'd-none' funcione correctamente en Bootstrap.
         if(hasLeftContent) {
-            leftCol.classList.remove('d-none');
-            leftCol.classList.add('d-flex');
+            leftCol.classList.remove('d-none'); leftCol.classList.add('d-flex');
             rightCol.className = 'col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column';
             rightCol.style.maxWidth = 'none';
         } else {
-            leftCol.classList.remove('d-flex');
-            leftCol.classList.add('d-none'); // Ahora sí desaparece la columna izquierda por completo
+            leftCol.classList.remove('d-flex'); leftCol.classList.add('d-none');
             rightCol.className = 'col-12 h-100 overflow-y-auto bg-white px-4 px-md-5 py-4 py-md-5 d-flex flex-column mx-auto';
             rightCol.style.maxWidth = '900px';
         }
@@ -226,6 +226,9 @@ window.cancelarEdicion = () => {
     bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide();
 };
 
+// =====================================
+// CONFIGURACIÓN DE SIDEBAR Y FOOTER
+// =====================================
 onSnapshot(doc(db, "config", "sidebar"), (s) => {
     if(s.exists()){ const d = s.data(); if(d.t) document.getElementById('sb-titulo').innerText = d.t; if(d.desc) document.getElementById('sb-desc').innerText = d.desc; }
 });
@@ -234,6 +237,23 @@ window.editarSidebar = async () => {
     const desc = prompt("Descripción:", document.getElementById('sb-desc').innerText) || document.getElementById('sb-desc').innerText;
     await setDoc(doc(db, "config", "sidebar"), {t, desc}, {merge:true});
 };
+
+onSnapshot(doc(db, "config", "footer"), (s) => {
+    if(s.exists()){ const d = s.data(); if(d.desc) document.getElementById('footer-desc').innerText = d.desc; }
+    else { document.getElementById('footer-desc').innerText = "Somos CAFE UNP, una plataforma dedicada a la divulgación académica, investigación y el libre debate de ideas. Creemos en el conocimiento compartido como motor de progreso."; }
+});
+window.editarFooter = async () => {
+    const desc = prompt("Descripción de ¿Quiénes somos?:", document.getElementById('footer-desc').innerText) || document.getElementById('footer-desc').innerText;
+    await setDoc(doc(db, "config", "footer"), {desc}, {merge:true});
+};
+
+// Sincronizar Bottom Nav móvil con las Desktop Pills visualmente
+document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => {
+    btn.addEventListener('shown.bs.tab', (e) => {
+        const target = e.target.getAttribute('data-bs-target');
+        document.querySelectorAll(`button[data-bs-target="${target}"]`).forEach(tBtn => tBtn.classList.add('active'));
+    });
+});
 
 // =====================================
 // 1. NOTICIAS Y COLUMNAS
@@ -273,13 +293,15 @@ function renderNoticias() {
     let hLista = ''; let hPrinc = ''; let pFound = false;
     filtradas.forEach(d => {
         const date = d.fecha ? d.fecha.toDate().toLocaleDateString() : 'Reciente'; const avgStr = getPromedioStars(d.comentarios);
-        const tHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#1976d2'}">${t}</span>`).join('');
+        
+        // DISEÑO TAG (blanco + borde + color letras)
+        const tHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${t}</span>`).join('');
         const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
         const textoLimpioPreview = d.contenido.replace(/<[^>]*>?/gm, '');
 
         if (d.principal && !pFound) {
             pFound = true;
-            const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-4 shadow-sm cursor-pointer" style="height:380px; object-fit: contain; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
+            const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-4 shadow-sm cursor-pointer" style="height:380px; object-fit: cover; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
             hPrinc = `
             <div class="row mb-5 border-bottom pb-5 align-items-center">
                 <div class="col-lg-7 mb-4 mb-lg-0">${imgP}</div>
@@ -315,7 +337,7 @@ function renderNoticias() {
 window.editarNoticia = (id) => {
     const d = window.postsData[id];
     document.getElementById('not-titulo').value = d.titulo; document.getElementById('not-tags').value = (d.etiquetas||[]).join(', ');
-    document.getElementById('not-color').value = d.colorTag || '#1976d2'; document.getElementById('not-principal').checked = d.principal;
+    document.getElementById('not-color').value = d.colorTag || '#004b79'; document.getElementById('not-principal').checked = d.principal;
     if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(d.contenido || ''); window.editandoId = id;
     document.getElementById('not-form-title').innerText = "Editando Columna"; document.getElementById('btn-pub-noticia').innerText = "Guardar";
     bootstrap.Collapse.getOrCreateInstance(document.getElementById('colNoticia')).show(); window.scrollTo(0,0);
@@ -337,7 +359,7 @@ onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) 
     let h = ''; snap.forEach(d => {
         const data = d.data(); window.postsData[d.id] = data; checkDeepLink(d.id, 'articulos');
         const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios);
-        const tHTML = (data.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${data.colorTag||'#dc3545'}">${t}</span>`).join('');
+        const tHTML = (data.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${data.colorTag||'#004b79'}; border-color: #d1d5db;">${t}</span>`).join('');
         
         h += `
         <article class="col-12 mb-5 pb-4 border-bottom border-light-subtle">
@@ -366,7 +388,7 @@ onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) 
                     <div class="text-muted small mb-3 font-inter">${data.fecha ? '(Publicado el ' + data.fecha.toDate().toLocaleDateString() + ')' : ''}</div>
                     <p class="text-muted mb-3 font-inter text-truncate-3" style="font-size: 1.05rem; line-height: 1.6;">${data.resumen}</p>
                     <div class="mt-auto d-flex align-items-center">
-                        <button class="btn btn-sm btn-outline-primary fw-bold font-inter rounded-pill px-3 me-3 shadow-sm" onclick="abrirModal('${d.id}', 'articulos')">Leer documento <i class="bi bi-arrow-right ms-1"></i></button>
+                        <button class="btn btn-sm text-primary fw-bold font-inter rounded-pill me-3 shadow-sm" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${d.id}', 'articulos')">Leer documento <i class="bi bi-arrow-right ms-1"></i></button>
                         <span class="text-warning fw-bold small">${avgStr}</span>
                     </div>
                 </div>
@@ -379,13 +401,13 @@ onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) 
 window.editarArt = (id) => {
     const d = window.postsData[id];
     document.getElementById('art-titulo').value = d.titulo; document.getElementById('art-link').value = d.link;
-    document.getElementById('art-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('art-color').value = d.colorTag || '#dc3545';
+    document.getElementById('art-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('art-color').value = d.colorTag || '#004b79';
     document.getElementById('art-resumen').value = d.resumen; window.editandoId = id;
     bootstrap.Collapse.getOrCreateInstance(document.getElementById('colArticulo')).show(); window.scrollTo(0,0);
 };
 
 // ==========================================
-// 3. DEBATES Y ENCUESTAS (DISEÑO PROFESIONAL RED SOCIAL)
+// 3. DEBATES Y ENCUESTAS
 // ==========================================
 document.getElementById('btn-add-opcion').onclick = () => {
     const i = document.createElement('input'); i.type = 'text'; i.className = 'form-control border-0 shadow-sm mb-2 opcion-input font-inter'; i.placeholder = 'Nueva Opción';
@@ -421,7 +443,7 @@ function renderEncuestas() {
         <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" id="encuesta-${data.id}">
             <div class="card-body p-4 p-md-5">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="badge bg-primary rounded-pill px-3 py-2 fw-semibold" style="letter-spacing: 0.5px;">DEBATE ABIERTO</span>
+                    <span class="tag-badge" style="color: #009668; border-color: #d1d5db;">DEBATE ABIERTO</span>
                     <div class="text-nowrap">
                         <i class="bi bi-share-fill text-muted cursor-pointer me-3" onclick="compartir('${data.pregunta}', '${data.id}', 'encuestas')"></i>
                         <i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('encuestas', '${data.id}')"></i>
@@ -436,7 +458,7 @@ function renderEncuestas() {
                     <small class="text-muted fw-semibold font-inter"><i class="bi bi-people-fill me-1"></i> ${data.totalVotos} votos</small>
                     <div class="d-flex align-items-center">
                         <span class="text-warning fw-bold small me-3">${avgStr}</span>
-                        <button class="btn btn-sm btn-light text-primary fw-bold font-inter rounded-pill px-3" onclick="abrirModal('${data.id}', 'encuestas')">Participar</button>
+                        <button class="btn btn-sm text-primary fw-bold font-inter rounded-pill px-3" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${data.id}', 'encuestas')">Participar</button>
                     </div>
                 </div>
             </div>

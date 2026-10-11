@@ -3,41 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FEUNP - Plataforma Académica</title>
+    <title>CAFE UNP - Plataforma Académica</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-light">
 
-    <!-- SPLASH SCREEN -->
+    <!-- SPLASH SCREEN CAFE UNP -->
     <div id="splash-screen" class="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-white" style="z-index: 9999; transition: opacity 0.5s ease;">
-        <h1 class="brand-gradient m-0 fw-bold mb-1" style="font-size: 3.5rem;">ECONOMIA</h1>
+        <div class="d-flex align-items-center mb-3">
+            <svg width="65" height="65" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
+                <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/>
+                <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/>
+            </svg>
+            <h1 class="m-0 fw-bold brand-text" style="font-size: 3.5rem;">CAFE UNP</h1>
+        </div>
         <p class="text-muted small mb-4 fw-semibold" style="letter-spacing: 0.5px;">Creado por Gifted Studios</p>
         <div class="progress rounded-pill bg-light border shadow-sm" style="width: 250px; height: 8px;">
-            <div id="splash-progress" class="progress-bar rounded-pill" role="progressbar" style="width: 0%; transition: width 0.3s ease; background: linear-gradient(90deg, #092e6e 0%, #1976d2 50%, #00c853 100%);"></div>
+            <div id="splash-progress" class="progress-bar rounded-pill" role="progressbar" style="width: 0%; transition: width 0.3s ease; background: linear-gradient(90deg, #009668 0%, #004b79 100%);"></div>
         </div>
     </div>
 
+    <!-- NAVBAR ESCRITORIO -->
     <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm py-3 mb-4 sticky-top">
         <div class="container d-flex justify-content-between align-items-center">
-            <a class="navbar-brand brand-gradient m-0 fs-3 fw-bold font-serif" href="index.html">ECONOMIA</a>
+            <a class="navbar-brand m-0 d-flex align-items-center" href="index.html">
+                <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
+                    <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/>
+                    <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/>
+                </svg>
+                <span class="fs-4 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span>
+            </a>
             <ul class="nav nav-underline d-none d-md-flex" id="pills-tab" role="tablist">
                 <li class="nav-item"><button class="nav-link text-dark active px-3 fw-semibold font-inter" data-bs-toggle="pill" data-bs-target="#columnas">Columnas de Opinión</button></li>
                 <li class="nav-item"><button class="nav-link text-dark px-3 fw-semibold font-inter" data-bs-toggle="pill" data-bs-target="#investigacion">Investigación & Papers</button></li>
                 <li class="nav-item"><button class="nav-link text-dark px-3 fw-semibold font-inter" data-bs-toggle="pill" data-bs-target="#ensayos">Debates y Encuestas</button></li>
             </ul>
             <div>
-                <button id="btn-login" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-bold shadow-sm">Ingresar</button>
+                <button id="btn-login" class="btn btn-ingresar shadow-sm">Ingresar <i class="bi bi-arrow-right ms-1"></i></button>
                 <button id="btn-logout" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-bold shadow-sm d-none">Salir</button>
             </div>
         </div>
     </nav>
 
-    <div class="container pb-5">
+    <!-- NAVEGACIÓN INFERIOR MÓVIL (NUEVO) -->
+    <ul class="nav nav-pills nav-justified mobile-nav d-md-none fixed-bottom bg-white shadow-lg z-3 m-0 p-0 border-top" id="pills-tab-mobile" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#columnas" type="button" role="tab">
+                <i class="bi bi-newspaper fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Opinión</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#investigacion" type="button" role="tab">
+                <i class="bi bi-journal-text fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Papers</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#ensayos" type="button" role="tab">
+                <i class="bi bi-chat-square-text fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Debates</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="container pb-2">
         <div class="tab-content" id="pills-tabContent">
             
             <!-- 1. COLUMNAS DE OPINIÓN -->
@@ -51,13 +83,13 @@
                                 <div class="col-md-12"><input type="text" id="not-titulo" class="form-control form-control-lg bg-light border-0 font-serif fw-bold" placeholder="Titular de la columna"></div>
                                 <div class="col-md-5"><label class="small fw-bold text-muted mb-1">Subir Imagen:</label><input type="file" id="not-imagen" class="form-control bg-light border-0" accept="image/*"></div>
                                 <div class="col-md-5"><label class="small fw-bold text-muted mb-1">Etiquetas (comas):</label><input type="text" id="not-tags" class="form-control bg-light border-0" placeholder="Ej: UNP, Política"></div>
-                                <div class="col-md-2"><label class="small fw-bold text-muted mb-1">Color Tag:</label><input type="color" id="not-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#1976d2"></div>
+                                <div class="col-md-2"><label class="small fw-bold text-muted mb-1">Color Tag:</label><input type="color" id="not-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#004b79"></div>
                             </div>
                             <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="not-principal"><label class="form-check-label fw-bold text-primary small">Marcar como Principal (Grande)</label></div>
                             <div class="mb-3"><textarea id="editor-noticias"></textarea></div>
                             <div class="text-end">
                                 <button class="btn btn-light rounded-pill px-4 me-2 fw-bold" onclick="cancelarEdicion()">Cancelar</button>
-                                <button id="btn-pub-noticia" class="btn btn-success px-5 rounded-pill fw-bold">Publicar Columna</button>
+                                <button id="btn-pub-noticia" class="btn btn-success px-5 rounded-pill fw-bold" style="background-color: #009668; border-color:#009668;">Publicar Columna</button>
                             </div>
                         </div>
                     </div>
@@ -85,7 +117,7 @@
                             <button class="btn btn-sm btn-warning position-absolute top-0 end-0 m-2 admin-only-inline shadow-sm" onclick="editarSidebar()"><i class="bi bi-pencil-fill"></i></button>
                             <h4 id="sb-titulo" class="fw-bold mb-3 font-serif" style="color: #1a202c; font-size: 1.4rem; line-height: 1.4;">Te damos la bienvenida a nuestro nuevo INTEGRATE</h4>
                             <p id="sb-desc" class="mb-3 fw-bold font-inter" style="font-size: 0.95rem; color: #2d3748; line-height: 1.6;">Conferencia Internacional: Empleabilidad, IA y competencias...</p>
-                            <a href="#" class="text-dark text-decoration-none fw-bold d-inline-block font-inter" style="font-size: 0.95rem;">Ver mas... <i class="bi bi-arrow-right-circle ms-1 text-muted"></i></a>
+                            <a href="#" class="text-dark text-decoration-none fw-bold d-inline-block font-inter" style="font-size: 0.95rem; color: #009668 !important;">Ver mas... <i class="bi bi-arrow-right-circle ms-1 text-muted"></i></a>
                         </div>
                     </div>
                 </div>
@@ -102,11 +134,11 @@
                                 <div class="col-md-6"><input type="text" id="art-titulo" class="form-control bg-light border-0 font-serif fw-bold" placeholder="Título completo"></div>
                                 <div class="col-md-6"><input type="url" id="art-link" class="form-control bg-light border-0" placeholder="Enlace del PDF (Drive)"></div>
                                 <div class="col-md-9"><input type="text" id="art-tags" class="form-control bg-light border-0" placeholder="Etiquetas (Ej: Tesis, Macro)"></div>
-                                <div class="col-md-3"><input type="color" id="art-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#dc3545"></div>
+                                <div class="col-md-3"><input type="color" id="art-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#004b79"></div>
                                 <div class="col-12"><textarea id="art-resumen" class="form-control bg-light border-0 font-inter" rows="3" placeholder="Resumen o Abstract..."></textarea></div>
                                 <div class="col-12 text-end">
                                     <button class="btn btn-light rounded-pill px-4 me-2 fw-bold" onclick="cancelarEdicion()">Cancelar</button>
-                                    <button id="btn-pub-articulo" class="btn btn-success px-5 rounded-pill fw-bold">Publicar Paper</button>
+                                    <button id="btn-pub-articulo" class="btn btn-success px-5 rounded-pill fw-bold" style="background-color: #009668; border-color:#009668;">Publicar Paper</button>
                                 </div>
                             </div>
                         </div>
@@ -139,7 +171,7 @@
                                 <label class="form-check-label fw-bold text-primary small">Ocultar porcentajes al público</label>
                             </div>
 
-                            <div class="text-end"><button id="btn-pub-encuesta" class="btn btn-success px-5 rounded-pill fw-bold">Activar Debate</button></div>
+                            <div class="text-end"><button id="btn-pub-encuesta" class="btn btn-success px-5 rounded-pill fw-bold" style="background-color: #009668; border-color:#009668;">Activar Debate</button></div>
                         </div>
                     </div>
                 </div>
@@ -148,16 +180,41 @@
 
         </div>
     </div>
+    
+    <!-- FOOTER: QUIÉNES SOMOS -->
+    <footer class="mt-5 pt-5 pb-4 bg-white border-top footer-mobile-pad">
+        <div class="container position-relative">
+            <button class="btn btn-sm btn-warning position-absolute top-0 end-0 mt-2 admin-only-inline shadow-sm" onclick="editarFooter()"><i class="bi bi-pencil-fill"></i></button>
+            <div class="row justify-content-center text-center mb-4">
+                <div class="col-lg-8">
+                    <h5 class="fw-bold font-serif text-dark mb-3" style="font-size: 1.4rem;">¿QUIÉNES SOMOS?</h5>
+                    <p id="footer-desc" class="text-muted font-inter mb-0" style="line-height: 1.8; font-size: 1.05rem;">
+                        Cargando información...
+                    </p>
+                </div>
+            </div>
+            <hr class="text-muted opacity-25">
+            <div class="text-center text-muted small font-inter fw-medium mt-3">
+                &copy; <span id="current-year"></span> CAFE UNP. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
 
     <!-- 🌟 MODAL CLÁSICO (SOLO PARA COLUMNAS DE OPINIÓN) - MÁS ANCHO -->
     <div class="modal fade" id="modalNoticia" tabindex="-1" aria-hidden="true">
-        <!-- AQUÍ SE AUMENTÓ EL ANCHO A 960px PARA HACERLO 20% MÁS ANCHO QUE ANTES -->
         <div class="modal-dialog modal-dialog-scrollable" style="max-width: 960px;">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header border-0 pb-0">
+                <div class="modal-header border-0 pb-0 mt-2 px-4 px-md-5">
+                    <div class="d-flex align-items-center">
+                        <svg width="24" height="24" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
+                            <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/>
+                            <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/>
+                        </svg>
+                        <span class="fs-5 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span>
+                    </div>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body px-4 px-md-5 pb-5 pt-2">
+                <div class="modal-body px-4 px-md-5 pb-5 pt-3">
                     <div id="mn-tags" class="mb-3"></div>
                     <h1 id="mn-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2.3rem; line-height: 1.25;"></h1>
                     
@@ -169,7 +226,7 @@
                     <img id="mn-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 450px; object-fit: cover; display: none;">
                     <div id="mn-contenido" class="contenido-apa mb-5 text-dark" style="font-size: 1.15rem;"></div>
 
-                    <h4 class="fw-bold mb-4 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2 text-primary"></i> Comentarios</h4>
+                    <h4 class="fw-bold mb-4 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color: #009668;"></i> Comentarios</h4>
                     <div class="bg-light p-4 rounded-4 mb-4 border shadow-sm">
                         <div class="d-flex align-items-center mb-3 text-warning fs-5">
                             <span class="text-dark small fw-bold me-2 fs-6 font-inter">Tu calificación:</span>
@@ -181,7 +238,7 @@
                             <span class="text-muted small ms-2 font-inter" id="rating-text-mn"></span>
                         </div>
                         <textarea id="mn-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión sobre esta columna..."></textarea>
-                        <div class="text-end"><button class="btn btn-primary rounded-pill fw-bold px-4 py-2 font-inter shadow-sm" id="btn-enviar-comentario-mn">Publicar Comentario</button></div>
+                        <div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-2 font-inter shadow-sm" id="btn-enviar-comentario-mn">Publicar Comentario</button></div>
                     </div>
                     <div id="mn-lista-comentarios"></div>
                 </div>
@@ -195,7 +252,13 @@
             <div class="modal-content bg-white">
                 <div class="modal-header border-bottom py-3 px-4 shadow-sm z-1">
                     <div class="d-flex align-items-center w-100 justify-content-between">
-                        <a class="navbar-brand brand-gradient m-0 fs-4 fw-bold font-serif" href="#">ECONOMIA</a>
+                        <div class="d-flex align-items-center">
+                            <svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
+                                <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/>
+                                <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/>
+                            </svg>
+                            <span class="fs-4 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span>
+                        </div>
                         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                 </div>
@@ -222,7 +285,7 @@
                             <div id="modal-contenido" class="text-secondary mb-4" style="font-size: 1.1rem; line-height: 1.8;"></div>
                             
                             <!-- Zona de Discusión -->
-                            <h5 class="fw-bold mb-3 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2 text-primary"></i> Discusión y Aportes</h5>
+                            <h5 class="fw-bold mb-3 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color:#009668;"></i> Discusión y Aportes</h5>
                             
                             <div class="bg-light p-3 rounded-4 mb-4 border shadow-sm">
                                 <div class="d-flex align-items-center mb-2 text-warning fs-6">
@@ -235,7 +298,7 @@
                                     <span class="text-muted small ms-2 font-inter" id="rating-text-ml"></span>
                                 </div>
                                 <textarea id="ml-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="2" placeholder="Escribe tu opinión académica o comentario..."></textarea>
-                                <div class="text-end"><button class="btn btn-primary rounded-pill fw-bold px-4 py-1 font-inter shadow-sm" id="btn-enviar-comentario-ml">Publicar</button></div>
+                                <div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-1 font-inter shadow-sm" id="btn-enviar-comentario-ml">Publicar</button></div>
                             </div>
                             
                             <div id="ml-lista-comentarios" class="flex-grow-1 pe-2 comments-scrollbar"></div>
