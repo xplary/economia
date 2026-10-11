@@ -23,7 +23,13 @@ onAuthStateChanged(auth, async (u) => {
     document.getElementById('btn-login').classList.toggle('d-none', !!u);
     document.getElementById('btn-logout').classList.toggle('d-none', !u);
     document.body.classList.remove('is-owner');
-    if(u) { const d = await getDoc(doc(db, "usuarios", u.uid)); if(d.exists() && d.data().owner) document.body.classList.add('is-owner'); }
+    if(u) { 
+        const d = await getDoc(doc(db, "usuarios", u.uid)); 
+        if(d.exists() && d.data().owner) {
+            document.body.classList.add('is-owner'); 
+            renderEncuestas(); // Recarga debates para mostrar gráficos y porcentajes a los dueños
+        }
+    }
 });
 
 window.borrarPost = async (col, id) => { if(confirm("¿Eliminar publicación?")) await deleteDoc(doc(db, col, id)); };
@@ -93,10 +99,25 @@ const renderComentarios = (comentarios) => {
         </div>`).join('');
 };
 
+// GENERADOR DE HTML PARA DEBATES (Aplica ocultamiento si no es dueño)
+const generarHTMLOpcionesEncuesta = (id, data) => {
+    let h = `<div class="d-grid gap-2 border-start border-4 border-primary ps-3">`;
+    const isOwner = document.body.classList.contains('is-owner');
+    data.opciones.forEach((o, i) => {
+        const pct = data.totalVotos === 0 ? 0 : Math.round((o.votos / data.totalVotos) * 100);
+        const hidePct = data.ocultarPct && !isOwner;
+        const txtPct = hidePct ? '?' : pct;
+        const width = hidePct ? 0 : pct;
+        h += `<button class="btn btn-light text-start position-relative border-0 rounded-3 py-2 shadow-sm" onclick="votar('${id}', ${i})"><div class="position-absolute top-0 start-0 h-100 bg-primary opacity-25 rounded-3" style="width: ${width}%;"></div><span class="position-relative z-1 d-flex justify-content-between px-2"><span class="small fw-semibold text-dark">${o.texto}</span><span class="fw-bold text-primary small">${txtPct}%</span></span></button>`;
+    });
+    return h + `</div>`;
+};
+
+// ABRIR EL MODAL (Soluciona Bug de Pantalla Negra usando getInstance)
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return;
     window.modalActual = { id, col };
-    document.getElementById('modal-titulo').innerText = d.titulo;
+    document.getElementById('modal-titulo').innerText = d.titulo || d.pregunta;
     document.getElementById('modal-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`;
     document.getElementById('modal-promedio-estrellas').innerText = getPromedioStars(d.comentarios);
     document.getElementById('modal-tags').innerHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#1976d2'};">${t}</span>`).join('');
@@ -104,20 +125,25 @@ window.abrirModal = (id, col) => {
     const imgEl = document.getElementById('modal-imagen');
     if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
     document.getElementById('modal-btn-drive').innerHTML = d.link ? `<a href="${d.link}" target="_blank" class="btn btn-danger fw-bold rounded-pill shadow-sm"><i class="bi bi-file-pdf-fill me-1"></i> Ver PDF</a>` : '';
-    document.getElementById('modal-contenido').innerHTML = d.contenido || d.resumen || '';
+    
+    if(col === 'encuestas') {
+        document.getElementById('modal-contenido').innerHTML = `<p class="mb-4">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
+    } else {
+        document.getElementById('modal-contenido').innerHTML = d.contenido || d.resumen || '';
+    }
+    
     renderComentarios(d.comentarios);
-    new bootstrap.Modal(document.getElementById('modalLectura')).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLectura')).show();
 };
 
-// DEEP LINKING CHECKER
+// DEEP LINKING CHECKER (Con retraso de seguridad para evitar fondo negro)
 let autoOpenDone = false;
 const checkDeepLink = (id, col) => {
     if(autoOpenDone) return;
     const urlP = new URLSearchParams(window.location.search);
     if(urlP.get('p') === id && urlP.get('t') === col) {
         autoOpenDone = true; 
-        if(col==='encuestas') setTimeout(() => document.getElementById('encuesta-'+id)?.scrollIntoView({behavior:'smooth'}), 1000);
-        else abrirModal(id, col);
+        setTimeout(() => { abrirModal(id, col); }, 500);
     }
 };
 
@@ -181,7 +207,7 @@ document.getElementById('btn-pub-noticia').onclick = async () => {
 onSnapshot(collection(db, "noticias"), (snap) => {
     noticiasData = []; snap.forEach(d => { noticiasData.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'noticias'); });
     renderNoticias();
-    if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); // Refresca comentarios
+    if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); // Refresca modal abierto
 });
 
 function renderNoticias() {
@@ -287,7 +313,7 @@ window.editarArt = (id) => {
 };
 
 // ==========================================
-// 3. DEBATES Y ENCUESTAS (Voto Único y Gráfico)
+// 3. DEBATES Y ENCUESTAS (Voto Único y Gráficos Estables)
 // ==========================================
 document.getElementById('btn-add-opcion').onclick = () => {
     const i = document.createElement('input'); i.type = 'text'; i.className = 'form-control border-0 shadow-sm mb-2 opcion-input'; i.placeholder = 'Nueva Opción';
@@ -296,52 +322,75 @@ document.getElementById('btn-add-opcion').onclick = () => {
 
 document.getElementById('btn-pub-encuesta').onclick = async () => {
     const p = document.getElementById('enc-pregunta').value; if(!p) return alert("Falta pregunta.");
+    const ocultarPct = document.getElementById('enc-ocultar-pct').checked;
     let opc = []; document.querySelectorAll('.opcion-input').forEach(i => { if(i.value.trim()) opc.push({ texto: i.value, votos: 0 }); });
     if(opc.length < 2) return alert("Mínimo 2 opciones.");
-    await addDoc(collection(db, "encuestas"), { pregunta: p, resumen: document.getElementById('enc-desc').value, opciones: opc, totalVotos: 0, votantes: [], fecha: serverTimestamp() });
-    document.getElementById('enc-pregunta').value=''; document.getElementById('enc-desc').value=''; document.querySelectorAll('.opcion-input').forEach(i => i.value='');
+    
+    await addDoc(collection(db, "encuestas"), { pregunta: p, resumen: document.getElementById('enc-desc').value, opciones: opc, totalVotos: 0, votantes: [], ocultarPct: ocultarPct, fecha: serverTimestamp(), comentarios: [] });
+    document.getElementById('enc-pregunta').value=''; document.getElementById('enc-desc').value=''; document.querySelectorAll('.opcion-input').forEach(i => i.value=''); document.getElementById('enc-ocultar-pct').checked = false;
     bootstrap.Collapse.getInstance(document.getElementById('colEncuesta'))?.hide();
 };
 
 let chartInstances = {};
+let encuestasDataCache = [];
 
 onSnapshot(query(collection(db, "encuestas"), orderBy("fecha", "desc")), (snap) => {
-    const cont = document.getElementById('contenedor-encuestas'); if(snap.empty) return cont.innerHTML = '<div class="text-center text-muted">No hay debates.</div>';
-    let h = ''; snap.forEach(d => {
-        const data = d.data(); const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; checkDeepLink(d.id, 'encuestas');
+    encuestasDataCache = [];
+    snap.forEach(d => {
+        encuestasDataCache.push({id: d.id, ...d.data()});
+        window.postsData[d.id] = d.data();
+        checkDeepLink(d.id, 'encuestas');
+    });
+    renderEncuestas();
+});
+
+function renderEncuestas() {
+    const cont = document.getElementById('contenedor-encuestas'); 
+    if(encuestasDataCache.length === 0) return cont.innerHTML = '<div class="text-center text-muted">No hay debates.</div>';
+    
+    let h = ''; 
+    encuestasDataCache.forEach(data => {
+        const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; 
+        const avgStr = getPromedioStars(data.comentarios);
+        
         h += `
-        <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" id="encuesta-${d.id}">
+        <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" id="encuesta-${data.id}">
             <div class="card-body p-4 p-md-5">
                 <div class="d-flex justify-content-between mb-3">
-                    <div><span class="tag-badge bg-primary">DEBATE</span><h4 class="fw-bold font-serif mt-2" style="color: #1a202c;">${data.pregunta}</h4></div>
+                    <div class="cursor-pointer" onclick="abrirModal('${data.id}', 'encuestas')">
+                        <span class="tag-badge bg-primary">DEBATE</span>
+                        <h4 class="fw-bold font-serif mt-2" style="color: #1a202c;">${data.pregunta}</h4>
+                    </div>
                     <div>
-                        <i class="bi bi-share-fill text-primary cursor-pointer me-2" onclick="compartir('${data.pregunta}', '${d.id}', 'encuestas')"></i>
-                        <i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('encuestas', '${d.id}')"></i>
+                        <i class="bi bi-share-fill text-primary cursor-pointer me-2" onclick="compartir('${data.pregunta}', '${data.id}', 'encuestas')"></i>
+                        <i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('encuestas', '${data.id}')"></i>
                     </div>
                 </div>
-                <p class="text-muted font-inter mb-4">${data.resumen||''}</p>
-                <div class="d-grid gap-2 border-start border-4 border-primary ps-3">`;
-        data.opciones.forEach((o, i) => {
-            const pct = data.totalVotos===0 ? 0 : Math.round((o.votos/data.totalVotos)*100);
-            h += `<button class="btn btn-light text-start position-relative border-0 rounded-3 py-2 shadow-sm" onclick="votar('${d.id}', ${i})"><div class="position-absolute top-0 start-0 h-100 bg-primary opacity-25 rounded-3" style="width: ${pct}%;"></div><span class="position-relative z-1 d-flex justify-content-between px-2"><span class="small fw-semibold text-dark">${o.texto}</span><span class="fw-bold text-primary small">${pct}%</span></span></button>`;
-        });
-        h += `</div><div class="mt-4 pt-3 border-top d-flex justify-content-between"><small class="text-muted fw-semibold"><i class="bi bi-calendar3 me-1"></i> ${date}</small><small class="text-muted fw-bold">${data.totalVotos} votos</small></div>
-              <div class="mt-3 admin-only w-100 d-flex justify-content-center"><div style="width:250px;"><canvas id="chart-${d.id}"></canvas></div></div>
-        </div></div>`;
+                <p class="text-muted font-inter mb-4 cursor-pointer" onclick="abrirModal('${data.id}', 'encuestas')">${data.resumen||''}</p>
+                ${generarHTMLOpcionesEncuesta(data.id, data)}
+                <div class="mt-4 pt-3 border-top d-flex justify-content-between">
+                    <small class="text-muted fw-semibold"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2 text-warning fw-bold">${avgStr}</span></small>
+                    <small class="text-muted fw-bold">${data.totalVotos} votos</small>
+                </div>
+                <div class="mt-3 admin-only w-100 d-flex justify-content-center"><div style="width:250px;"><canvas id="chart-${data.id}"></canvas></div></div>
+            </div>
+        </div>`;
     }); 
     cont.innerHTML = h;
 
-    // Dibujar Gráficos para dueños
-    if(document.body.classList.contains('is-owner')) {
-        snap.forEach(d => {
-            if(chartInstances[d.id]) chartInstances[d.id].destroy(); // Prevenir superposición de gráficos
-            const ctx = document.getElementById('chart-'+d.id);
-            if(ctx) {
-                chartInstances[d.id] = new Chart(ctx, { type: 'pie', data: { labels: d.data().opciones.map(o=>o.texto), datasets: [{ data: d.data().opciones.map(o=>o.votos), backgroundColor: ['#092e6e', '#1976d2', '#00c853', '#ffc107', '#dc3545'] }] }, options: { plugins: { legend: { display: false } } } });
-            }
-        });
+    // Genera siempre los gráficos. Si no es dueño, CSS (.admin-only) lo oculta automáticamente, solucionando el Bug de desaparición.
+    encuestasDataCache.forEach(d => {
+        if(chartInstances[d.id]) chartInstances[d.id].destroy(); 
+        const ctx = document.getElementById('chart-'+d.id);
+        if(ctx) {
+            chartInstances[d.id] = new Chart(ctx, { type: 'pie', data: { labels: d.opciones.map(o=>o.texto), datasets: [{ data: d.opciones.map(o=>o.votos), backgroundColor: ['#092e6e', '#1976d2', '#00c853', '#ffc107', '#dc3545'] }] }, options: { plugins: { legend: { display: false } }, responsive: true } });
+        }
+    });
+
+    if(window.modalActual.col === 'encuestas' && window.modalActual.id) {
+        abrirModal(window.modalActual.id, 'encuestas'); // Refresca contenido modal si está abierto
     }
-});
+}
 
 window.votar = async (id, idx) => {
     const uid = getUid(); const ref = doc(db, "encuestas", id); const snap = await getDoc(ref);
