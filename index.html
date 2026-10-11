@@ -45,7 +45,6 @@
                                 <div class="col-md-2"><label class="small fw-bold text-muted mb-1">Color Tag:</label><input type="color" id="not-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#1976d2"></div>
                             </div>
                             <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="not-principal"><label class="form-check-label fw-bold text-primary small">Marcar como Principal (Grande)</label></div>
-                            <!-- Aumentado el tamaño a 350px para modo Word APA -->
                             <div class="border rounded-3 bg-white overflow-hidden mb-3"><div id="editor-noticias" style="height: 350px; font-size: 1.1rem;"></div></div>
                             <div class="text-end">
                                 <button class="btn btn-light rounded-pill px-4 me-2 fw-bold" onclick="cancelarEdicion()">Cancelar</button>
@@ -161,9 +160,13 @@
                             <span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span>
                             <span id="modal-promedio-estrellas" class="fw-bold text-warning fs-6"></span>
                         </div>
-                        <div id="modal-btn-drive"></div>
+                        <div id="modal-btn-drive"></div> <!-- Se mantiene vacío ahora -->
                     </div>
+                    
                     <img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm object-fit-cover" style="max-height: 500px; display: none;">
+                    
+                    <!-- VISOR DE PDF INCRUSTADO -->
+                    <iframe id="modal-iframe" src="" class="w-100 rounded-4 mb-4 shadow-sm" style="height: 70vh; border: none; display: none;"></iframe>
                     
                     <!-- Contenedor del contenido -->
                     <div id="modal-contenido" class="text-secondary" style="font-size: 1.15rem; line-height: 1.8;"></div>

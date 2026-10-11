@@ -25,7 +25,7 @@ const quill = new Quill('#editor-noticias', {
             ['clean']
         ],
         clipboard: {
-            matchVisual: false // Crucial para que respete los espaciados originales al pegar de Word
+            matchVisual: false 
         }
     } 
 });
@@ -132,7 +132,16 @@ const generarHTMLOpcionesEncuesta = (id, data) => {
     return h + `</div>`;
 };
 
-// ABRIR EL MODAL (Con inyección de clases Quill para formato APA)
+// TRANSFORMADOR DE ENLACES PARA VISOR PDF
+const formatEmbedUrl = (url) => {
+    if(!url) return '';
+    if(url.includes('drive.google.com/file/d/')) {
+        return url.replace(/\/view.*$/, '/preview'); // Obliga a Drive a mostrar en visor web
+    }
+    return url;
+};
+
+// ABRIR EL MODAL (Ahora con soporte de iframe en vivo)
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return;
     window.modalActual = { id, col };
@@ -141,14 +150,25 @@ window.abrirModal = (id, col) => {
     document.getElementById('modal-promedio-estrellas').innerText = getPromedioStars(d.comentarios);
     document.getElementById('modal-tags').innerHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#1976d2'};">${t}</span>`).join('');
     
+    // Imagen
     const imgEl = document.getElementById('modal-imagen');
     if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
-    document.getElementById('modal-btn-drive').innerHTML = d.link ? `<a href="${d.link}" target="_blank" class="btn btn-danger fw-bold rounded-pill shadow-sm"><i class="bi bi-file-pdf-fill me-1"></i> Ver PDF</a>` : '';
     
+    // PDF Iframe directamente
+    document.getElementById('modal-btn-drive').innerHTML = ''; // Quitamos el botón "Ver PDF"
+    const iframeEl = document.getElementById('modal-iframe');
+    if(d.link) {
+        iframeEl.src = formatEmbedUrl(d.link);
+        iframeEl.style.display = 'block';
+    } else {
+        iframeEl.style.display = 'none';
+        iframeEl.src = '';
+    }
+    
+    // Contenido
     if(col === 'encuestas') {
         document.getElementById('modal-contenido').innerHTML = `<p class="mb-4">${d.resumen||''}</p>` + generarHTMLOpcionesEncuesta(id, d);
     } else {
-        // AQUÍ ESTÁ LA MAGIA PARA APA: Se envuelve el contenido en ql-snow y ql-editor para que aplique los estilos correctos de Quill
         document.getElementById('modal-contenido').innerHTML = `<div class="ql-snow"><div class="ql-editor font-inter" style="padding:0;">${d.contenido || d.resumen || ''}</div></div>`;
     }
     
@@ -240,8 +260,6 @@ function renderNoticias() {
         const date = d.fecha ? d.fecha.toDate().toLocaleDateString() : 'Reciente'; const avgStr = getPromedioStars(d.comentarios);
         const tHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="background-color: ${d.colorTag||'#1976d2'}">${t}</span>`).join('');
         const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`;
-        
-        // Vista de vista previa, limpiamos las etiquetas HTML para que no se rompa el diseño
         const textoLimpioPreview = d.contenido.replace(/<[^>]*>?/gm, '');
 
         if (d.principal && !pFound && ordDesc) {
