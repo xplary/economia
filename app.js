@@ -177,13 +177,17 @@ window.abrirModal = (id, col) => {
         if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; hasLeftContent = true; } else { imgEl.style.display = 'none'; }
         if(d.link) { iframeEl.src = formatEmbedUrl(d.link); iframeEl.style.display = 'block'; hasLeftContent = true; } else { iframeEl.style.display = 'none'; iframeEl.src = ''; }
         
+        // CORRECCIÓN DEL BUG DE LA IMAGEN EN BLANCO Y EMPUJE HACIA ABAJO:
+        // Remueve la clase 'd-flex' para que 'd-none' funcione correctamente en Bootstrap.
         if(hasLeftContent) {
-            leftCol.style.display = 'flex';
+            leftCol.classList.remove('d-none');
+            leftCol.classList.add('d-flex');
             rightCol.className = 'col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column';
             rightCol.style.maxWidth = 'none';
         } else {
-            leftCol.style.display = 'none';
-            rightCol.className = 'col-12 h-100 overflow-y-auto bg-white px-4 px-md-5 py-4 d-flex flex-column mx-auto';
+            leftCol.classList.remove('d-flex');
+            leftCol.classList.add('d-none'); // Ahora sí desaparece la columna izquierda por completo
+            rightCol.className = 'col-12 h-100 overflow-y-auto bg-white px-4 px-md-5 py-4 py-md-5 d-flex flex-column mx-auto';
             rightCol.style.maxWidth = '900px';
         }
         
