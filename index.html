@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cafe UNP | Plataforma Académica</title>
+    <title>CAFE UNP - Plataforma Académica</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -28,7 +28,7 @@
     <!-- NAVBAR ESCRITORIO -->
     <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm py-3 mb-4 sticky-top" style="z-index: 1060;">
         <div class="container d-flex justify-content-between align-items-center">
-            <a class="navbar-brand m-0 d-flex align-items-center" href="#">
+            <a class="navbar-brand m-0 d-flex align-items-center" href="index.html">
                 <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg>
                 <span class="fs-4 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span>
             </a>
@@ -73,7 +73,15 @@
                         </div>
                     </div>
                 </div>
-                <div id="contenedor-noticia-principal"></div>
+
+                <!-- CONTENEDOR NOTICIA PRINCIPAL CON ESQUELETO -->
+                <div id="contenedor-noticia-principal">
+                    <div class="row mb-5 border-bottom pb-5 align-items-center">
+                        <div class="col-lg-7 mb-4 mb-lg-0"><div class="skeleton-box w-100 rounded-4" style="height:380px;"></div></div>
+                        <div class="col-lg-5 ps-lg-4"><div class="skeleton-box w-25 mb-3" style="height:24px; border-radius:12px;"></div><div class="skeleton-box w-100 mb-3" style="height:45px; border-radius:8px;"></div><div class="skeleton-box w-75 mb-4" style="height:45px; border-radius:8px;"></div><div class="skeleton-box w-100 mb-2" style="height:15px; border-radius:8px;"></div><div class="skeleton-box w-50" style="height:15px; border-radius:8px;"></div></div>
+                    </div>
+                </div>
+
                 <div class="row mb-4 mt-2">
                     <div class="col-md-8">
                         <div class="d-flex gap-2">
@@ -83,7 +91,11 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-lg-8" id="contenedor-noticias-lista"><div class="skeleton-box w-100 mb-3" style="height: 200px;"></div></div>
+                    <!-- ESQUELETO PARA LA LISTA -->
+                    <div class="col-lg-8" id="contenedor-noticias-lista">
+                        <div class="skeleton-box w-100 mb-4" style="height: 180px;"></div>
+                        <div class="skeleton-box w-100 mb-4" style="height: 180px;"></div>
+                    </div>
                     <div class="col-lg-4 ps-lg-4 mt-4 mt-lg-0">
                         <div class="p-4 bg-white shadow-sm position-relative rounded-4" style="border: 2px solid #ffffff;">
                             <button class="btn btn-sm btn-warning position-absolute top-0 end-0 m-2 admin-only-inline shadow-sm" onclick="editarSidebar()"><i class="bi bi-pencil-fill"></i></button>
@@ -116,15 +128,20 @@
                 <div class="row" id="contenedor-articulos"></div>
             </div>
 
-            <!-- 3. DEBATES Y ENCUESTAS -->
+            <!-- 3. DEBATES Y ENCUESTAS AVANZADOS -->
             <div class="tab-pane fade" id="ensayos">
                 <div class="admin-only d-none mb-4">
                     <button class="btn btn-primary rounded-pill shadow-sm px-4 fw-bold mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#colEncuesta"><i class="bi bi-chat-quote-fill me-2"></i> Crear Debate</button>
                     <div class="collapse" id="colEncuesta">
                         <div class="card border-0 shadow rounded-4 p-4 mb-4 bg-white">
-                            <h5 class="fw-bold text-primary mb-3">Nuevo Debate</h5>
+                            <h5 class="fw-bold text-primary mb-3">Nuevo Debate Avanzado</h5>
                             <input type="text" id="enc-pregunta" class="form-control form-control-lg bg-light border-0 mb-3 font-serif fw-bold" placeholder="Pregunta central del debate (Título)">
-                            <textarea id="enc-desc" class="form-control bg-light border-0 mb-3 font-inter" rows="2" placeholder="Contexto o descripción breve del debate..."></textarea>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-12"><textarea id="enc-desc" class="form-control bg-light border-0 font-inter" rows="2" placeholder="Contexto o descripción breve del debate..."></textarea></div>
+                                <div class="col-md-12"><label class="small fw-bold text-muted mb-1">Imagen referencial (Opcional):</label><input type="file" id="enc-imagen" class="form-control bg-light border-0" accept="image/*"></div>
+                            </div>
+
                             <div class="p-3 bg-light rounded-3 mb-3 border">
                                 <label class="fw-bold small text-muted mb-2 font-inter">Opciones de votación:</label>
                                 <div id="opciones-encuesta"><input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input font-inter" placeholder="Opción 1"><input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input font-inter" placeholder="Opción 2"></div>

@@ -10,7 +10,6 @@ let progress = 0; let isFirstLoad = true;
 const progBar = document.getElementById('splash-progress'); const splash = document.getElementById('splash-screen');
 const splashInterval = setInterval(() => { progress += Math.random() * 15 + 5; if(progress > 85) progress = 85; if(progBar) progBar.style.width = progress + '%'; }, 200);
 
-// FAILSAFE: Obliga a que la pantalla de carga desaparezca máximo a los 3 segundos, protegiendo la página de bloqueos
 setTimeout(() => { clearInterval(splashInterval); if(progBar) progBar.style.width = '100%'; if(splash && splash.parentNode) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); } }, 3000);
 
 document.getElementById('current-year').innerText = new Date().getFullYear();
@@ -34,7 +33,6 @@ onAuthStateChanged(auth, async (u) => {
 
 window.borrarPost = async (col, id) => { if(confirm("¿Eliminar publicación?")) await deleteDoc(doc(db, col, id)); };
 
-// FUNCIONES PARA ENLACES LIMPIOS Y COMPARTIR (Solucionado el error de las comillas)
 const slugify = (text) => (text ? text.toString() : '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").substring(0, 80) || 'cafe-unp';
 window.compartir = (id, col) => { 
     const d = window.postsData[id]; if(!d) return; 
@@ -126,7 +124,8 @@ window.editarSidebar = async () => { const t = prompt("Título:", document.getEl
 onSnapshot(doc(db, "config", "footer"), (s) => { if(s.exists()){ const d = s.data(); if(d.ubicacion) document.getElementById('f-ubicacion').innerHTML = d.ubicacion.replace(/\n/g, "<br>"); if(d.contacto) document.getElementById('f-contacto').innerHTML = d.contacto.replace(/\n/g, "<br>"); if(d.sobre) document.getElementById('f-sobre').innerHTML = d.sobre.replace(/\n/g, "<br>"); } });
 window.editarFooter = async () => { const u = prompt("Ubicación (Usa Enter para saltos de línea):", document.getElementById('f-ubicacion').innerText); const c = prompt("Contacto:", document.getElementById('f-contacto').innerText); const s = prompt("Sobre la Universidad:", document.getElementById('f-sobre').innerText); if(u && c && s) await setDoc(doc(db, "config", "footer"), {ubicacion: u, contacto: c, sobre: s}, {merge:true}); };
 
-document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => { btn.addEventListener('shown.bs.tab', (e) => { const target = e.target.getAttribute('data-bs-target'); document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(b => b.classList.remove('active')); document.querySelectorAll(`button[data-bs-target="${target}"]`).forEach(tBtn => tBtn.classList.add('active')); }); });
+// AUTO-SCROLL AL CAMBIAR DE PESTAÑA
+document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => { btn.addEventListener('shown.bs.tab', (e) => { const target = e.target.getAttribute('data-bs-target'); document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(b => b.classList.remove('active')); document.querySelectorAll(`button[data-bs-target="${target}"]`).forEach(tBtn => tBtn.classList.add('active')); window.scrollTo({ top: 0, behavior: 'smooth' }); }); });
 
 let noticiasData = []; let qBuscar = ''; let ordDesc = true;
 document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); }); document.getElementById('btn-ordenar').addEventListener('click', () => { ordDesc = !ordDesc; document.getElementById('btn-ordenar').innerText = ordDesc ? 'Ordenar: Recientes ↓' : 'Ordenar: Antiguos ↑'; renderNoticias(); });
@@ -162,7 +161,17 @@ onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) 
 window.editarArt = (id) => { const d = window.postsData[id]; document.getElementById('art-titulo').value = d.titulo; document.getElementById('art-link').value = d.link; document.getElementById('art-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('art-color').value = d.colorTag || '#004b79'; document.getElementById('art-resumen').value = d.resumen; window.editandoId = id; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colArticulo')).show(); window.scrollTo(0,0); };
 
 document.getElementById('btn-add-opcion').onclick = () => { const i = document.createElement('input'); i.type = 'text'; i.className = 'form-control border-0 shadow-sm mb-2 opcion-input font-inter'; i.placeholder = 'Nueva Opción'; document.getElementById('opciones-encuesta').appendChild(i); };
-document.getElementById('btn-pub-encuesta').onclick = async () => { const p = document.getElementById('enc-pregunta').value; if(!p) return alert("Falta pregunta."); const ocultarPct = document.getElementById('enc-ocultar-pct').checked; let opc = []; document.querySelectorAll('.opcion-input').forEach(i => { if(i.value.trim()) opc.push({ texto: i.value, votos: 0 }); }); if(opc.length < 2) return alert("Mínimo 2 opciones."); await addDoc(collection(db, "encuestas"), { pregunta: p, resumen: document.getElementById('enc-desc').value, opciones: opc, totalVotos: 0, votantes: [], ocultarPct: ocultarPct, fecha: serverTimestamp(), comentarios: [] }); document.getElementById('enc-pregunta').value=''; document.getElementById('enc-desc').value=''; document.querySelectorAll('.opcion-input').forEach(i => i.value=''); document.getElementById('enc-ocultar-pct').checked = false; bootstrap.Collapse.getInstance(document.getElementById('colEncuesta'))?.hide(); };
+
+// CREADOR DE ENCUESTAS AVANZADAS CON IMAGEN
+document.getElementById('btn-pub-encuesta').onclick = async () => { 
+    const p = document.getElementById('enc-pregunta').value; if(!p) return alert("Falta pregunta."); 
+    const ocultarPct = document.getElementById('enc-ocultar-pct').checked; 
+    let opc = []; document.querySelectorAll('.opcion-input').forEach(i => { if(i.value.trim()) opc.push({ texto: i.value, votos: 0 }); }); 
+    if(opc.length < 2) return alert("Mínimo 2 opciones."); 
+    let imgFinal = ''; const imgFile = document.getElementById('enc-imagen').files[0]; if (imgFile) imgFinal = await compressImg(imgFile);
+    await addDoc(collection(db, "encuestas"), { pregunta: p, resumen: document.getElementById('enc-desc').value, imagen: imgFinal, opciones: opc, totalVotos: 0, votantes: [], ocultarPct: ocultarPct, fecha: serverTimestamp(), comentarios: [] }); 
+    document.getElementById('enc-pregunta').value=''; document.getElementById('enc-desc').value=''; document.getElementById('enc-imagen').value=''; document.querySelectorAll('.opcion-input').forEach(i => i.value=''); document.getElementById('enc-ocultar-pct').checked = false; bootstrap.Collapse.getInstance(document.getElementById('colEncuesta'))?.hide(); 
+};
 
 let encuestasDataCache = [];
 onSnapshot(query(collection(db, "encuestas"), orderBy("fecha", "desc")), (snap) => { encuestasDataCache = []; snap.forEach(d => { encuestasDataCache.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'encuestas'); }); renderEncuestas(); });
@@ -171,7 +180,8 @@ function renderEncuestas() {
     const cont = document.getElementById('contenedor-encuestas'); if(encuestasDataCache.length === 0) return cont.innerHTML = '<div class="text-center text-muted font-inter mt-5"><i class="bi bi-chat-square-text fs-1"></i><p class="mt-3">No hay debates activos.</p></div>'; let h = ''; 
     encuestasDataCache.forEach(data => {
         const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios);
-        h += `<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" id="encuesta-${data.id}"><div class="card-body p-4 p-md-5"><div class="d-flex justify-content-between align-items-center mb-3"><span class="tag-badge" style="color: #009668; border-color: #d1d5db;">DEBATE ABIERTO</span><div class="text-nowrap"><i class="bi bi-share-fill text-muted cursor-pointer me-3" onclick="compartir('${data.id}', 'encuestas')"></i><i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('encuestas', '${data.id}')"></i></div></div><h3 class="fw-bold font-inter text-dark mb-2 cursor-pointer" style="font-size: 1.5rem;" onclick="abrirModal('${data.id}', 'encuestas')">${data.pregunta}</h3><p class="text-muted font-inter mb-4 cursor-pointer" style="font-size: 1.05rem;" onclick="abrirModal('${data.id}', 'encuestas')">${escapeHTML(data.resumen||'')}</p>${generarHTMLOpcionesEncuesta(data.id, data)}<div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center"><small class="text-muted fw-semibold font-inter"><i class="bi bi-people-fill me-1"></i> ${data.totalVotos} votos</small><div class="d-flex align-items-center"><span class="ms-2 me-3">${avgStr}</span><button class="btn btn-sm text-primary fw-bold font-inter rounded-pill px-3" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${data.id}', 'encuestas')">Participar</button></div></div></div></div>`;
+        const imgHTML = data.imagen ? `<img src="${data.imagen}" class="img-fluid w-100 rounded-4 mb-4 shadow-sm cursor-pointer" style="max-height: 250px; object-fit: contain; background: #f8f9fa;" onclick="abrirModal('${data.id}', 'encuestas')">` : '';
+        h += `<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" id="encuesta-${data.id}"><div class="card-body p-4 p-md-5"><div class="d-flex justify-content-between align-items-center mb-3"><span class="tag-badge" style="color: #009668; border-color: #d1d5db;">DEBATE ABIERTO</span><div class="text-nowrap"><i class="bi bi-share-fill text-muted cursor-pointer me-3" onclick="compartir('${data.id}', 'encuestas')"></i><i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('encuestas', '${data.id}')"></i></div></div><h3 class="fw-bold font-inter text-dark mb-2 cursor-pointer" style="font-size: 1.5rem;" onclick="abrirModal('${data.id}', 'encuestas')">${data.pregunta}</h3><p class="text-muted font-inter mb-4 cursor-pointer" style="font-size: 1.05rem;" onclick="abrirModal('${data.id}', 'encuestas')">${escapeHTML(data.resumen||'')}</p>${imgHTML}${generarHTMLOpcionesEncuesta(data.id, data)}<div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center"><small class="text-muted fw-semibold font-inter"><i class="bi bi-people-fill me-1"></i> ${data.totalVotos} votos</small><div class="d-flex align-items-center"><span class="ms-2 me-3">${avgStr}</span><button class="btn btn-sm text-primary fw-bold font-inter rounded-pill px-3" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${data.id}', 'encuestas')">Participar</button></div></div></div></div>`;
     }); cont.innerHTML = h; if(window.modalActual.col === 'encuestas' && window.modalActual.id) abrirModal(window.modalActual.id, 'encuestas'); 
 }
 

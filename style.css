@@ -51,6 +51,4 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 #modalNoticia { background-color: rgba(0, 0, 0, 0.5); }
 @keyframes breathe { 0% { transform: scale(0.98); opacity: 0.85; } 50% { transform: scale(1.02); opacity: 1; } 100% { transform: scale(0.98); opacity: 0.85; } }
 .breathe-anim { animation: breathe 3s ease-in-out infinite; }
-
-/* ESTRELLAS PERSONALIZADAS */
 .star-gradient { background: linear-gradient(90deg, #009668 0%, #004b79 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
