@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cafe UNP - Plataforma Académica</title>
+    <title>CAFE UNP - Plataforma Académica</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -133,12 +133,12 @@
                     
                     <div class="collapse mt-4 text-start" id="colFormulario">
                         <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white mx-auto" style="max-width: 800px;">
-                            <h4 class="fw-bold mb-4 font-serif" style="color: #009668;"><i class="bi bi-file-earmark-text-fill me-2"></i> Nuevo Formulario de Debate / Encuesta</h4>
+                            <h4 class="fw-bold mb-4 font-serif" style="color: #009668;"><i class="bi bi-file-earmark-text-fill me-2"></i> Nuevo Formulario</h4>
                             <div class="row g-3 mb-4">
-                                <div class="col-md-12"><input type="text" id="form-titulo" class="form-control form-control-lg bg-light border-0 font-serif fw-bold" placeholder="Título Principal de la Encuesta"></div>
+                                <div class="col-md-12"><input type="text" id="form-titulo" class="form-control form-control-lg bg-light border-0 font-serif fw-bold" placeholder="Título Principal del Formulario"></div>
                                 <div class="col-md-12"><textarea id="form-desc" class="form-control bg-light border-0 font-inter" rows="2" placeholder="Descripción, contexto o instrucciones para los participantes..."></textarea></div>
                                 <div class="col-md-6">
-                                    <label class="small fw-bold text-muted mb-1">Imagen Referencial (Opcional):</label>
+                                    <label class="small fw-bold text-muted mb-1">Imagen de Cabecera (Opcional):</label>
                                     <input type="file" id="form-imagen" class="form-control bg-light border-0" accept="image/*">
                                 </div>
                                 <div class="col-md-6">
@@ -148,7 +148,7 @@
                             </div>
                             
                             <div class="bg-light p-4 rounded-4 mb-4 border" style="border-color: #e2e8f0 !important;">
-                                <h6 class="fw-bold text-dark mb-3 font-inter">Preguntas de la Encuesta</h6>
+                                <h6 class="fw-bold text-dark mb-3 font-inter">Preguntas</h6>
                                 <div id="contenedor-preguntas-builder" class="mb-3"></div>
                                 <button id="btn-add-pregunta-form" class="btn btn-outline-primary fw-bold rounded-pill shadow-sm"><i class="bi bi-plus-circle me-1"></i> Añadir Pregunta</button>
                             </div>
@@ -199,13 +199,14 @@
                 <div class="modal-body p-0 d-flex justify-content-center w-100 pb-5" style="padding-top: 3rem !important;">
                     <div class="w-100 px-3 px-md-0" style="max-width: 800px;">
                         
-                        <!-- Header Verde Decorativo (Ahora con ID para colocarle imagen de fondo) -->
+                        <!-- Header Verde Decorativo -->
                         <div id="mf-banner" class="rounded-top-4" style="height: 160px; background-color: #009668; border: 1px solid #007753; background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
                         
                         <!-- Tarjeta Principal (Título) -->
                         <div class="bg-white p-4 p-md-5 shadow-sm mb-4 border-top border-4" style="border-radius: 0 0 12px 12px; border-color: #004b79 !important; margin-top: -5px;">
                             <h2 class="fw-bold font-serif mb-3 text-dark" id="mf-titulo" style="font-size: 2.2rem; line-height: 1.2;"></h2>
                             <p class="text-secondary font-inter mb-0" id="mf-desc" style="font-size: 1.1rem; line-height: 1.6;"></p>
+                            <p class="text-danger small mt-3 mb-0 fw-semibold">* Indica que la pregunta es obligatoria</p>
                         </div>
                         
                         <!-- Contenedor de las Preguntas o Mensaje de Error/Login -->

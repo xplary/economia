@@ -16,7 +16,6 @@ document.getElementById('current-year').innerText = new Date().getFullYear();
 
 tinymce.init({ selector: '#editor-noticias', height: 450, menubar: false, plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table wordcount', toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link image | removeformat', content_style: 'body { font-family: "Inter", sans-serif; font-size: 16px; text-align: justify; line-height: 1.6; }', paste_data_images: true });
 
-// El uid anónimo solo sirve para ver, ahora para encuestas se validará auth.currentUser
 if(!localStorage.getItem('uid')) localStorage.setItem('uid', 'anon_'+Math.random().toString(36).substring(2,11));
 const getUid = () => auth.currentUser ? auth.currentUser.uid : localStorage.getItem('uid');
 document.getElementById('btn-login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
@@ -71,30 +70,75 @@ onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) 
 window.editarArt = (id) => { const d = window.postsData[id]; document.getElementById('art-titulo').value = d.titulo; document.getElementById('art-link').value = d.link; document.getElementById('art-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('art-color').value = d.colorTag || '#004b79'; document.getElementById('art-resumen').value = d.resumen; window.editandoId = id; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colArticulo')).show(); window.scrollTo(0,0); };
 
 /* =========================================================================
-   SISTEMA UNIFICADO DE DEBATES Y ENCUESTAS (ESTILO GOOGLE FORMS EXPORT)
+   SISTEMA DE FORMULARIOS: OPCIONES GOOGLE FORMS, IMÁGENES Y EXCEL ORDENADO
 ========================================================================= */
 let numPreguntasForm = 0;
+
+// Preview rápido de imagen en el formulario sin subir aún
+window.prevQImg = (input) => {
+    if(input.files && input.files[0]){
+        let reader = new FileReader();
+        reader.onload = function(e){
+            let img = input.parentElement.parentElement.querySelector('.q-img-preview');
+            img.src = e.target.result;
+            img.style.display = 'block';
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+
 document.getElementById('btn-add-pregunta-form').onclick = () => {
     numPreguntasForm++;
-    const div = document.createElement('div'); div.className = 'builder-q-block'; div.id = `q-block-${numPreguntasForm}`;
+    const div = document.createElement('div'); div.className = 'builder-q-block position-relative'; div.id = `q-block-${numPreguntasForm}`;
     div.innerHTML = `
-        <div class="d-flex justify-content-between mb-3 align-items-center">
-            <input type="text" class="form-control fw-bold q-title w-75 font-inter bg-white border" placeholder="Escribe aquí la Pregunta ${numPreguntasForm}">
-            <button class="btn btn-sm text-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash fs-5"></i></button>
+        <div class="row g-3 align-items-start mb-3">
+            <div class="col-md-7">
+                <input type="text" class="form-control fw-bold q-title font-inter bg-light border-0 border-bottom border-2 border-secondary rounded-0 shadow-none px-2 py-2" placeholder="Pregunta ${numPreguntasForm}">
+            </div>
+            <div class="col-md-4">
+                <select class="form-select q-type font-inter bg-white border shadow-sm" onchange="toggleQOpts(this)">
+                    <option value="text">⚏ Respuesta corta</option>
+                    <option value="textarea">☰ Párrafo</option>
+                    <option value="radio" selected>◉ Varias opciones</option>
+                    <option value="checkbox">☑ Casillas</option>
+                    <option value="select">▽ Desplegable</option>
+                    <option value="scale">⟷ Escala lineal</option>
+                    <option value="date">📅 Fecha</option>
+                    <option value="time">🕒 Hora</option>
+                </select>
+            </div>
+            <div class="col-md-1 text-end">
+                <button class="btn btn-sm btn-outline-danger border-0 hover-bg-light" onclick="this.parentElement.parentElement.parentElement.remove()"><i class="bi bi-trash fs-5"></i></button>
+            </div>
         </div>
-        <select class="form-select mb-3 w-100 q-type font-inter bg-white border" onchange="toggleQOpts(this)">
-            <option value="radio">Opción Única (Solo una respuesta)</option>
-            <option value="checkbox">Casillas (Múltiples respuestas)</option>
-            <option value="select">Menú Desplegable (Lista)</option>
-            <option value="text">Respuesta Corta</option>
-            <option value="textarea">Párrafo (Respuesta larga)</option>
-        </select>
-        <input type="text" class="form-control q-opts font-inter bg-white border" placeholder="Escribe las opciones separadas por comas (Ej: Sí, No, Tal vez)">
+        <div class="mb-3 ps-2">
+            <input type="text" class="form-control q-opts font-inter bg-white border shadow-sm" placeholder="Opciones (separadas por comas, ej: Sí, No, Tal vez)">
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+            <div class="d-flex align-items-center">
+                <label class="btn btn-sm btn-outline-secondary font-inter rounded-pill me-3 shadow-sm cursor-pointer">
+                    <i class="bi bi-image me-1"></i> Añadir Imagen
+                    <input type="file" class="q-img-input d-none" accept="image/*" onchange="prevQImg(this)">
+                </label>
+                <img class="q-img-preview rounded shadow-sm border" style="height: 40px; object-fit: cover; display:none;">
+            </div>
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input q-req cursor-pointer" type="checkbox" role="switch" id="req_${numPreguntasForm}">
+                <label class="form-check-label font-inter small fw-semibold text-muted cursor-pointer" for="req_${numPreguntasForm}">Obligatorio</label>
+            </div>
+        </div>
     `;
     document.getElementById('contenedor-preguntas-builder').appendChild(div);
 };
 
-window.toggleQOpts = (selectEl) => { const inputOpts = selectEl.nextElementSibling; if(['text', 'textarea'].includes(selectEl.value)) { inputOpts.style.display = 'none'; } else { inputOpts.style.display = 'block'; } };
+window.toggleQOpts = (selectEl) => { 
+    const inputOpts = selectEl.parentElement.parentElement.nextElementSibling.querySelector('.q-opts'); 
+    if(['text', 'textarea', 'date', 'time', 'scale'].includes(selectEl.value)) { 
+        inputOpts.style.display = 'none'; 
+    } else { 
+        inputOpts.style.display = 'block'; 
+    } 
+};
 
 document.getElementById('btn-pub-formulario').onclick = async () => {
     const titulo = document.getElementById('form-titulo').value; if(!titulo) return alert("Por favor, asigna un título principal.");
@@ -102,29 +146,54 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
     const fechaStr = document.getElementById('form-fecha').value;
     
     let limitMillis = null; 
-    if (fechaStr && fechaStr.trim() !== '') { 
-        limitMillis = new Date(fechaStr + "T23:59:59").getTime(); 
-    }
+    if (fechaStr && fechaStr.trim() !== '') limitMillis = new Date(fechaStr + "T23:59:59").getTime(); 
     
-    let imgFinal = ''; const imgFile = document.getElementById('form-imagen').files[0]; if (imgFile) imgFinal = await compressImg(imgFile);
+    let imgFinal = ''; const imgFile = document.getElementById('form-imagen').files[0]; 
+    if (imgFile) imgFinal = await compressImg(imgFile);
 
+    // Procesamiento asíncrono para incluir posibles imágenes de cada pregunta
     let preguntas = [];
-    document.querySelectorAll('.builder-q-block').forEach((block, idx) => {
+    const blocks = document.querySelectorAll('.builder-q-block');
+    for (let idx = 0; idx < blocks.length; idx++) {
+        const block = blocks[idx];
         const pTitulo = block.querySelector('.q-title').value;
         const pType = block.querySelector('.q-type').value;
         const pOpts = block.querySelector('.q-opts').value;
-        if(pTitulo) {
-            let opcionesArr = []; if(['radio', 'checkbox', 'select'].includes(pType) && pOpts) { opcionesArr = pOpts.split(',').map(s=>s.trim()).filter(Boolean); }
-            preguntas.push({ id: `pq_${idx}`, titulo: pTitulo, tipo: pType, opciones: opcionesArr });
+        const pReq = block.querySelector('.q-req').checked;
+        
+        let qImgFinal = '';
+        const qFileInput = block.querySelector('.q-img-input');
+        if (qFileInput && qFileInput.files[0]) {
+            qImgFinal = await compressImg(qFileInput.files[0]);
         }
-    });
-    if(preguntas.length === 0) return alert("Debes agregar al menos una pregunta.");
+
+        if(pTitulo) {
+            let opcionesArr = []; 
+            if(['radio', 'checkbox', 'select'].includes(pType) && pOpts) { 
+                opcionesArr = pOpts.split(',').map(s=>s.trim()).filter(Boolean); 
+            }
+            preguntas.push({ id: `pq_${idx}`, titulo: pTitulo, tipo: pType, opciones: opcionesArr, obligatoria: pReq, imagen: qImgFinal });
+        }
+    }
     
+    if(preguntas.length === 0) return alert("Debes agregar al menos una pregunta válida.");
+    
+    // Cambiar estado a guardando visualmente
+    const btnPub = document.getElementById('btn-pub-formulario');
+    const oldText = btnPub.innerHTML;
+    btnPub.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Publicando...';
+    btnPub.disabled = true;
+
     try {
         await addDoc(collection(db, "formularios"), { titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas, respuestas: [], fecha: serverTimestamp() });
         document.getElementById('form-titulo').value = ''; document.getElementById('form-desc').value = ''; document.getElementById('form-fecha').value = ''; document.getElementById('form-imagen').value = ''; document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; bootstrap.Collapse.getInstance(document.getElementById('colFormulario'))?.hide();
         alert("¡Encuesta publicada y activada con éxito!");
-    } catch(e) { alert("Hubo un error al publicar: " + e.message); }
+    } catch(e) { 
+        alert("Hubo un error al publicar: " + e.message); 
+    } finally {
+        btnPub.innerHTML = oldText;
+        btnPub.disabled = false;
+    }
 };
 
 let formulariosDataCache = [];
@@ -135,7 +204,6 @@ onSnapshot(query(collection(db, "formularios"), orderBy("fecha", "desc")), (snap
 
 function renderFormularios() {
     const cont = document.getElementById('contenedor-formularios'); 
-    
     if(formulariosDataCache.length === 0) {
         return cont.innerHTML = '<div class="text-center font-inter mt-5 py-5"><i class="bi bi-ui-checks-grid display-1 text-secondary opacity-25"></i><h4 class="mt-4 fw-bold text-dark">No hay encuestas o debates activos</h4><p class="text-secondary">Vuelve más tarde para participar en nuevas discusiones y formularios.</p></div>';
     }
@@ -145,7 +213,6 @@ function renderFormularios() {
         const cerrada = data.fechaLimite && data.fechaLimite < now;
         const statusBadge = cerrada ? `<span class="badge bg-danger rounded-pill fw-semibold" style="font-size: 0.7rem;">Finalizada</span>` : `<span class="badge bg-success rounded-pill fw-semibold" style="font-size: 0.7rem;">Activa</span>`;
         const numRes = data.respuestas ? data.respuestas.length : 0;
-        
         const placeholderImg = `<div class="d-flex align-items-center justify-content-center bg-light text-secondary h-100 w-100" style="min-height: 140px; border-right: 1px solid #e2e8f0;"><i class="bi bi-card-checklist fs-1 opacity-50"></i></div>`;
         const imgHTML = data.imagen ? `<img src="${data.imagen}" class="w-100 h-100 object-fit-cover" style="min-height: 140px; border-right: 1px solid #e2e8f0;">` : placeholderImg;
         
@@ -159,8 +226,8 @@ function renderFormularios() {
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div><span class="tag-badge me-2" style="color: #009668; border-color: #d1d5db;">ENCUESTA</span> ${statusBadge}</div>
                             <div class="text-nowrap ms-2">
-                                <i class="bi bi-share-fill text-muted me-3" onclick="event.stopPropagation(); compartir('${data.id}', 'formularios')"></i>
-                                <i class="bi bi-trash-fill text-danger admin-only-inline" onclick="event.stopPropagation(); borrarPost('formularios', '${data.id}')"></i>
+                                <i class="bi bi-share-fill text-muted me-3 hover-bg-light p-1 rounded" onclick="event.stopPropagation(); compartir('${data.id}', 'formularios')"></i>
+                                <i class="bi bi-trash-fill text-danger admin-only-inline hover-bg-light p-1 rounded" onclick="event.stopPropagation(); borrarPost('formularios', '${data.id}')"></i>
                             </div>
                         </div>
                         <h4 class="fw-bold font-inter text-dark mb-1 text-truncate" style="font-size: 1.25rem;">${data.titulo}</h4>
@@ -178,41 +245,41 @@ function renderFormularios() {
     if(window.modalActual.col === 'formularios' && window.modalActual.id) abrirModal(window.modalActual.id, 'formularios');
 }
 
-// ---------------- EXPORTAR EXCEL IDÉNTICO A GOOGLE FORMS ----------------
+// ---------------- EXCEL: FORMATO DE COLUMNAS CORRECTO PARA LATAM (;) Y SOLO CORREOS ----------------
 window.exportarExcel = (id) => {
     const data = window.postsData[id];
     if (!data || !data.respuestas || data.respuestas.length === 0) return alert("No hay respuestas para exportar.");
     
-    let csvContent = "\uFEFF"; // UTF-8 BOM para que Excel lea las tildes y ñ correctamente
+    // BOM UTF-8 (Ayuda a Excel a detectar acentos y tildes)
+    let csvContent = "\uFEFF"; 
     
-    // Generar Cabeceras Estilo Google Forms
-    let headers = ["Marca temporal", "Dirección de correo electrónico", "Nombre de la cuenta"];
+    // Generar Cabeceras - Utilizamos Punto y Coma (;) que es el separador nativo para Excel en Perú/LatAm
+    let headers = ["Marca temporal", "Dirección de correo electrónico"];
     data.preguntas.forEach(q => headers.push(`"${q.titulo.replace(/"/g, '""')}"`));
-    csvContent += headers.join(",") + "\n";
+    csvContent += headers.join(";") + "\n";
     
     // Generar Filas
     data.respuestas.forEach(r => {
-        // Fallbacks por si hay datos viejos guardados antes de esta actualización
         const fDate = r.date ? new Date(r.date).toLocaleString('es-PE') : "";
         const fMail = r.email || "No registrado";
-        const fName = r.nombre || r.uid || "Anónimo";
         
-        let row = [`"${fDate}"`, `"${fMail}"`, `"${fName}"`];
+        let row = [`"${fDate}"`, `"${fMail}"`];
         
         data.preguntas.forEach(q => {
             let ans = r.datos[q.id] || "";
-            if (Array.isArray(ans)) ans = ans.join(", "); // Múltiples opciones separadas por coma
-            // Sanitizar saltos de línea y comillas internas para que no rompan las columnas en Excel
+            if (Array.isArray(ans)) ans = ans.join(", ");
+            // Evitar que saltos de línea internos rompan la fila de Excel
             let safeAns = ans.toString().replace(/"/g, '""').replace(/\r?\n/g, " "); 
             row.push(`"${safeAns}"`);
         });
-        csvContent += row.join(",") + "\n";
+        csvContent += row.join(";") + "\n";
     });
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
+    // Descargar como CSV pero formateado perfectamente para celdas
     link.setAttribute("download", `Resultados_${slugify(data.titulo)}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
@@ -242,8 +309,8 @@ window.renderModalFormulario = (id, data) => {
     const cerrada = data.fechaLimite && data.fechaLimite < Date.now();
     
     if (isOwner) { 
-        const exportBtnHtml = `<button class="btn btn-sm text-white fw-bold mt-2 shadow-sm" style="background-color: #009668; border-color:#009668;" onclick="exportarExcel('${id}')"><i class="bi bi-file-earmark-excel-fill me-1"></i> Descargar Excel (CSV)</button>`;
-        status.innerHTML = `Total respuestas: <strong class="text-dark">${data.respuestas ? data.respuestas.length : 0}</strong><br>${exportBtnHtml}`; 
+        const exportBtnHtml = `<button class="btn btn-sm text-white fw-bold mt-2 shadow-sm px-3 py-2" style="background-color: #009668; border-color:#009668;" onclick="exportarExcel('${id}')"><i class="bi bi-file-earmark-excel-fill me-1"></i> Descargar Excel (CSV)</button>`;
+        status.innerHTML = `<div class="d-flex flex-column align-items-start"><span class="mb-2">Total respuestas: <strong class="text-dark fs-5">${data.respuestas ? data.respuestas.length : 0}</strong></span>${exportBtnHtml}</div>`; 
         btn.style.display = 'none'; footerCont.style.display = 'flex';
         
         if (!data.respuestas || data.respuestas.length === 0) { cont.innerHTML = '<div class="text-muted text-center py-5 bg-white shadow-sm" style="border-radius: 12px;"><i class="bi bi-bar-chart fs-1"></i><p class="mt-3">Aún no hay respuestas para mostrar.</p></div>'; return modal.show(); }
@@ -251,17 +318,24 @@ window.renderModalFormulario = (id, data) => {
         let htmlStats = '';
         data.preguntas.forEach((q, idx) => {
             htmlStats += `<div class="mb-4 bg-white p-4 p-md-5 shadow-sm" style="border-radius: 12px;"><h5 class="fw-bold text-dark mb-4 font-inter">${idx + 1}. ${q.titulo}</h5>`;
-            if (['text', 'textarea'].includes(q.tipo)) {
+            if (['text', 'textarea', 'date', 'time'].includes(q.tipo)) {
                 htmlStats += `<div class="p-3 bg-light rounded-3 text-dark" style="max-height: 250px; overflow-y: auto;">`;
                 let hasAnswers = false;
                 data.respuestas.forEach(r => { if(r.datos[q.id]) { hasAnswers = true; htmlStats += `<div class="border-bottom border-light py-2 font-inter small text-secondary"><i class="bi bi-chat-left-text me-2 opacity-50"></i> ${escapeHTML(r.datos[q.id])}</div>`; } });
                 if(!hasAnswers) htmlStats += `<span class="text-muted small">Nadie ha respondido a esta pregunta.</span>`;
                 htmlStats += `</div>`;
             } else {
-                let counts = {}; q.opciones.forEach(o => counts[o] = 0);
+                let counts = {}; 
+                if(q.tipo === 'scale') { for(let i=1; i<=5; i++) counts[i.toString()] = 0; }
+                else { q.opciones.forEach(o => counts[o] = 0); }
+                
                 data.respuestas.forEach(r => { let ans = r.datos[q.id]; if(ans) { if(Array.isArray(ans)) ans.forEach(a => { if(counts[a]!==undefined) counts[a]++ }); else if(counts[ans]!==undefined) counts[ans]++; } });
                 const totalQRes = data.respuestas.length;
-                q.opciones.forEach(o => { const pct = totalQRes===0?0:Math.round((counts[o]/totalQRes)*100); htmlStats += `<div class="mt-3 small fw-bold d-flex justify-content-between font-inter text-dark"><span>${o}</span><span>${counts[o]} resp. (${pct}%)</span></div><div class="q-result-bar mt-1 mb-3 bg-light" style="height: 16px; border-radius: 8px; overflow: hidden;"><div class="q-result-fill" style="width:${pct}%; height: 100%; background-color: #009668; transition: width 1s ease-in-out;"></div></div>`; });
+                
+                Object.keys(counts).forEach(o => { 
+                    const pct = totalQRes===0?0:Math.round((counts[o]/totalQRes)*100); 
+                    htmlStats += `<div class="mt-3 small fw-bold d-flex justify-content-between font-inter text-dark"><span>${o}</span><span>${counts[o]} resp. (${pct}%)</span></div><div class="q-result-bar mt-1 mb-3 bg-light" style="height: 16px; border-radius: 8px; overflow: hidden;"><div class="q-result-fill" style="width:${pct}%; height: 100%; background-color: #009668; transition: width 1s ease-in-out;"></div></div>`; 
+                });
             } htmlStats += `</div>`;
         }); cont.innerHTML = htmlStats; modal.show();
         
@@ -269,38 +343,89 @@ window.renderModalFormulario = (id, data) => {
         if (cerrada) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #dc3545;"><i class="bi bi-lock-fill d-block mb-3 text-danger" style="font-size: 3rem;"></i><h4 class="fw-bold text-dark font-inter">Formulario cerrado</h4><p class="text-secondary mb-0">El tiempo para participar en esta encuesta ha terminado.</p></div>'; return modal.show(); }
         if (yaRespondio) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">Respuestas Registradas</h4><p class="text-secondary mb-0">Ya hemos recibido tu información. ¡Muchas gracias por participar!</p></div>'; return modal.show(); }
         
-        status.innerText = 'Tus datos están protegidos.'; btn.style.display = 'block'; footerCont.style.display = 'flex';
+        status.innerText = 'Tu correo será registrado al enviar.'; btn.style.display = 'block'; footerCont.style.display = 'flex';
         let hForm = '<form id="form-responder">';
+        
         data.preguntas.forEach((q, idx) => {
+            const reqMark = q.obligatoria ? '<span class="text-danger ms-1">*</span>' : '';
+            const reqAttr = q.obligatoria ? 'required' : '';
+            const imgHtml = q.imagen ? `<img src="${q.imagen}" class="img-fluid rounded-3 mb-4 shadow-sm" style="max-height: 350px; width: 100%; object-fit: contain; background: #f8f9fa;">` : '';
+            
             hForm += `<div class="mb-4 bg-white p-4 p-md-5 shadow-sm" style="border-radius: 12px; border-left: 5px solid #004b79;">
-                        <h5 class="fw-bold text-dark mb-4 font-inter" style="font-size: 1.2rem;">${idx + 1}. ${q.titulo}</h5>`;
-            if (q.tipo === 'text') { hForm += `<input type="text" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input" name="${q.id}" placeholder="Tu respuesta..." required>`; }
-            else if (q.tipo === 'textarea') { hForm += `<textarea class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input" name="${q.id}" rows="3" placeholder="Desarrolla tu respuesta..." required></textarea>`; }
-            else if (q.tipo === 'radio') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6"><input class="form-check-input border-secondary" type="radio" name="${q.id}" value="${escapeHTML(o)}" id="${q.id}_${i}" required><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
-            else if (q.tipo === 'checkbox') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6"><input class="form-check-input border-secondary" type="checkbox" name="${q.id}[]" value="${escapeHTML(o)}" id="${q.id}_${i}"><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
-            else if (q.tipo === 'select') { hForm += `<select class="form-select bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter text-dark py-2 px-3 gform-input" name="${q.id}" required><option value="">Elige una opción...</option>`; q.opciones.forEach(o => { hForm += `<option value="${escapeHTML(o)}">${escapeHTML(o)}</option>`; }); hForm += `</select>`; }
+                        <h5 class="fw-bold text-dark mb-3 font-inter" style="font-size: 1.15rem;">${idx + 1}. ${q.titulo}${reqMark}</h5>
+                        ${imgHtml}`;
+            
+            if (q.tipo === 'text') { 
+                hForm += `<input type="text" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input" name="${q.id}" placeholder="Tu respuesta" ${reqAttr}>`; 
+            }
+            else if (q.tipo === 'textarea') { 
+                hForm += `<textarea class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input" name="${q.id}" rows="3" placeholder="Tu respuesta" ${reqAttr}></textarea>`; 
+            }
+            else if (q.tipo === 'radio') { 
+                q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6"><input class="form-check-input border-secondary" type="radio" name="${q.id}" value="${escapeHTML(o)}" id="${q.id}_${i}" ${reqAttr}><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); 
+            }
+            else if (q.tipo === 'checkbox') { 
+                // El required en checkbox array es manejado manualmente en JS
+                q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6"><input class="form-check-input border-secondary" type="checkbox" name="${q.id}[]" value="${escapeHTML(o)}" id="${q.id}_${i}"><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); 
+            }
+            else if (q.tipo === 'select') { 
+                hForm += `<select class="form-select bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter text-dark py-2 px-3 gform-input w-auto" name="${q.id}" ${reqAttr}><option value="">Elegir</option>`; 
+                q.opciones.forEach(o => { hForm += `<option value="${escapeHTML(o)}">${escapeHTML(o)}</option>`; }); 
+                hForm += `</select>`; 
+            }
+            else if (q.tipo === 'scale') { 
+                hForm += `<div class="d-flex align-items-center gap-2 gap-md-4 py-3 overflow-auto">
+                            <span class="text-muted small fw-semibold">1</span>`;
+                for(let j=1; j<=5; j++){
+                    hForm += `<div class="form-check form-check-inline d-flex flex-column align-items-center mx-1 mx-md-2 mb-0">
+                                <label class="form-check-label text-dark font-inter mb-2 small" for="${q.id}_${j}">${j}</label>
+                                <input class="form-check-input m-0 border-secondary" style="width: 1.2rem; height: 1.2rem;" type="radio" name="${q.id}" value="${j}" id="${q.id}_${j}" ${reqAttr}>
+                              </div>`;
+                }
+                hForm += `<span class="text-muted small fw-semibold">5</span></div>`;
+            }
+            else if (q.tipo === 'date') { 
+                hForm += `<input type="date" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 w-auto gform-input" name="${q.id}" ${reqAttr}>`; 
+            }
+            else if (q.tipo === 'time') { 
+                hForm += `<input type="time" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 w-auto gform-input" name="${q.id}" ${reqAttr}>`; 
+            }
             hForm += `</div>`;
         }); hForm += '</form>'; cont.innerHTML = hForm;
         
         btn.onclick = async () => {
-            const frm = document.getElementById('form-responder'); const fd = new FormData(frm); let ans = {}; let isComplete = true;
-            data.preguntas.forEach(q => {
-                if(q.tipo === 'checkbox') { const vals = fd.getAll(q.id+'[]'); if(vals.length===0) isComplete = false; ans[q.id] = vals; }
-                else { const v = fd.get(q.id); if(!v) isComplete = false; ans[q.id] = v; }
-            });
-            if(!isComplete) return alert("Por favor, revisa y completa todas las preguntas antes de enviar.");
+            const frm = document.getElementById('form-responder'); 
             
+            // Validar HTML5 required fields
+            if (!frm.reportValidity()) return;
+            
+            const fd = new FormData(frm); let ans = {}; let isComplete = true;
+            data.preguntas.forEach(q => {
+                if(q.tipo === 'checkbox') { 
+                    const vals = fd.getAll(q.id+'[]'); 
+                    if(q.obligatoria && vals.length === 0) isComplete = false; 
+                    ans[q.id] = vals; 
+                } else { 
+                    const v = fd.get(q.id); 
+                    if(q.obligatoria && !v) isComplete = false; 
+                    ans[q.id] = v; 
+                }
+            });
+            
+            if(!isComplete) return alert("Por favor, completa todas las preguntas obligatorias antes de enviar.");
+            
+            const btnPub = document.getElementById('btn-enviar-formulario');
+            btnPub.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Enviando...';
+            btnPub.disabled = true;
+
             const ref = doc(db, "formularios", id); const snap = await getDoc(ref);
             if(snap.exists()) {
                 let d = snap.data(); if(!d.respuestas) d.respuestas = [];
                 
-                // AHORA CAPTURAMOS EL NOMBRE Y CORREO DEL USUARIO DE GOOGLE AL MOMENTO DE ENVIAR
-                const uName = auth.currentUser ? auth.currentUser.displayName || "Usuario Registrado" : "Anónimo";
                 const uEmail = auth.currentUser ? auth.currentUser.email || "Sin correo" : "Sin correo";
                 
                 d.respuestas.push({ 
                     uid: uid, 
-                    nombre: uName,
                     email: uEmail,
                     datos: ans, 
                     date: Date.now() 
