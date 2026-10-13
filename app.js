@@ -16,6 +16,7 @@ document.getElementById('current-year').innerText = new Date().getFullYear();
 
 tinymce.init({ selector: '#editor-noticias', height: 450, menubar: false, plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table wordcount', toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link image | removeformat', content_style: 'body { font-family: "Inter", sans-serif; font-size: 16px; text-align: justify; line-height: 1.6; }', paste_data_images: true });
 
+// El uid anónimo solo sirve para ver, ahora para encuestas se validará auth.currentUser
 if(!localStorage.getItem('uid')) localStorage.setItem('uid', 'anon_'+Math.random().toString(36).substring(2,11));
 const getUid = () => auth.currentUser ? auth.currentUser.uid : localStorage.getItem('uid');
 document.getElementById('btn-login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
@@ -45,7 +46,7 @@ const formatEmbedUrl = (url) => { if(!url) return ''; const match = url.match(/\
 
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return; window.modalActual = { id, col };
-    if(col === 'formularios') return renderModalFormulario(id, d); // Novedad Encuestas
+    if(col === 'formularios') return renderModalFormulario(id, d);
     const tagsHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join('');
     if (col === 'noticias') {
         document.getElementById('mn-titulo').innerText = d.titulo; document.getElementById('mn-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`; document.getElementById('mn-promedio-estrellas').innerHTML = getPromedioStars(d.comentarios); document.getElementById('mn-tags').innerHTML = tagsHTML; const imgEl = document.getElementById('mn-imagen'); if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; } document.getElementById('mn-contenido').innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${escapeHTML(d.resumen||'')}</div>`; renderComentarios(d.comentarios, 'mn-lista-comentarios'); bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNoticia')).show();
@@ -70,7 +71,7 @@ onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) 
 window.editarArt = (id) => { const d = window.postsData[id]; document.getElementById('art-titulo').value = d.titulo; document.getElementById('art-link').value = d.link; document.getElementById('art-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('art-color').value = d.colorTag || '#004b79'; document.getElementById('art-resumen').value = d.resumen; window.editandoId = id; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colArticulo')).show(); window.scrollTo(0,0); };
 
 /* =========================================================================
-   SISTEMA UNIFICADO DE DEBATES Y ENCUESTAS (TIPO GOOGLE FORMS)
+   SISTEMA UNIFICADO DE DEBATES Y ENCUESTAS (CON CSV EXPORT Y LOGIN CHECK)
 ========================================================================= */
 let numPreguntasForm = 0;
 document.getElementById('btn-add-pregunta-form').onclick = () => {
@@ -100,7 +101,6 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
     const descripcion = document.getElementById('form-desc').value;
     const fechaStr = document.getElementById('form-fecha').value;
     
-    // SOLUCIÓN ERROR DE PUBLICACIÓN (Soporte seguro para variables de fecha en Firebase)
     let limitMillis = null; 
     if (fechaStr && fechaStr.trim() !== '') { 
         limitMillis = new Date(fechaStr + "T23:59:59").getTime(); 
@@ -133,10 +133,10 @@ onSnapshot(query(collection(db, "formularios"), orderBy("fecha", "desc")), (snap
     renderFormularios();
 });
 
+// NUEVO DISEÑO HORIZONTAL EN EL FEED
 function renderFormularios() {
     const cont = document.getElementById('contenedor-formularios'); 
     
-    // SOLUCIÓN: DISEÑO VACÍO GLOBAL VISIBLE PARA TODOS (DUEÑOS Y NO DUEÑOS)
     if(formulariosDataCache.length === 0) {
         return cont.innerHTML = '<div class="text-center font-inter mt-5 py-5"><i class="bi bi-ui-checks-grid display-1 text-secondary opacity-25"></i><h4 class="mt-4 fw-bold text-dark">No hay encuestas o debates activos</h4><p class="text-secondary">Vuelve más tarde para participar en nuevas discusiones y formularios.</p></div>';
     }
@@ -144,26 +144,34 @@ function renderFormularios() {
     let h = ''; const now = Date.now();
     formulariosDataCache.forEach(data => {
         const cerrada = data.fechaLimite && data.fechaLimite < now;
-        const statusBadge = cerrada ? `<span class="badge bg-danger rounded-pill fw-semibold">Finalizada</span>` : `<span class="badge bg-success rounded-pill fw-semibold">Activa</span>`;
+        const statusBadge = cerrada ? `<span class="badge bg-danger rounded-pill fw-semibold" style="font-size: 0.7rem;">Finalizada</span>` : `<span class="badge bg-success rounded-pill fw-semibold" style="font-size: 0.7rem;">Activa</span>`;
         const numRes = data.respuestas ? data.respuestas.length : 0;
-        const imgHTML = data.imagen ? `<img src="${data.imagen}" class="img-fluid w-100 rounded-4 mb-3 shadow-sm" style="max-height: 250px; object-fit: contain; background: #f8f9fa;">` : '';
         
-        h += `<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white form-survey-card cursor-pointer" onclick="abrirModal('${data.id}', 'formularios')">
-            <div class="card-body p-4 p-md-5">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="tag-badge" style="color: #009668; border-color: #d1d5db;">DEBATE / ENCUESTA</span>
-                    <div class="text-nowrap d-flex align-items-center">
-                        ${statusBadge}
-                        <i class="bi bi-share-fill text-muted ms-3 me-3 fs-5" onclick="event.stopPropagation(); compartir('${data.id}', 'formularios')"></i>
-                        <i class="bi bi-trash-fill text-danger admin-only-inline fs-5" onclick="event.stopPropagation(); borrarPost('formularios', '${data.id}')"></i>
-                    </div>
+        // Imagen Izquierda o Placeholder
+        const placeholderImg = `<div class="d-flex align-items-center justify-content-center bg-light text-secondary h-100 w-100" style="min-height: 140px; border-right: 1px solid #e2e8f0;"><i class="bi bi-card-checklist fs-1 opacity-50"></i></div>`;
+        const imgHTML = data.imagen ? `<img src="${data.imagen}" class="w-100 h-100 object-fit-cover" style="min-height: 140px; border-right: 1px solid #e2e8f0;">` : placeholderImg;
+        
+        h += `<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white form-survey-card cursor-pointer overflow-hidden" onclick="abrirModal('${data.id}', 'formularios')">
+            <div class="row g-0 align-items-stretch">
+                <div class="col-4 col-md-3">
+                    ${imgHTML}
                 </div>
-                <h3 class="fw-bold font-inter text-dark mb-2">${data.titulo}</h3>
-                <p class="text-muted font-inter mb-4" style="font-size: 1.05rem;">${escapeHTML(data.descripcion||'')}</p>
-                ${imgHTML}
-                <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
-                    <small class="text-muted fw-semibold font-inter"><i class="bi bi-person-check-fill me-1"></i> ${numRes} Participantes</small>
-                    <button class="btn btn-sm text-primary fw-bold font-inter rounded-pill px-3 shadow-sm" style="border: 1px solid #004b79; color:#004b79!important;">Participar <i class="bi bi-arrow-right ms-1"></i></button>
+                <div class="col-8 col-md-9 d-flex flex-column justify-content-center">
+                    <div class="card-body p-3 p-md-4 position-relative">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div><span class="tag-badge me-2" style="color: #009668; border-color: #d1d5db;">ENCUESTA</span> ${statusBadge}</div>
+                            <div class="text-nowrap ms-2">
+                                <i class="bi bi-share-fill text-muted me-3" onclick="event.stopPropagation(); compartir('${data.id}', 'formularios')"></i>
+                                <i class="bi bi-trash-fill text-danger admin-only-inline" onclick="event.stopPropagation(); borrarPost('formularios', '${data.id}')"></i>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold font-inter text-dark mb-1 text-truncate" style="font-size: 1.25rem;">${data.titulo}</h4>
+                        <p class="text-muted font-inter mb-3 text-truncate-2 small" style="line-height: 1.5;">${escapeHTML(data.descripcion||'')}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <small class="text-muted fw-semibold font-inter"><i class="bi bi-person-check-fill me-1"></i> ${numRes} Respuestas</small>
+                            <span class="fw-bold font-inter small" style="color:#004b79;">Participar <i class="bi bi-arrow-right ms-1"></i></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>`;
@@ -172,18 +180,69 @@ function renderFormularios() {
     if(window.modalActual.col === 'formularios' && window.modalActual.id) abrirModal(window.modalActual.id, 'formularios');
 }
 
-// SOLUCIÓN: NUEVO DISEÑO TIPO GOOGLE FORMS AL HACER CLIC
+// GENERAR EXCEL (CSV) GLOBALMENTE
+window.exportarExcel = (id) => {
+    const data = window.postsData[id];
+    if (!data || !data.respuestas || data.respuestas.length === 0) return alert("No hay respuestas para exportar.");
+    
+    let csvContent = "\uFEFF"; // UTF-8 BOM para que Excel lea tildes correctamente
+    
+    // Generar Cabeceras
+    let headers = ["ID_Usuario", "Fecha"];
+    data.preguntas.forEach(q => headers.push(`"${q.titulo.replace(/"/g, '""')}"`));
+    csvContent += headers.join(",") + "\n";
+    
+    // Generar Filas
+    data.respuestas.forEach(r => {
+        let row = [`"${r.uid}"`, `"${new Date(r.date).toLocaleString()}"`];
+        data.preguntas.forEach(q => {
+            let ans = r.datos[q.id] || "";
+            if (Array.isArray(ans)) ans = ans.join(" | "); // Si es checkbox
+            row.push(`"${ans.toString().replace(/"/g, '""')}"`);
+        });
+        csvContent += row.join(",") + "\n";
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Resultados_${slugify(data.titulo)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 window.renderModalFormulario = (id, data) => {
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalFormulario'));
     document.getElementById('mf-titulo').innerText = data.titulo; document.getElementById('mf-desc').innerText = data.descripcion;
-    const isOwner = document.body.classList.contains('is-owner'); const uid = getUid();
+    
+    // PONER IMAGEN DE BANNER SI EXISTE
+    const banner = document.getElementById('mf-banner');
+    if(data.imagen) { banner.style.backgroundImage = `url('${data.imagen}')`; } 
+    else { banner.style.backgroundImage = 'none'; }
+    
+    const isOwner = document.body.classList.contains('is-owner'); 
+    
+    const cont = document.getElementById('mf-contenido'); const btn = document.getElementById('btn-enviar-formulario'); const status = document.getElementById('mf-status'); const footerCont = document.getElementById('mf-footer-container');
+
+    // BLOQUEO PARA NO LOGUEADOS (Si no es dueño y no hay sesión real)
+    if (!isOwner && !auth.currentUser) {
+        cont.innerHTML = `<div class="bg-white shadow-sm p-5 text-center mt-4" style="border-radius: 12px; border-top: 5px solid #004b79;"><i class="bi bi-google d-block mb-3" style="font-size: 3.5rem; color:#db4437;"></i><h4 class="fw-bold text-dark font-inter">Acceso Restringido</h4><p class="text-secondary mb-4">Debes iniciar sesión con tu cuenta de Google para poder participar en este debate o encuesta.</p><button class="btn btn-ingresar px-5 py-2 shadow-sm fs-6" onclick="document.getElementById('btn-login').click(); bootstrap.Modal.getInstance(document.getElementById('modalFormulario')).hide();">Ingresar con Google</button></div>`;
+        btn.style.display = 'none'; footerCont.style.display = 'none';
+        return modal.show();
+    }
+    
+    const uid = getUid(); // Ahora sí es seguro usar el UID para responder
     const yaRespondio = data.respuestas && data.respuestas.some(r => r.uid === uid);
     const cerrada = data.fechaLimite && data.fechaLimite < Date.now();
     
-    const cont = document.getElementById('mf-contenido'); const btn = document.getElementById('btn-enviar-formulario'); const status = document.getElementById('mf-status'); const footerCont = document.getElementById('mf-footer-container');
-    
-    if (isOwner) { // PANEL ADMINISTRADOR: VER RESULTADOS
-        status.innerText = `Total respuestas recibidas: ${data.respuestas ? data.respuestas.length : 0}`; btn.style.display = 'none'; footerCont.style.display = 'flex';
+    if (isOwner) { // PANEL ADMINISTRADOR: VER RESULTADOS Y DESCARGAR EXCEL
+        const exportBtnHtml = `<button class="btn btn-sm text-white fw-bold mt-2 shadow-sm" style="background-color: #009668; border-color:#009668;" onclick="exportarExcel('${id}')"><i class="bi bi-file-earmark-excel-fill me-1"></i> Descargar Excel (CSV)</button>`;
+        status.innerHTML = `Total respuestas: <strong class="text-dark">${data.respuestas ? data.respuestas.length : 0}</strong><br>${exportBtnHtml}`; 
+        btn.style.display = 'none'; footerCont.style.display = 'flex';
+        
         if (!data.respuestas || data.respuestas.length === 0) { cont.innerHTML = '<div class="text-muted text-center py-5 bg-white shadow-sm" style="border-radius: 12px;"><i class="bi bi-bar-chart fs-1"></i><p class="mt-3">Aún no hay respuestas para mostrar.</p></div>'; return modal.show(); }
         
         let htmlStats = '';
@@ -207,7 +266,7 @@ window.renderModalFormulario = (id, data) => {
         if (cerrada) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #dc3545;"><i class="bi bi-lock-fill d-block mb-3 text-danger" style="font-size: 3rem;"></i><h4 class="fw-bold text-dark font-inter">Formulario cerrado</h4><p class="text-secondary mb-0">El tiempo para participar en esta encuesta ha terminado.</p></div>'; return modal.show(); }
         if (yaRespondio) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">Respuestas Registradas</h4><p class="text-secondary mb-0">Ya hemos recibido tu información. ¡Muchas gracias por participar!</p></div>'; return modal.show(); }
         
-        status.innerText = 'Tus datos son completamente anónimos.'; btn.style.display = 'block'; footerCont.style.display = 'flex';
+        status.innerText = 'Tus datos están protegidos.'; btn.style.display = 'block'; footerCont.style.display = 'flex';
         let hForm = '<form id="form-responder">';
         data.preguntas.forEach((q, idx) => {
             hForm += `<div class="mb-4 bg-white p-4 p-md-5 shadow-sm" style="border-radius: 12px; border-left: 5px solid #004b79;">
@@ -233,7 +292,7 @@ window.renderModalFormulario = (id, data) => {
                 let d = snap.data(); if(!d.respuestas) d.respuestas = [];
                 d.respuestas.push({ uid: uid, datos: ans, date: Date.now() });
                 await updateDoc(ref, { respuestas: d.respuestas });
-                cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center mt-4" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">¡Respuestas Enviadas!</h4><p class="text-secondary mb-0">La información ha sido guardada correctamente en el sistema.</p></div>'; btn.style.display = 'none'; status.innerText = 'Completado.';
+                cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center mt-4" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">¡Respuestas Enviadas!</h4><p class="text-secondary mb-0">La información ha sido guardada correctamente en el sistema.</p></div>'; btn.style.display = 'none'; status.innerHTML = 'Completado.';
             }
         };
         modal.show();
