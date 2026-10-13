@@ -1,12 +1,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, updateDoc, deleteDoc, increment } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1" });
 const auth = getAuth(app); const db = getFirestore(app);
 
 window.postsData = {}; window.editandoId = null; window.modalActual = { id: null, col: null };
 let progress = 0; let isFirstLoad = true;
+let currentTab = 'columnas'; let userReputacion = 0; let reqReputacion = 15; let userSub = null;
+
 const progBar = document.getElementById('splash-progress'); const splash = document.getElementById('splash-screen');
 const splashInterval = setInterval(() => { progress += Math.random() * 15 + 5; if(progress > 85) progress = 85; if(progBar) progBar.style.width = progress + '%'; }, 200);
 
@@ -21,9 +23,41 @@ const getUid = () => auth.currentUser ? auth.currentUser.uid : localStorage.getI
 document.getElementById('btn-login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
 document.getElementById('btn-logout').onclick = () => signOut(auth);
 
+function updateReputationVisibility() {
+    const repCont = document.getElementById('reputacion-container');
+    if (auth.currentUser && currentTab === 'ensayos') {
+        repCont.classList.remove('d-none');
+        repCont.classList.add('d-flex');
+        setTimeout(() => repCont.style.opacity = '1', 10);
+    } else {
+        repCont.style.opacity = '0';
+        setTimeout(() => { repCont.classList.add('d-none'); repCont.classList.remove('d-flex'); }, 300);
+    }
+}
+
 onAuthStateChanged(auth, async (u) => {
-    document.getElementById('btn-login').classList.toggle('d-none', !!u); document.getElementById('btn-logout').classList.toggle('d-none', !u); document.body.classList.remove('is-owner');
-    if(u) { const d = await getDoc(doc(db, "usuarios", u.uid)); if(d.exists() && d.data().owner) { document.body.classList.add('is-owner'); } }
+    document.getElementById('btn-login').classList.toggle('d-none', !!u); document.getElementById('btn-logout').classList.toggle('d-none', !u); 
+    document.body.classList.remove('is-owner');
+    document.querySelectorAll('.auth-only').forEach(el => el.classList.toggle('d-none', !u));
+    
+    if(userSub) userSub();
+    
+    if(u) { 
+        const ref = doc(db, "usuarios", u.uid);
+        userSub = onSnapshot(ref, (d) => {
+            if(d.exists()) {
+                if(d.data().owner) document.body.classList.add('is-owner');
+                userReputacion = d.data().reputacion || 0;
+            } else {
+                setDoc(ref, { nombre: u.displayName, email: u.email, reputacion: 0 });
+                userReputacion = 0;
+            }
+            document.getElementById('user-reputacion').innerText = userReputacion;
+        });
+    } else {
+        userReputacion = 0;
+    }
+    updateReputationVisibility();
 });
 
 window.borrarPost = async (col, id) => { if(confirm("¿Eliminar publicación?")) await deleteDoc(doc(db, col, id)); };
@@ -59,7 +93,18 @@ const compressImg = (file) => new Promise((res) => { const reader = new FileRead
 window.cancelarEdicion = () => { window.editandoId = null; document.querySelectorAll('input:not([type="color"]), textarea').forEach(i => i.value = ''); if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(''); document.getElementById('not-principal').checked = false; document.getElementById('not-form-title').innerText = "Editor de Columnas"; bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide(); };
 onSnapshot(doc(db, "config", "sidebar"), (s) => { if(s.exists()){ const d = s.data(); if(d.t) document.getElementById('sb-titulo').innerText = d.t; if(d.desc) document.getElementById('sb-desc').innerText = d.desc; } }); window.editarSidebar = async () => { const t = prompt("Título:", document.getElementById('sb-titulo').innerText) || document.getElementById('sb-titulo').innerText; const desc = prompt("Descripción:", document.getElementById('sb-desc').innerText) || document.getElementById('sb-desc').innerText; await setDoc(doc(db, "config", "sidebar"), {t, desc}, {merge:true}); };
 onSnapshot(doc(db, "config", "footer"), (s) => { if(s.exists()){ const d = s.data(); if(d.ubicacion) document.getElementById('f-ubicacion').innerHTML = d.ubicacion.replace(/\n/g, "<br>"); if(d.contacto) document.getElementById('f-contacto').innerHTML = d.contacto.replace(/\n/g, "<br>"); if(d.sobre) document.getElementById('f-sobre').innerHTML = d.sobre.replace(/\n/g, "<br>"); } }); window.editarFooter = async () => { const u = prompt("Ubicación (Usa Enter para saltos de línea):", document.getElementById('f-ubicacion').innerText); const c = prompt("Contacto:", document.getElementById('f-contacto').innerText); const s = prompt("Sobre la Universidad:", document.getElementById('f-sobre').innerText); if(u && c && s) await setDoc(doc(db, "config", "footer"), {ubicacion: u, contacto: c, sobre: s}, {merge:true}); };
-document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => { btn.addEventListener('shown.bs.tab', (e) => { const target = e.target.getAttribute('data-bs-target'); document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(b => b.classList.remove('active')); document.querySelectorAll(`button[data-bs-target="${target}"]`).forEach(tBtn => tBtn.classList.add('active')); window.scrollTo({ top: 0, behavior: 'smooth' }); }); });
+
+// Escuchar cambios de Tabs
+document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => { 
+    btn.addEventListener('shown.bs.tab', (e) => { 
+        const target = e.target.getAttribute('data-bs-target'); 
+        currentTab = target.replace('#', '');
+        document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(b => b.classList.remove('active')); 
+        document.querySelectorAll(`button[data-bs-target="${target}"]`).forEach(tBtn => tBtn.classList.add('active')); 
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+        updateReputationVisibility();
+    }); 
+});
 
 /* NOTICIAS & ARTÍCULOS */
 let noticiasData = []; let qBuscar = ''; let ordDesc = true; document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); }); document.getElementById('btn-ordenar').addEventListener('click', () => { ordDesc = !ordDesc; document.getElementById('btn-ordenar').innerText = ordDesc ? 'Ordenar: Recientes ↓' : 'Ordenar: Antiguos ↑'; renderNoticias(); }); document.getElementById('btn-pub-noticia').onclick = async () => { const titulo = document.getElementById('not-titulo').value; if(!titulo) return alert("Falta el titular."); const etiquetas = document.getElementById('not-tags').value ? document.getElementById('not-tags').value.split(',').map(t=>t.trim()).filter(Boolean) : ['Opinión']; let imgFinal = ''; const imgFile = document.getElementById('not-imagen').files[0]; if (imgFile) imgFinal = await compressImg(imgFile); else if (window.editandoId && window.postsData[window.editandoId].imagen) imgFinal = window.postsData[window.editandoId].imagen; const editorContent = tinymce.get('editor-noticias').getContent(); const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: document.getElementById('not-principal').checked, contenido: editorContent }; if (window.editandoId) await updateDoc(doc(db, "noticias", window.editandoId), data); else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "noticias"), data); } cancelarEdicion(); }; onSnapshot(collection(db, "noticias"), (snap) => { noticiasData = []; snap.forEach(d => { noticiasData.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'noticias'); }); renderNoticias(); if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); if(isFirstLoad) { isFirstLoad = false; clearInterval(splashInterval); if(progBar) progBar.style.width = '100%'; setTimeout(() => { if(splash && splash.parentNode) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); } }, 600); } });
@@ -70,11 +115,35 @@ onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) 
 window.editarArt = (id) => { const d = window.postsData[id]; document.getElementById('art-titulo').value = d.titulo; document.getElementById('art-link').value = d.link; document.getElementById('art-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('art-color').value = d.colorTag || '#004b79'; document.getElementById('art-resumen').value = d.resumen; window.editandoId = id; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colArticulo')).show(); window.scrollTo(0,0); };
 
 /* =========================================================================
-   SISTEMA DE FORMULARIOS: OPCIONES GOOGLE FORMS, IMÁGENES Y EXCEL ORDENADO
+   SISTEMA DE FORMULARIOS & REPUTACION
 ========================================================================= */
-let numPreguntasForm = 0;
 
-// Preview rápido de imagen en el formulario sin subir aún
+// Traer la reputación requerida desde Firebase
+onSnapshot(doc(db, "config", "reputacion"), (s) => {
+    if(s.exists() && s.data().requerida !== undefined) {
+        reqReputacion = s.data().requerida;
+    }
+});
+
+// Botón "Crear Encuesta" (Validación de Reputación)
+document.getElementById('btn-iniciar-crear-form').onclick = () => {
+    const isOwner = document.body.classList.contains('is-owner');
+    if (!isOwner && userReputacion < reqReputacion) {
+        alert(`💎 Necesitas al menos ${reqReputacion} de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion}.\n\n¡Gana +5 de reputación respondiendo otras encuestas de la comunidad!`);
+        return;
+    }
+    bootstrap.Collapse.getOrCreateInstance(document.getElementById('colFormulario')).toggle();
+};
+
+window.editarReqReputacion = async () => {
+    const val = prompt("¿Cuántos puntos de reputación se necesitan para crear una encuesta?", reqReputacion);
+    if(val !== null && !isNaN(parseInt(val))) {
+        await setDoc(doc(db, "config", "reputacion"), { requerida: parseInt(val) }, { merge: true });
+        alert("Configuración de reputación actualizada.");
+    }
+};
+
+let numPreguntasForm = 0;
 window.prevQImg = (input) => {
     if(input.files && input.files[0]){
         let reader = new FileReader();
@@ -151,7 +220,6 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
     let imgFinal = ''; const imgFile = document.getElementById('form-imagen').files[0]; 
     if (imgFile) imgFinal = await compressImg(imgFile);
 
-    // Procesamiento asíncrono para incluir posibles imágenes de cada pregunta
     let preguntas = [];
     const blocks = document.querySelectorAll('.builder-q-block');
     for (let idx = 0; idx < blocks.length; idx++) {
@@ -178,14 +246,13 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
     
     if(preguntas.length === 0) return alert("Debes agregar al menos una pregunta válida.");
     
-    // Cambiar estado a guardando visualmente
     const btnPub = document.getElementById('btn-pub-formulario');
     const oldText = btnPub.innerHTML;
     btnPub.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Publicando...';
     btnPub.disabled = true;
 
     try {
-        await addDoc(collection(db, "formularios"), { titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas, respuestas: [], fecha: serverTimestamp() });
+        await addDoc(collection(db, "formularios"), { titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas, respuestas: [], fecha: serverTimestamp(), autorId: auth.currentUser.uid });
         document.getElementById('form-titulo').value = ''; document.getElementById('form-desc').value = ''; document.getElementById('form-fecha').value = ''; document.getElementById('form-imagen').value = ''; document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; bootstrap.Collapse.getInstance(document.getElementById('colFormulario'))?.hide();
         alert("¡Encuesta publicada y activada con éxito!");
     } catch(e) { 
@@ -245,30 +312,23 @@ function renderFormularios() {
     if(window.modalActual.col === 'formularios' && window.modalActual.id) abrirModal(window.modalActual.id, 'formularios');
 }
 
-// ---------------- EXCEL: FORMATO DE COLUMNAS CORRECTO PARA LATAM (;) Y SOLO CORREOS ----------------
 window.exportarExcel = (id) => {
     const data = window.postsData[id];
     if (!data || !data.respuestas || data.respuestas.length === 0) return alert("No hay respuestas para exportar.");
     
-    // BOM UTF-8 (Ayuda a Excel a detectar acentos y tildes)
     let csvContent = "\uFEFF"; 
-    
-    // Generar Cabeceras - Utilizamos Punto y Coma (;) que es el separador nativo para Excel en Perú/LatAm
     let headers = ["Marca temporal", "Dirección de correo electrónico"];
     data.preguntas.forEach(q => headers.push(`"${q.titulo.replace(/"/g, '""')}"`));
     csvContent += headers.join(";") + "\n";
     
-    // Generar Filas
     data.respuestas.forEach(r => {
         const fDate = r.date ? new Date(r.date).toLocaleString('es-PE') : "";
         const fMail = r.email || "No registrado";
-        
         let row = [`"${fDate}"`, `"${fMail}"`];
         
         data.preguntas.forEach(q => {
             let ans = r.datos[q.id] || "";
             if (Array.isArray(ans)) ans = ans.join(", ");
-            // Evitar que saltos de línea internos rompan la fila de Excel
             let safeAns = ans.toString().replace(/"/g, '""').replace(/\r?\n/g, " "); 
             row.push(`"${safeAns}"`);
         });
@@ -279,7 +339,6 @@ window.exportarExcel = (id) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    // Descargar como CSV pero formateado perfectamente para celdas
     link.setAttribute("download", `Resultados_${slugify(data.titulo)}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
@@ -343,7 +402,7 @@ window.renderModalFormulario = (id, data) => {
         if (cerrada) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #dc3545;"><i class="bi bi-lock-fill d-block mb-3 text-danger" style="font-size: 3rem;"></i><h4 class="fw-bold text-dark font-inter">Formulario cerrado</h4><p class="text-secondary mb-0">El tiempo para participar en esta encuesta ha terminado.</p></div>'; return modal.show(); }
         if (yaRespondio) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">Respuestas Registradas</h4><p class="text-secondary mb-0">Ya hemos recibido tu información. ¡Muchas gracias por participar!</p></div>'; return modal.show(); }
         
-        status.innerText = 'Tu correo será registrado al enviar.'; btn.style.display = 'block'; footerCont.style.display = 'flex';
+        status.innerHTML = '💎 Ganarás <strong class="text-success">+5</strong> Reputación.'; btn.style.display = 'block'; footerCont.style.display = 'flex';
         let hForm = '<form id="form-responder">';
         
         data.preguntas.forEach((q, idx) => {
@@ -355,24 +414,11 @@ window.renderModalFormulario = (id, data) => {
                         <h5 class="fw-bold text-dark mb-3 font-inter" style="font-size: 1.15rem;">${idx + 1}. ${q.titulo}${reqMark}</h5>
                         ${imgHtml}`;
             
-            if (q.tipo === 'text') { 
-                hForm += `<input type="text" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input" name="${q.id}" placeholder="Tu respuesta" ${reqAttr}>`; 
-            }
-            else if (q.tipo === 'textarea') { 
-                hForm += `<textarea class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input" name="${q.id}" rows="3" placeholder="Tu respuesta" ${reqAttr}></textarea>`; 
-            }
-            else if (q.tipo === 'radio') { 
-                q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6"><input class="form-check-input border-secondary" type="radio" name="${q.id}" value="${escapeHTML(o)}" id="${q.id}_${i}" ${reqAttr}><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); 
-            }
-            else if (q.tipo === 'checkbox') { 
-                // El required en checkbox array es manejado manualmente en JS
-                q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6"><input class="form-check-input border-secondary" type="checkbox" name="${q.id}[]" value="${escapeHTML(o)}" id="${q.id}_${i}"><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); 
-            }
-            else if (q.tipo === 'select') { 
-                hForm += `<select class="form-select bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter text-dark py-2 px-3 gform-input w-auto" name="${q.id}" ${reqAttr}><option value="">Elegir</option>`; 
-                q.opciones.forEach(o => { hForm += `<option value="${escapeHTML(o)}">${escapeHTML(o)}</option>`; }); 
-                hForm += `</select>`; 
-            }
+            if (q.tipo === 'text') { hForm += `<input type="text" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input" name="${q.id}" placeholder="Tu respuesta" ${reqAttr}>`; }
+            else if (q.tipo === 'textarea') { hForm += `<textarea class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input" name="${q.id}" rows="3" placeholder="Tu respuesta" ${reqAttr}></textarea>`; }
+            else if (q.tipo === 'radio') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6"><input class="form-check-input border-secondary" type="radio" name="${q.id}" value="${escapeHTML(o)}" id="${q.id}_${i}" ${reqAttr}><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
+            else if (q.tipo === 'checkbox') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6"><input class="form-check-input border-secondary" type="checkbox" name="${q.id}[]" value="${escapeHTML(o)}" id="${q.id}_${i}"><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
+            else if (q.tipo === 'select') { hForm += `<select class="form-select bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter text-dark py-2 px-3 gform-input w-auto" name="${q.id}" ${reqAttr}><option value="">Elegir</option>`; q.opciones.forEach(o => { hForm += `<option value="${escapeHTML(o)}">${escapeHTML(o)}</option>`; }); hForm += `</select>`; }
             else if (q.tipo === 'scale') { 
                 hForm += `<div class="d-flex align-items-center gap-2 gap-md-4 py-3 overflow-auto">
                             <span class="text-muted small fw-semibold">1</span>`;
@@ -384,19 +430,13 @@ window.renderModalFormulario = (id, data) => {
                 }
                 hForm += `<span class="text-muted small fw-semibold">5</span></div>`;
             }
-            else if (q.tipo === 'date') { 
-                hForm += `<input type="date" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 w-auto gform-input" name="${q.id}" ${reqAttr}>`; 
-            }
-            else if (q.tipo === 'time') { 
-                hForm += `<input type="time" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 w-auto gform-input" name="${q.id}" ${reqAttr}>`; 
-            }
+            else if (q.tipo === 'date') { hForm += `<input type="date" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 w-auto gform-input" name="${q.id}" ${reqAttr}>`; }
+            else if (q.tipo === 'time') { hForm += `<input type="time" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 w-auto gform-input" name="${q.id}" ${reqAttr}>`; }
             hForm += `</div>`;
         }); hForm += '</form>'; cont.innerHTML = hForm;
         
         btn.onclick = async () => {
             const frm = document.getElementById('form-responder'); 
-            
-            // Validar HTML5 required fields
             if (!frm.reportValidity()) return;
             
             const fd = new FormData(frm); let ans = {}; let isComplete = true;
@@ -421,18 +461,22 @@ window.renderModalFormulario = (id, data) => {
             const ref = doc(db, "formularios", id); const snap = await getDoc(ref);
             if(snap.exists()) {
                 let d = snap.data(); if(!d.respuestas) d.respuestas = [];
-                
                 const uEmail = auth.currentUser ? auth.currentUser.email || "Sin correo" : "Sin correo";
                 
-                d.respuestas.push({ 
-                    uid: uid, 
-                    email: uEmail,
-                    datos: ans, 
-                    date: Date.now() 
-                });
+                // SISTEMA DE RECOMPENSA: Dar +5 de reputación al usuario que responde
+                if(auth.currentUser) {
+                    const userRef = doc(db, "usuarios", uid);
+                    const userSnap = await getDoc(userRef);
+                    if (userSnap.exists()) {
+                        await updateDoc(userRef, { reputacion: increment(5) });
+                    }
+                }
                 
+                d.respuestas.push({ uid: uid, email: uEmail, datos: ans, date: Date.now() });
                 await updateDoc(ref, { respuestas: d.respuestas });
-                cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center mt-4" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">¡Respuestas Enviadas!</h4><p class="text-secondary mb-0">La información ha sido guardada correctamente en el sistema.</p></div>'; btn.style.display = 'none'; status.innerHTML = 'Completado.';
+                
+                cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center mt-4" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">¡Respuestas Enviadas!</h4><p class="text-secondary mb-0">Tus respuestas han sido guardadas y has ganado <strong class="text-success">+5</strong> diamantes de reputación. ¡Gracias por participar!</p></div>'; 
+                btn.style.display = 'none'; status.innerHTML = 'Completado.';
             }
         };
         modal.show();
