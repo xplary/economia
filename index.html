@@ -38,9 +38,9 @@
                 <li class="nav-item"><button class="nav-link text-dark px-3 fw-semibold font-inter" data-bs-toggle="pill" data-bs-target="#ensayos">Debates y Encuestas</button></li>
             </ul>
             <div class="d-flex align-items-center">
-                <!-- DIAMANTE DE REPUTACIÓN (Oculto por defecto, se muestra por JS) -->
-                <div id="reputacion-container" class="d-none me-3 align-items-center bg-white px-3 py-1 rounded-pill border shadow-sm" style="transition: opacity 0.3s ease; opacity: 0;">
-                    <i class="bi bi-gem me-2" style="background: linear-gradient(135deg, #009668, #004b79); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.1rem;"></i>
+                <!-- CAFECITO DE REPUTACIÓN -->
+                <div id="reputacion-container" class="d-none me-3 align-items-center bg-white px-3 py-1 rounded-pill border shadow-sm" style="transition: opacity 0.3s ease; opacity: 0;" title="Tu Reputación">
+                    <i class="bi bi-cup-hot-fill me-2" style="background: linear-gradient(135deg, #8B4513, #D2691E); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.2rem;"></i>
                     <span class="fw-bold font-inter text-dark" style="font-size: 0.95rem;" id="user-reputacion">0</span>
                 </div>
                 <button id="btn-login" class="btn btn-ingresar shadow-sm">Ingresar <i class="bi bi-arrow-right ms-1"></i></button>
@@ -133,13 +133,13 @@
 
             <!-- DEBATES Y ENCUESTAS -->
             <div class="tab-pane fade" id="ensayos">
-                <!-- BOTÓN SUTIL A LA IZQUIERDA (Visible para todos los logueados) -->
-                <div class="auth-only d-none mb-4 text-start">
-                    <button id="btn-iniciar-crear-form" class="btn btn-sm bg-white border rounded-pill shadow-sm px-4 py-2 fw-bold font-inter" style="color: #004b79;">
-                        <i class="bi bi-ui-checks-grid me-1 text-primary"></i> Crear Debate o Encuesta
+                <!-- BOTÓN SUTIL CENTRADO -->
+                <div class="auth-only d-none mb-4 text-center">
+                    <button id="btn-iniciar-crear-form" class="btn btn-sm bg-white border rounded-pill shadow-sm px-4 py-2 fw-bold font-inter d-inline-flex align-items-center" style="color: #004b79;">
+                        <i class="bi bi-ui-checks-grid me-2 text-primary fs-6"></i> Crear Debate o Encuesta
                     </button>
                     <!-- Engranaje solo para dueños -->
-                    <button class="btn btn-sm btn-light border admin-only-inline ms-2 rounded-pill shadow-sm" onclick="editarReqReputacion()" title="Configurar Reputación Requerida">
+                    <button class="btn btn-sm btn-light border admin-only-inline ms-2 rounded-pill shadow-sm d-inline-flex align-items-center" onclick="editarReqReputacion()" title="Configurar Reputación Requerida" style="padding: 0.4rem 0.6rem;">
                         <i class="bi bi-gear-fill text-muted"></i>
                     </button>
                     

@@ -129,7 +129,7 @@ onSnapshot(doc(db, "config", "reputacion"), (s) => {
 document.getElementById('btn-iniciar-crear-form').onclick = () => {
     const isOwner = document.body.classList.contains('is-owner');
     if (!isOwner && userReputacion < reqReputacion) {
-        alert(`💎 Necesitas al menos ${reqReputacion} de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion}.\n\n¡Gana +5 de reputación respondiendo otras encuestas de la comunidad!`);
+        alert(`☕ Necesitas al menos ${reqReputacion} puntos de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion} cafecitos.\n\n¡Gana +5 de reputación aportando tus respuestas a la comunidad!`);
         return;
     }
     bootstrap.Collapse.getOrCreateInstance(document.getElementById('colFormulario')).toggle();
@@ -402,7 +402,7 @@ window.renderModalFormulario = (id, data) => {
         if (cerrada) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #dc3545;"><i class="bi bi-lock-fill d-block mb-3 text-danger" style="font-size: 3rem;"></i><h4 class="fw-bold text-dark font-inter">Formulario cerrado</h4><p class="text-secondary mb-0">El tiempo para participar en esta encuesta ha terminado.</p></div>'; return modal.show(); }
         if (yaRespondio) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">Respuestas Registradas</h4><p class="text-secondary mb-0">Ya hemos recibido tu información. ¡Muchas gracias por participar!</p></div>'; return modal.show(); }
         
-        status.innerHTML = '💎 Ganarás <strong class="text-success">+5</strong> Reputación.'; btn.style.display = 'block'; footerCont.style.display = 'flex';
+        status.innerHTML = '☕ Ganarás <strong class="text-success">+5</strong> de Reputación.'; btn.style.display = 'block'; footerCont.style.display = 'flex';
         let hForm = '<form id="form-responder">';
         
         data.preguntas.forEach((q, idx) => {
@@ -463,7 +463,6 @@ window.renderModalFormulario = (id, data) => {
                 let d = snap.data(); if(!d.respuestas) d.respuestas = [];
                 const uEmail = auth.currentUser ? auth.currentUser.email || "Sin correo" : "Sin correo";
                 
-                // SISTEMA DE RECOMPENSA: Dar +5 de reputación al usuario que responde
                 if(auth.currentUser) {
                     const userRef = doc(db, "usuarios", uid);
                     const userSnap = await getDoc(userRef);
@@ -475,7 +474,7 @@ window.renderModalFormulario = (id, data) => {
                 d.respuestas.push({ uid: uid, email: uEmail, datos: ans, date: Date.now() });
                 await updateDoc(ref, { respuestas: d.respuestas });
                 
-                cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center mt-4" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">¡Respuestas Enviadas!</h4><p class="text-secondary mb-0">Tus respuestas han sido guardadas y has ganado <strong class="text-success">+5</strong> diamantes de reputación. ¡Gracias por participar!</p></div>'; 
+                cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center mt-4" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">¡Respuestas Enviadas!</h4><p class="text-secondary mb-0">Tus respuestas han sido guardadas y has ganado <strong class="text-success">+5</strong> de reputación. ¡Gracias por participar!</p></div>'; 
                 btn.style.display = 'none'; status.innerHTML = 'Completado.';
             }
         };
