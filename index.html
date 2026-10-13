@@ -48,7 +48,7 @@
     <ul class="nav nav-pills nav-justified mobile-nav d-md-none fixed-bottom bg-white shadow-lg m-0 p-0 border-top" style="z-index: 1060;" id="pills-tab-mobile" role="tablist">
         <li class="nav-item" role="presentation"><button class="nav-link active mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#columnas" type="button" role="tab"><i class="bi bi-newspaper fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Opinión</span></button></li>
         <li class="nav-item" role="presentation"><button class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#investigacion" type="button" role="tab"><i class="bi bi-journal-text fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Papers</span></button></li>
-        <li class="nav-item" role="presentation"><button class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#ensayos" type="button" role="tab"><i class="bi bi-chat-square-text fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Debates</span></button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" data-bs-toggle="pill" data-bs-target="#ensayos" type="button" role="tab"><i class="bi bi-ui-checks-grid fs-5 mb-1"></i><span style="font-size: 0.65rem; font-weight: 600;">Encuestas</span></button></li>
     </ul>
 
     <div class="container pb-2 flex-grow-1 position-relative z-1">
@@ -126,66 +126,43 @@
                 <div class="row" id="contenedor-articulos"></div>
             </div>
 
-            <!-- 3. DEBATES Y ENCUESTAS DIVIDIDOS -->
+            <!-- 3. DEBATES Y ENCUESTAS UNIFICADOS (TIPO GOOGLE FORMS) -->
             <div class="tab-pane fade" id="ensayos">
-                <div class="admin-only d-none mb-4">
-                    <div class="d-flex gap-2 mb-3">
-                        <button class="btn btn-primary rounded-pill shadow-sm px-4 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#colEncuesta"><i class="bi bi-chat-quote-fill me-2"></i> Crear Debate</button>
-                        <button class="btn rounded-pill shadow-sm px-4 fw-bold text-white" style="background-color: #009668;" type="button" data-bs-toggle="collapse" data-bs-target="#colFormulario"><i class="bi bi-ui-checks me-2"></i> Crear Encuesta Avanzada</button>
-                    </div>
-
-                    <!-- Creador de Debates (Existente) -->
-                    <div class="collapse mb-4" id="colEncuesta">
-                        <div class="card border-0 shadow rounded-4 p-4 bg-white">
-                            <h5 class="fw-bold text-primary mb-3">Nuevo Debate</h5>
-                            <input type="text" id="enc-pregunta" class="form-control form-control-lg bg-light border-0 mb-3 font-serif fw-bold" placeholder="Pregunta central del debate">
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-12"><textarea id="enc-desc" class="form-control bg-light border-0 font-inter" rows="2" placeholder="Contexto o descripción breve..."></textarea></div>
-                                <div class="col-md-12"><label class="small fw-bold text-muted mb-1">Imagen referencial (Opcional):</label><input type="file" id="enc-imagen" class="form-control bg-light border-0" accept="image/*"></div>
-                            </div>
-                            <div class="p-3 bg-light rounded-3 mb-3 border">
-                                <label class="fw-bold small text-muted mb-2 font-inter">Opciones de votación:</label>
-                                <div id="opciones-encuesta"><input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input font-inter" placeholder="Opción 1"><input type="text" class="form-control border-0 shadow-sm mb-2 opcion-input font-inter" placeholder="Opción 2"></div>
-                                <button id="btn-add-opcion" class="btn btn-sm btn-outline-secondary fw-bold rounded-pill px-3 mt-1">+ Añadir otra opción</button>
-                            </div>
-                            <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="enc-ocultar-pct"><label class="form-check-label fw-bold text-primary small">Ocultar porcentajes al público</label></div>
-                            <div class="text-end"><button id="btn-pub-encuesta" class="btn btn-success px-5 rounded-pill fw-bold" style="background-color: #009668; border-color:#009668;">Activar Debate</button></div>
-                        </div>
-                    </div>
-
-                    <!-- Creador de Encuestas Avanzadas (NUEVO) -->
-                    <div class="collapse mb-4" id="colFormulario">
-                        <div class="card border-0 shadow rounded-4 p-4 bg-white">
-                            <h5 class="fw-bold mb-3" style="color: #009668;">Nueva Encuesta Avanzada</h5>
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-8"><input type="text" id="form-titulo" class="form-control form-control-lg bg-light border-0 font-serif fw-bold" placeholder="Título de la Encuesta"></div>
-                                <div class="col-md-4">
+                <div class="admin-only d-none mb-5 text-center">
+                    <button class="btn rounded-pill shadow-lg px-5 py-3 fw-bold text-white fs-5" style="background-color: #009668;" type="button" data-bs-toggle="collapse" data-bs-target="#colFormulario"><i class="bi bi-ui-checks-grid me-2"></i> Crear Debate o Encuesta</button>
+                    
+                    <div class="collapse mt-4 text-start" id="colFormulario">
+                        <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white mx-auto" style="max-width: 800px;">
+                            <h4 class="fw-bold mb-4 font-serif" style="color: #009668;"><i class="bi bi-file-earmark-text-fill me-2"></i> Nuevo Formulario de Debate / Encuesta</h4>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-12"><input type="text" id="form-titulo" class="form-control form-control-lg bg-light border-0 font-serif fw-bold" placeholder="Título Principal de la Encuesta"></div>
+                                <div class="col-md-12"><textarea id="form-desc" class="form-control bg-light border-0 font-inter" rows="2" placeholder="Descripción, contexto o instrucciones para los participantes..."></textarea></div>
+                                <div class="col-md-6">
+                                    <label class="small fw-bold text-muted mb-1">Imagen Referencial (Opcional):</label>
+                                    <input type="file" id="form-imagen" class="form-control bg-light border-0" accept="image/*">
+                                </div>
+                                <div class="col-md-6">
                                     <label class="small fw-bold text-muted mb-1">Fecha Límite (Opcional):</label>
                                     <input type="date" id="form-fecha" class="form-control bg-light border-0">
                                 </div>
-                                <div class="col-12"><textarea id="form-desc" class="form-control bg-light border-0 font-inter" rows="2" placeholder="Descripción e instrucciones..."></textarea></div>
                             </div>
                             
-                            <div id="contenedor-preguntas-builder" class="mb-3"></div>
+                            <div class="bg-light p-4 rounded-4 mb-4 border" style="border-color: #e2e8f0 !important;">
+                                <h6 class="fw-bold text-dark mb-3 font-inter">Preguntas de la Encuesta</h6>
+                                <div id="contenedor-preguntas-builder" class="mb-3"></div>
+                                <button id="btn-add-pregunta-form" class="btn btn-outline-primary fw-bold rounded-pill shadow-sm"><i class="bi bi-plus-circle me-1"></i> Añadir Pregunta</button>
+                            </div>
                             
-                            <button id="btn-add-pregunta-form" class="btn btn-outline-primary fw-bold rounded-pill mb-4"><i class="bi bi-plus-circle me-1"></i> Añadir Pregunta</button>
-                            <div class="text-end border-top pt-3"><button id="btn-pub-formulario" class="btn btn-primary px-5 rounded-pill fw-bold">Publicar Encuesta</button></div>
+                            <div class="text-end border-top pt-4">
+                                <button id="btn-pub-formulario" class="btn btn-success px-5 py-2 rounded-pill fw-bold fs-6 shadow-sm" style="background-color: #009668; border-color:#009668;">Publicar y Activar</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- División en 2 Columnas -->
-                <div class="row g-4">
-                    <!-- IZQUIERDA: ENCUESTAS AVANZADAS -->
-                    <div class="col-lg-6">
-                        <h4 class="fw-bold mb-4 font-serif text-dark border-bottom pb-2" style="color: #009668 !important;"><i class="bi bi-ui-checks me-2"></i> Encuestas</h4>
-                        <div id="contenedor-formularios"></div>
-                    </div>
-                    <!-- DERECHA: DEBATES EXISTENTES -->
-                    <div class="col-lg-6">
-                        <h4 class="fw-bold mb-4 font-serif text-dark border-bottom pb-2" style="color: #004b79 !important;"><i class="bi bi-chat-quote me-2"></i> Debates Abiertos</h4>
-                        <div id="contenedor-encuestas"></div>
-                    </div>
+                <!-- Feed Unificado de Formularios y Encuestas Centrado -->
+                <div class="row">
+                    <div class="col-lg-8 col-md-10 mx-auto" id="contenedor-formularios"></div>
                 </div>
             </div>
         </div>
@@ -209,12 +186,12 @@
         <div class="modal-dialog modal-fullscreen m-0"><div class="modal-content border-0 bg-white rounded-0"><div class="modal-body p-0 d-flex justify-content-center align-items-start" style="padding-top: 5.5rem !important; padding-bottom: 3.5rem !important;"><div class="p-4 p-md-5 position-relative" style="width: 100%; max-width: 900px; min-height: 100vh;"><button type="button" class="btn-close shadow-none position-absolute top-0 end-0 m-4" data-bs-dismiss="modal"></button><div id="mn-tags" class="mb-3 mt-3"></div><h1 id="mn-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2.5rem; line-height: 1.25;"></h1><div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom text-muted small font-inter"><span id="mn-fecha" class="fw-semibold"></span><span id="mn-promedio-estrellas" class="fw-bold fs-6"></span></div><img id="mn-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 550px; object-fit: contain; background: #f8f9fa; display: none;"><div id="mn-contenido" class="contenido-apa mb-5 text-dark" style="font-size: 1.15rem;"></div><h4 class="fw-bold mb-4 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color: #009668;"></i> Comentarios</h4><div class="bg-light p-4 rounded-4 mb-4 border shadow-sm"><div class="d-flex align-items-center mb-3"><span class="text-dark small fw-bold me-3 fs-6 font-inter">Tu calificación:</span><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="1"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="2"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="3"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="4"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="5"></i><span class="text-muted small ms-3 font-inter" id="rating-text-mn"></span></div><textarea id="mn-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión..."></textarea><div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-2 font-inter shadow-sm" id="btn-enviar-comentario-mn">Publicar Comentario</button></div></div><div id="mn-lista-comentarios"></div></div></div></div></div>
     </div>
 
-    <!-- MODAL 2 COLUMNAS (PAPERS Y DEBATES) -->
+    <!-- MODAL PAPERS -->
     <div class="modal fade" id="modalLectura" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
         <div class="modal-dialog modal-fullscreen"><div class="modal-content bg-white"><div class="modal-header border-bottom py-3 px-4 shadow-sm z-1"><div class="d-flex align-items-center w-100 justify-content-between"><div class="d-flex align-items-center"><svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg><span class="fs-4 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span></div><button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button></div></div><div class="modal-body p-0"><div class="row h-100 g-0"><div class="col-lg-7 border-end h-100 overflow-y-auto px-4 py-4 bg-light d-flex flex-column align-items-center justify-content-start" id="modal-left-col"><img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 85vh; object-fit: contain; background-color: #fff; display: none;"><iframe id="modal-iframe" src="" class="w-100 rounded-3 shadow-sm bg-white" style="height: 85vh; border: 1px solid #dee2e6; display: none;"></iframe></div><div class="col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column" id="modal-right-col"><div id="modal-tags" class="mb-2"></div><h2 id="modal-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2rem; line-height: 1.25;"></h2><div class="text-muted small mb-3 pb-3 d-flex justify-content-between align-items-center border-bottom font-inter"><div><span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span><span id="modal-promedio-estrellas" class="fw-bold fs-6"></span></div></div><div id="modal-contenido" class="text-secondary mb-4" style="font-size: 1.1rem; line-height: 1.8;"></div><h5 class="fw-bold mb-3 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color:#009668;"></i> Discusión y Aportes</h5><div class="bg-light p-3 rounded-4 mb-4 border shadow-sm"><div class="d-flex align-items-center mb-3"><span class="text-dark small fw-bold me-3 fs-6 font-inter">Tu calificación:</span><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="1"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="2"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="3"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="4"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="5"></i><span class="text-muted small ms-3 font-inter" id="rating-text-ml"></span></div><textarea id="ml-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="2" placeholder="Escribe tu opinión..."></textarea><div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-1 font-inter shadow-sm" id="btn-enviar-comentario-ml">Publicar</button></div></div><div id="ml-lista-comentarios" class="flex-grow-1 pe-2 comments-scrollbar"></div></div></div></div></div></div>
     </div>
 
-    <!-- NUEVO MODAL ENCUESTA AVANZADA -->
+    <!-- MODAL ENCUESTA / DEBATE AVANZADO -->
     <div class="modal fade" id="modalFormulario" tabindex="-1" aria-hidden="true" style="z-index: 1080;">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 rounded-4 shadow-lg">
@@ -222,13 +199,13 @@
                     <h3 class="fw-bold font-serif mb-0" id="mf-titulo" style="color: #009668;"></h3>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4 bg-light">
-                    <p class="text-muted font-inter mb-4" id="mf-desc" style="font-size: 1.05rem;"></p>
+                <div class="modal-body p-4 p-md-5 bg-light">
+                    <p class="text-muted font-inter mb-4" id="mf-desc" style="font-size: 1.1rem; line-height: 1.6;"></p>
                     <div id="mf-contenido" class="font-inter"></div>
                 </div>
                 <div class="modal-footer border-0 bg-light pt-0 pb-4 px-4 justify-content-between rounded-bottom-4">
                     <span id="mf-status" class="small fw-bold text-muted"></span>
-                    <button type="button" class="btn btn-success px-5 rounded-pill fw-bold shadow-sm" id="btn-enviar-formulario" style="background-color: #009668; border-color:#009668;">Enviar Respuestas</button>
+                    <button type="button" class="btn btn-success px-5 py-2 rounded-pill fw-bold shadow-sm" id="btn-enviar-formulario" style="background-color: #009668; border-color:#009668;">Enviar Respuestas</button>
                 </div>
             </div>
         </div>

@@ -23,7 +23,7 @@ document.getElementById('btn-logout').onclick = () => signOut(auth);
 
 onAuthStateChanged(auth, async (u) => {
     document.getElementById('btn-login').classList.toggle('d-none', !!u); document.getElementById('btn-logout').classList.toggle('d-none', !u); document.body.classList.remove('is-owner');
-    if(u) { const d = await getDoc(doc(db, "usuarios", u.uid)); if(d.exists() && d.data().owner) { document.body.classList.add('is-owner'); renderEncuestas(); renderFormularios(); } }
+    if(u) { const d = await getDoc(doc(db, "usuarios", u.uid)); if(d.exists() && d.data().owner) { document.body.classList.add('is-owner'); renderFormularios(); } }
 });
 
 window.borrarPost = async (col, id) => { if(confirm("¿Eliminar publicación?")) await deleteDoc(doc(db, col, id)); };
@@ -41,17 +41,16 @@ window.borrarComentario = async (cid) => { if(!confirm("¿Borrar comentario?")) 
 window.aprobarComentario = async (cid) => { const ref = doc(db, window.modalActual.col, window.modalActual.id); const snap = await getDoc(ref); if(snap.exists()) { const arr = snap.data().comentarios || []; const index = arr.findIndex(c => c.id === cid); if(index !== -1) { arr[index].aprobado = true; await updateDoc(ref, { comentarios: arr }); } } };
 
 const renderComentarios = (comentarios, containerId) => { const box = document.getElementById(containerId); if(!box) return; const isOwner = document.body.classList.contains('is-owner'); let comsToShow = comentarios || []; if(!isOwner) comsToShow = comsToShow.filter(c => c.aprobado !== false); if(comsToShow.length===0) return box.innerHTML = '<div class="text-center mt-4 text-muted"><i class="bi bi-chat-dots fs-3"></i><p class="mt-2 small">Sé el primero en aportar.</p></div>'; box.innerHTML = comsToShow.map(c => { const starsHTML = `<span class="star-gradient" style="font-size:0.9rem;">${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)}</span>`; const pendingBadge = c.aprobado === false ? `<span class="badge bg-warning text-dark ms-2 fw-semibold" style="font-size:0.65rem;">Pendiente</span>` : ''; const approveBtn = (c.aprobado === false && isOwner) ? `<button class="btn btn-sm btn-success py-0 px-2 ms-2 fw-bold" style="font-size:0.7rem;" onclick="aprobarComentario(${c.id})"><i class="bi bi-check-lg"></i> Aprobar</button>` : ''; return `<div class="mb-4 pb-3 border-bottom"><div class="d-flex justify-content-between align-items-center mb-1"><strong class="font-inter text-dark small">${c.autor} ${pendingBadge}</strong><div>${starsHTML}${approveBtn}<i class="bi bi-trash text-danger ms-2 cursor-pointer admin-only-inline" onclick="borrarComentario(${c.id})"></i></div></div><p class="text-secondary font-inter mb-1" style="font-size: 0.95rem;">${c.texto}</p><div class="text-muted small font-inter text-end" style="font-size: 0.75rem;">${c.date}</div></div>`; }).join(''); };
-const generarHTMLOpcionesEncuesta = (id, data) => { let h = `<div class="mt-3 w-100">`; const isOwner = document.body.classList.contains('is-owner'); const uid = getUid(); const yaVoto = data.votantes && data.votantes.includes(uid); data.opciones.forEach((o, i) => { const pct = data.totalVotos === 0 ? 0 : Math.round((o.votos / data.totalVotos) * 100); const hidePct = data.ocultarPct && !isOwner; const showResults = yaVoto || isOwner; const width = showResults && !hidePct ? pct : 0; const txtPct = hidePct ? '?' : pct; h += `<button class="poll-btn ${yaVoto ? 'voted' : ''}" onclick="votar('${id}', ${i})"><div class="poll-fill" style="width: ${width}%;"></div><div class="poll-content"><span class="poll-text">${escapeHTML(o.texto)}</span>${showResults ? `<span class="poll-pct">${txtPct}%</span>` : ''}</div></button>`; }); return h + `</div>`; };
 const formatEmbedUrl = (url) => { if(!url) return ''; const match = url.match(/\/(?:d|file\/d)\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/); if (match && match[1]) return `https://drive.google.com/file/d/${match[1]}/preview`; return url; };
 
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return; window.modalActual = { id, col };
-    if(col === 'formularios') return renderModalFormulario(id, d); // Novedad para encuestas
+    if(col === 'formularios') return renderModalFormulario(id, d); // Novedad Encuestas
     const tagsHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join('');
     if (col === 'noticias') {
         document.getElementById('mn-titulo').innerText = d.titulo; document.getElementById('mn-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`; document.getElementById('mn-promedio-estrellas').innerHTML = getPromedioStars(d.comentarios); document.getElementById('mn-tags').innerHTML = tagsHTML; const imgEl = document.getElementById('mn-imagen'); if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; } document.getElementById('mn-contenido').innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${escapeHTML(d.resumen||'')}</div>`; renderComentarios(d.comentarios, 'mn-lista-comentarios'); bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNoticia')).show();
     } else {
-        document.getElementById('modal-titulo').innerText = d.titulo || d.pregunta; document.getElementById('modal-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`; document.getElementById('modal-promedio-estrellas').innerHTML = getPromedioStars(d.comentarios); document.getElementById('modal-tags').innerHTML = tagsHTML; const imgEl = document.getElementById('modal-imagen'); const iframeEl = document.getElementById('modal-iframe'); const contEl = document.getElementById('modal-contenido'); const leftCol = document.getElementById('modal-left-col'); const rightCol = document.getElementById('modal-right-col'); let hasLeftContent = false; if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; hasLeftContent = true; } else { imgEl.style.display = 'none'; } if(d.link) { iframeEl.src = formatEmbedUrl(d.link); iframeEl.style.display = 'block'; hasLeftContent = true; } else { iframeEl.style.display = 'none'; iframeEl.src = ''; } if(hasLeftContent) { leftCol.classList.remove('d-none'); leftCol.classList.add('d-flex'); rightCol.className = 'col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column'; rightCol.style.maxWidth = 'none'; } else { leftCol.classList.remove('d-flex'); leftCol.classList.add('d-none'); rightCol.className = 'col-12 h-100 overflow-y-auto bg-white px-4 px-md-5 py-4 py-md-5 d-flex flex-column mx-auto'; rightCol.style.maxWidth = '900px'; } if(col === 'encuestas') contEl.innerHTML = `<p class="mb-4 font-inter text-dark" style="font-size: 1.15rem;">${escapeHTML(d.resumen||'')}</p>` + generarHTMLOpcionesEncuesta(id, d); else contEl.innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${escapeHTML(d.resumen||'')}</div>`; renderComentarios(d.comentarios, 'ml-lista-comentarios'); bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLectura')).show();
+        document.getElementById('modal-titulo').innerText = d.titulo || d.pregunta; document.getElementById('modal-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`; document.getElementById('modal-promedio-estrellas').innerHTML = getPromedioStars(d.comentarios); document.getElementById('modal-tags').innerHTML = tagsHTML; const imgEl = document.getElementById('modal-imagen'); const iframeEl = document.getElementById('modal-iframe'); const contEl = document.getElementById('modal-contenido'); const leftCol = document.getElementById('modal-left-col'); const rightCol = document.getElementById('modal-right-col'); let hasLeftContent = false; if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; hasLeftContent = true; } else { imgEl.style.display = 'none'; } if(d.link) { iframeEl.src = formatEmbedUrl(d.link); iframeEl.style.display = 'block'; hasLeftContent = true; } else { iframeEl.style.display = 'none'; iframeEl.src = ''; } if(hasLeftContent) { leftCol.classList.remove('d-none'); leftCol.classList.add('d-flex'); rightCol.className = 'col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column'; rightCol.style.maxWidth = 'none'; } else { leftCol.classList.remove('d-flex'); leftCol.classList.add('d-none'); rightCol.className = 'col-12 h-100 overflow-y-auto bg-white px-4 px-md-5 py-4 py-md-5 d-flex flex-column mx-auto'; rightCol.style.maxWidth = '900px'; } contEl.innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${escapeHTML(d.resumen||'')}</div>`; renderComentarios(d.comentarios, 'ml-lista-comentarios'); bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLectura')).show();
     }
 };
 
@@ -70,57 +69,55 @@ document.getElementById('btn-pub-articulo').onclick = async () => { const t = do
 onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) => { const cont = document.getElementById('contenedor-articulos'); if(snap.empty) return cont.innerHTML = '<div class="col-12 text-center text-muted font-inter">No hay papers.</div>'; let h = ''; snap.forEach(d => { const data = d.data(); window.postsData[d.id] = data; checkDeepLink(d.id, 'articulos'); const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios); const tHTML = (data.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${data.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join(''); h += `<article class="col-12 mb-5 pb-4 border-bottom border-light-subtle"><div class="row align-items-start"><div class="col-md-2 col-4 cursor-pointer" onclick="abrirModal('${d.id}', 'articulos')"><div class="paper-cover mx-auto rounded-1"><i class="bi bi-file-earmark-pdf-fill text-secondary fs-1"></i><div class="mt-2" style="width: 80%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-1" style="width: 60%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-auto" style="width: 40%; height: 4px; background: #cbd5e1; border-radius: 2px;"></div></div></div><div class="col-md-10 col-8 d-flex flex-column h-100 ps-md-4"><div class="d-flex justify-content-between align-items-start mb-2"><div>${tHTML} <span class="badge bg-secondary ms-1 fw-semibold font-inter" style="letter-spacing: 0.5px;">Acceso Abierto</span></div><div class="text-nowrap ms-3"><i class="bi bi-share-fill text-primary cursor-pointer me-3" onclick="compartir('${d.id}', 'articulos')"></i><i class="bi bi-pencil-fill text-warning me-3 admin-only-inline cursor-pointer" onclick="editarArt('${d.id}')"></i><i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('articulos', '${d.id}')"></i></div></div><a href="javascript:void(0)" onclick="abrirModal('${d.id}', 'articulos')" class="paper-title-link fw-bold font-serif mb-1" style="font-size: 1.45rem;">${d.data().titulo}</a><div class="text-muted small mb-3 font-inter">${data.fecha ? '(Publicado el ' + data.fecha.toDate().toLocaleDateString() + ')' : ''}</div><p class="text-muted mb-3 font-inter text-truncate-3" style="font-size: 1.05rem; line-height: 1.6;">${escapeHTML(data.resumen)}</p><div class="mt-auto d-flex align-items-center"><button class="btn btn-sm text-primary fw-bold font-inter rounded-pill me-3 shadow-sm" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${d.id}', 'articulos')">Leer documento <i class="bi bi-arrow-right ms-1"></i></button><span class="ms-2">${avgStr}</span></div></div></div></article>`; }); cont.innerHTML = h; if(window.modalActual.col === 'articulos' && window.modalActual.id) abrirModal(window.modalActual.id, 'articulos'); });
 window.editarArt = (id) => { const d = window.postsData[id]; document.getElementById('art-titulo').value = d.titulo; document.getElementById('art-link').value = d.link; document.getElementById('art-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('art-color').value = d.colorTag || '#004b79'; document.getElementById('art-resumen').value = d.resumen; window.editandoId = id; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colArticulo')).show(); window.scrollTo(0,0); };
 
-/* DEBATES EXISTENTES */
-document.getElementById('btn-add-opcion').onclick = () => { const i = document.createElement('input'); i.type = 'text'; i.className = 'form-control border-0 shadow-sm mb-2 opcion-input font-inter'; i.placeholder = 'Nueva Opción'; document.getElementById('opciones-encuesta').appendChild(i); };
-document.getElementById('btn-pub-encuesta').onclick = async () => { const p = document.getElementById('enc-pregunta').value; if(!p) return alert("Falta pregunta."); const ocultarPct = document.getElementById('enc-ocultar-pct').checked; let opc = []; document.querySelectorAll('.opcion-input').forEach(i => { if(i.value.trim()) opc.push({ texto: i.value, votos: 0 }); }); if(opc.length < 2) return alert("Mínimo 2 opciones."); let imgFinal = ''; const imgFile = document.getElementById('enc-imagen').files[0]; if (imgFile) imgFinal = await compressImg(imgFile); await addDoc(collection(db, "encuestas"), { pregunta: p, resumen: document.getElementById('enc-desc').value, imagen: imgFinal, opciones: opc, totalVotos: 0, votantes: [], ocultarPct: ocultarPct, fecha: serverTimestamp(), comentarios: [] }); document.getElementById('enc-pregunta').value=''; document.getElementById('enc-desc').value=''; document.getElementById('enc-imagen').value=''; document.querySelectorAll('.opcion-input').forEach(i => i.value=''); document.getElementById('enc-ocultar-pct').checked = false; bootstrap.Collapse.getInstance(document.getElementById('colEncuesta'))?.hide(); };
-let encuestasDataCache = []; onSnapshot(query(collection(db, "encuestas"), orderBy("fecha", "desc")), (snap) => { encuestasDataCache = []; snap.forEach(d => { encuestasDataCache.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'encuestas'); }); renderEncuestas(); });
-function renderEncuestas() { const cont = document.getElementById('contenedor-encuestas'); if(encuestasDataCache.length === 0) return cont.innerHTML = '<div class="text-center text-muted font-inter"><i class="bi bi-chat-square-text fs-3"></i><p>No hay debates activos.</p></div>'; let h = ''; encuestasDataCache.forEach(data => { const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios); const imgHTML = data.imagen ? `<img src="${data.imagen}" class="img-fluid w-100 rounded-4 mb-3 shadow-sm cursor-pointer" style="max-height: 200px; object-fit: contain; background: #f8f9fa;" onclick="abrirModal('${data.id}', 'encuestas')">` : ''; h += `<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" id="encuesta-${data.id}"><div class="card-body p-4"><div class="d-flex justify-content-between align-items-center mb-3"><span class="tag-badge" style="color: #004b79; border-color: #d1d5db;">DEBATE</span><div class="text-nowrap"><i class="bi bi-share-fill text-muted cursor-pointer me-3" onclick="compartir('${data.id}', 'encuestas')"></i><i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('encuestas', '${data.id}')"></i></div></div><h4 class="fw-bold font-inter text-dark mb-2 cursor-pointer" onclick="abrirModal('${data.id}', 'encuestas')">${data.pregunta}</h4><p class="text-muted font-inter mb-3 cursor-pointer small" onclick="abrirModal('${data.id}', 'encuestas')">${escapeHTML(data.resumen||'')}</p>${imgHTML}${generarHTMLOpcionesEncuesta(data.id, data)}<div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center"><small class="text-muted fw-semibold font-inter"><i class="bi bi-people-fill me-1"></i> ${data.totalVotos} votos</small><span class="ms-2">${avgStr}</span></div></div></div>`; }); cont.innerHTML = h; if(window.modalActual.col === 'encuestas' && window.modalActual.id) abrirModal(window.modalActual.id, 'encuestas'); }
-window.votar = async (id, idx) => { const uid = getUid(); const ref = doc(db, "encuestas", id); const snap = await getDoc(ref); if(snap.exists()){ let d = snap.data(); if(!d.votantes) d.votantes = []; if(d.votantes.includes(uid)) return alert("Tu voto ya ha sido registrado."); d.votantes.push(uid); d.opciones[idx].votos++; d.totalVotos++; await updateDoc(ref, { opciones: d.opciones, totalVotos: d.totalVotos, votantes: d.votantes }); } };
-
 /* =========================================================================
-   NUEVO SISTEMA DE ENCUESTAS AVANZADAS (COLECCIÓN: formularios)
+   NUEVO SISTEMA UNIFICADO DE DEBATES Y ENCUESTAS (TIPO GOOGLE FORMS)
 ========================================================================= */
 let numPreguntasForm = 0;
 document.getElementById('btn-add-pregunta-form').onclick = () => {
     numPreguntasForm++;
     const div = document.createElement('div'); div.className = 'builder-q-block'; div.id = `q-block-${numPreguntasForm}`;
     div.innerHTML = `
-        <div class="d-flex justify-content-between mb-2">
-            <input type="text" class="form-control border-0 bg-light fw-bold q-title w-75" placeholder="Título de la Pregunta ${numPreguntasForm}">
-            <button class="btn btn-sm text-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button>
+        <div class="d-flex justify-content-between mb-3 align-items-center">
+            <input type="text" class="form-control fw-bold q-title w-75 font-inter bg-white border" placeholder="Escribe aquí la Pregunta ${numPreguntasForm}">
+            <button class="btn btn-sm text-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash fs-5"></i></button>
         </div>
-        <select class="form-select form-select-sm border-0 bg-light mb-2 w-50 q-type" onchange="toggleQOpts(this)">
-            <option value="radio">Opción Única (Marcar una)</option>
+        <select class="form-select mb-3 w-100 q-type font-inter bg-white border" onchange="toggleQOpts(this)">
+            <option value="radio">Opción Única (Solo una respuesta)</option>
             <option value="checkbox">Casillas (Múltiples respuestas)</option>
-            <option value="text">Respuesta de Texto</option>
+            <option value="select">Menú Desplegable (Lista)</option>
+            <option value="text">Respuesta Corta</option>
+            <option value="textarea">Párrafo (Respuesta larga)</option>
         </select>
-        <input type="text" class="form-control form-control-sm border-0 bg-light q-opts" placeholder="Opciones separadas por coma (Ej: Si, No, Tal vez)">
+        <input type="text" class="form-control q-opts font-inter bg-white border" placeholder="Escribe las opciones separadas por comas (Ej: Sí, No, Tal vez)">
     `;
     document.getElementById('contenedor-preguntas-builder').appendChild(div);
 };
-window.toggleQOpts = (selectEl) => { const inputOpts = selectEl.nextElementSibling; if(selectEl.value === 'text') { inputOpts.style.display = 'none'; } else { inputOpts.style.display = 'block'; } };
+
+window.toggleQOpts = (selectEl) => { const inputOpts = selectEl.nextElementSibling; if(['text', 'textarea'].includes(selectEl.value)) { inputOpts.style.display = 'none'; } else { inputOpts.style.display = 'block'; } };
 
 document.getElementById('btn-pub-formulario').onclick = async () => {
-    const titulo = document.getElementById('form-titulo').value; if(!titulo) return alert("Ponle un título a la encuesta.");
+    const titulo = document.getElementById('form-titulo').value; if(!titulo) return alert("Por favor, asigna un título principal.");
     const descripcion = document.getElementById('form-desc').value;
     const fechaStr = document.getElementById('form-fecha').value;
     let limitMillis = null; if(fechaStr) { limitMillis = new Date(fechaStr + "T23:59:59").getTime(); }
     
+    let imgFinal = ''; const imgFile = document.getElementById('form-imagen').files[0]; if (imgFile) imgFinal = await compressImg(imgFile);
+
     let preguntas = [];
     document.querySelectorAll('.builder-q-block').forEach((block, idx) => {
         const pTitulo = block.querySelector('.q-title').value;
         const pType = block.querySelector('.q-type').value;
         const pOpts = block.querySelector('.q-opts').value;
         if(pTitulo) {
-            let opcionesArr = []; if(pType !== 'text' && pOpts) { opcionesArr = pOpts.split(',').map(s=>s.trim()).filter(Boolean); }
+            let opcionesArr = []; if(['radio', 'checkbox', 'select'].includes(pType) && pOpts) { opcionesArr = pOpts.split(',').map(s=>s.trim()).filter(Boolean); }
             preguntas.push({ id: `pq_${idx}`, titulo: pTitulo, tipo: pType, opciones: opcionesArr });
         }
     });
-    if(preguntas.length === 0) return alert("Agrega al menos una pregunta.");
+    if(preguntas.length === 0) return alert("Debes agregar al menos una pregunta.");
     
-    await addDoc(collection(db, "formularios"), { titulo, descripcion, fechaLimite: limitMillis, preguntas, respuestas: [], fecha: serverTimestamp() });
+    await addDoc(collection(db, "formularios"), { titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas, respuestas: [], fecha: serverTimestamp() });
     
-    document.getElementById('form-titulo').value = ''; document.getElementById('form-desc').value = ''; document.getElementById('form-fecha').value = ''; document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; bootstrap.Collapse.getInstance(document.getElementById('colFormulario'))?.hide();
+    document.getElementById('form-titulo').value = ''; document.getElementById('form-desc').value = ''; document.getElementById('form-fecha').value = ''; document.getElementById('form-imagen').value = ''; document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; bootstrap.Collapse.getInstance(document.getElementById('colFormulario'))?.hide();
 };
 
 let formulariosDataCache = [];
@@ -130,14 +127,38 @@ onSnapshot(query(collection(db, "formularios"), orderBy("fecha", "desc")), (snap
 });
 
 function renderFormularios() {
-    const cont = document.getElementById('contenedor-formularios'); if(formulariosDataCache.length === 0) return cont.innerHTML = '<div class="text-center text-muted font-inter"><i class="bi bi-ui-checks fs-3"></i><p>No hay encuestas avanzadas.</p></div>';
+    const cont = document.getElementById('contenedor-formularios'); 
+    if(formulariosDataCache.length === 0) return cont.innerHTML = '<div class="text-center text-muted font-inter mt-5"><i class="bi bi-ui-checks-grid fs-1"></i><p class="mt-3">No hay debates o encuestas activos.</p></div>';
+    
     let h = ''; const now = Date.now();
     formulariosDataCache.forEach(data => {
         const cerrada = data.fechaLimite && data.fechaLimite < now;
-        const statusBadge = cerrada ? `<span class="badge bg-danger rounded-pill">Finalizada</span>` : `<span class="badge bg-success rounded-pill">Activa</span>`;
+        const statusBadge = cerrada ? `<span class="badge bg-danger rounded-pill fw-semibold">Finalizada</span>` : `<span class="badge bg-success rounded-pill fw-semibold">Activa</span>`;
         const numRes = data.respuestas ? data.respuestas.length : 0;
-        h += `<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white form-survey-card cursor-pointer" onclick="abrirModal('${data.id}', 'formularios')"><div class="card-body p-4"><div class="d-flex justify-content-between align-items-center mb-2"><div>${statusBadge}</div><div class="text-nowrap"><i class="bi bi-share-fill text-muted me-3" onclick="event.stopPropagation(); compartir('${data.id}', 'formularios')"></i><i class="bi bi-trash-fill text-danger admin-only-inline" onclick="event.stopPropagation(); borrarPost('formularios', '${data.id}')"></i></div></div><h4 class="fw-bold font-inter text-dark mb-2">${data.titulo}</h4><p class="text-muted font-inter mb-3 small text-truncate-2">${escapeHTML(data.descripcion||'')}</p><div class="border-top pt-3 d-flex justify-content-between align-items-center"><small class="text-muted fw-semibold font-inter"><i class="bi bi-person-check-fill me-1"></i> ${numRes} Respuestas</small><span class="text-primary fw-bold small">Abrir <i class="bi bi-arrow-right"></i></span></div></div></div>`;
-    }); cont.innerHTML = h; if(window.modalActual.col === 'formularios' && window.modalActual.id) abrirModal(window.modalActual.id, 'formularios');
+        const imgHTML = data.imagen ? `<img src="${data.imagen}" class="img-fluid w-100 rounded-4 mb-3 shadow-sm" style="max-height: 250px; object-fit: contain; background: #f8f9fa;">` : '';
+        
+        h += `<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white form-survey-card cursor-pointer" onclick="abrirModal('${data.id}', 'formularios')">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="tag-badge" style="color: #009668; border-color: #d1d5db;">DEBATE / ENCUESTA</span>
+                    <div class="text-nowrap d-flex align-items-center">
+                        ${statusBadge}
+                        <i class="bi bi-share-fill text-muted ms-3 me-3 fs-5" onclick="event.stopPropagation(); compartir('${data.id}', 'formularios')"></i>
+                        <i class="bi bi-trash-fill text-danger admin-only-inline fs-5" onclick="event.stopPropagation(); borrarPost('formularios', '${data.id}')"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold font-inter text-dark mb-2">${data.titulo}</h3>
+                <p class="text-muted font-inter mb-4" style="font-size: 1.05rem;">${escapeHTML(data.descripcion||'')}</p>
+                ${imgHTML}
+                <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                    <small class="text-muted fw-semibold font-inter"><i class="bi bi-person-check-fill me-1"></i> ${numRes} Participantes</small>
+                    <button class="btn btn-sm text-primary fw-bold font-inter rounded-pill px-3 shadow-sm" style="border: 1px solid #004b79; color:#004b79!important;">Participar <i class="bi bi-arrow-right ms-1"></i></button>
+                </div>
+            </div>
+        </div>`;
+    }); 
+    cont.innerHTML = h; 
+    if(window.modalActual.col === 'formularios' && window.modalActual.id) abrirModal(window.modalActual.id, 'formularios');
 }
 
 window.renderModalFormulario = (id, data) => {
@@ -149,52 +170,54 @@ window.renderModalFormulario = (id, data) => {
     
     const cont = document.getElementById('mf-contenido'); const btn = document.getElementById('btn-enviar-formulario'); const status = document.getElementById('mf-status');
     
-    if (isOwner) { // VISTA ADMIN: ESTADÍSTICAS
+    if (isOwner) { // PANEL ADMINISTRADOR: VER RESULTADOS
         status.innerText = `Total respuestas: ${data.respuestas ? data.respuestas.length : 0}`; btn.style.display = 'none';
-        if (!data.respuestas || data.respuestas.length === 0) { cont.innerHTML = '<div class="text-muted text-center py-4">Aún no hay respuestas.</div>'; return modal.show(); }
+        if (!data.respuestas || data.respuestas.length === 0) { cont.innerHTML = '<div class="text-muted text-center py-4"><i class="bi bi-bar-chart fs-1"></i><p>Aún no hay respuestas.</p></div>'; return modal.show(); }
         let htmlStats = '';
         data.preguntas.forEach(q => {
-            htmlStats += `<div class="mb-4 bg-white p-3 rounded-3 shadow-sm"><h6 class="fw-bold text-dark">${q.titulo}</h6>`;
-            if (q.tipo === 'text') {
-                htmlStats += `<div class="bg-light p-2 rounded text-muted small" style="max-height:100px; overflow-y:auto;">`;
-                data.respuestas.forEach(r => { if(r.datos[q.id]) htmlStats += `• ${escapeHTML(r.datos[q.id])}<br>`; });
+            htmlStats += `<div class="mb-4 bg-white p-4 rounded-4 border shadow-sm"><h5 class="fw-bold text-dark mb-3 font-inter">${q.titulo}</h5>`;
+            if (['text', 'textarea'].includes(q.tipo)) {
+                htmlStats += `<div class="bg-light p-3 rounded-3 text-muted" style="max-height:200px; overflow-y:auto;">`;
+                data.respuestas.forEach(r => { if(r.datos[q.id]) htmlStats += `<div class="border-bottom py-2"><i class="bi bi-chat-right-quote-fill me-2 text-primary opacity-50"></i> ${escapeHTML(r.datos[q.id])}</div>`; });
                 htmlStats += `</div>`;
             } else {
                 let counts = {}; q.opciones.forEach(o => counts[o] = 0);
                 data.respuestas.forEach(r => { let ans = r.datos[q.id]; if(ans) { if(Array.isArray(ans)) ans.forEach(a => { if(counts[a]!==undefined) counts[a]++ }); else if(counts[ans]!==undefined) counts[ans]++; } });
                 const totalQRes = data.respuestas.length;
-                q.opciones.forEach(o => { const pct = totalQRes===0?0:Math.round((counts[o]/totalQRes)*100); htmlStats += `<div class="mt-2 small fw-semibold d-flex justify-content-between"><span>${o}</span><span>${counts[o]} (${pct}%)</span></div><div class="q-result-bar"><div class="q-result-fill" style="width:${pct}%"></div></div>`; });
+                q.opciones.forEach(o => { const pct = totalQRes===0?0:Math.round((counts[o]/totalQRes)*100); htmlStats += `<div class="mt-3 small fw-semibold d-flex justify-content-between font-inter text-secondary"><span>${o}</span><span>${counts[o]} votos (${pct}%)</span></div><div class="q-result-bar"><div class="q-result-fill" style="width:${pct}%"></div></div>`; });
             } htmlStats += `</div>`;
         }); cont.innerHTML = htmlStats; modal.show();
-    } else { // VISTA USUARIO: FORMULARIO
-        if (cerrada) { status.innerText = 'La encuesta ha finalizado.'; btn.style.display = 'none'; cont.innerHTML = '<div class="alert alert-warning fw-bold">Esta encuesta ya no acepta más respuestas.</div>'; return modal.show(); }
-        if (yaRespondio) { status.innerText = 'Ya participaste.'; btn.style.display = 'none'; cont.innerHTML = '<div class="alert alert-success fw-bold"><i class="bi bi-check-circle me-2"></i> Gracias por enviar tus respuestas.</div>'; return modal.show(); }
+    } else { // VISTA USUARIO: LLENAR FORMULARIO
+        if (cerrada) { status.innerText = 'Este debate/encuesta ha finalizado.'; btn.style.display = 'none'; cont.innerHTML = '<div class="alert alert-warning fw-bold font-inter fs-5 text-center"><i class="bi bi-lock-fill d-block mb-2 fs-1"></i> El tiempo para participar ha terminado.</div>'; return modal.show(); }
+        if (yaRespondio) { status.innerText = 'Participación Registrada.'; btn.style.display = 'none'; cont.innerHTML = '<div class="alert alert-success fw-bold font-inter fs-5 text-center"><i class="bi bi-check-circle-fill d-block mb-2 fs-1"></i> Ya has enviado tus respuestas. ¡Gracias por participar!</div>'; return modal.show(); }
         
-        status.innerText = 'Por favor, responde honestamente.'; btn.style.display = 'block';
+        status.innerText = 'Los datos son anónimos.'; btn.style.display = 'block';
         let hForm = '<form id="form-responder">';
-        data.preguntas.forEach(q => {
-            hForm += `<div class="mb-4 bg-white p-3 rounded-3 border shadow-sm"><label class="fw-bold text-dark mb-2">${q.titulo}</label>`;
-            if (q.tipo === 'text') { hForm += `<input type="text" class="form-control bg-light border-0" name="${q.id}" required>`; }
-            else if (q.tipo === 'radio') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check"><input class="form-check-input" type="radio" name="${q.id}" value="${escapeHTML(o)}" id="${q.id}_${i}" required><label class="form-check-label text-muted" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
-            else if (q.tipo === 'checkbox') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check"><input class="form-check-input" type="checkbox" name="${q.id}[]" value="${escapeHTML(o)}" id="${q.id}_${i}"><label class="form-check-label text-muted" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
+        data.preguntas.forEach((q, idx) => {
+            hForm += `<div class="mb-4 bg-white p-4 rounded-4 border shadow-sm">
+                        <h5 class="fw-bold text-dark mb-3 font-inter">${idx + 1}. ${q.titulo}</h5>`;
+            if (q.tipo === 'text') { hForm += `<input type="text" class="form-control form-control-lg bg-light border-0 font-inter" name="${q.id}" placeholder="Tu respuesta..." required>`; }
+            else if (q.tipo === 'textarea') { hForm += `<textarea class="form-control bg-light border-0 font-inter" name="${q.id}" rows="4" placeholder="Desarrolla tu respuesta..." required></textarea>`; }
+            else if (q.tipo === 'radio') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-2 fs-5"><input class="form-check-input" type="radio" name="${q.id}" value="${escapeHTML(o)}" id="${q.id}_${i}" required><label class="form-check-label text-secondary font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
+            else if (q.tipo === 'checkbox') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-2 fs-5"><input class="form-check-input" type="checkbox" name="${q.id}[]" value="${escapeHTML(o)}" id="${q.id}_${i}"><label class="form-check-label text-secondary font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
+            else if (q.tipo === 'select') { hForm += `<select class="form-select form-select-lg bg-light border-0 font-inter text-secondary" name="${q.id}" required><option value="">Selecciona una opción...</option>`; q.opciones.forEach(o => { hForm += `<option value="${escapeHTML(o)}">${escapeHTML(o)}</option>`; }); hForm += `</select>`; }
             hForm += `</div>`;
         }); hForm += '</form>'; cont.innerHTML = hForm;
         
         btn.onclick = async () => {
-            const frm = document.getElementById('form-responder'); const fd = new FormData(frm); let ans = {};
-            let isComplete = true;
+            const frm = document.getElementById('form-responder'); const fd = new FormData(frm); let ans = {}; let isComplete = true;
             data.preguntas.forEach(q => {
                 if(q.tipo === 'checkbox') { const vals = fd.getAll(q.id+'[]'); if(vals.length===0) isComplete = false; ans[q.id] = vals; }
                 else { const v = fd.get(q.id); if(!v) isComplete = false; ans[q.id] = v; }
             });
-            if(!isComplete) return alert("Por favor responde a todas las preguntas.");
+            if(!isComplete) return alert("Por favor, completa todas las preguntas antes de enviar.");
             
             const ref = doc(db, "formularios", id); const snap = await getDoc(ref);
             if(snap.exists()) {
                 let d = snap.data(); if(!d.respuestas) d.respuestas = [];
                 d.respuestas.push({ uid: uid, datos: ans, date: Date.now() });
                 await updateDoc(ref, { respuestas: d.respuestas });
-                cont.innerHTML = '<div class="alert alert-success fw-bold"><i class="bi bi-check-circle me-2"></i> Respuestas enviadas correctamente.</div>'; btn.style.display = 'none'; status.innerText = 'Completado.';
+                cont.innerHTML = '<div class="alert alert-success fw-bold font-inter fs-5 text-center mt-4"><i class="bi bi-check-circle-fill d-block mb-2 fs-1"></i> Respuestas enviadas correctamente.</div>'; btn.style.display = 'none'; status.innerText = 'Completado.';
             }
         };
         modal.show();
