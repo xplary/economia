@@ -9,6 +9,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* SCROLLBAR SUTIL Y PEGADO AL LADO DERECHO PARA MODALES */
+        .modal-dialog-scrollable .modal-body::-webkit-scrollbar {
+            width: 8px; /* Más delgada */
+            background-color: transparent;
+        }
+        .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track {
+            background-color: transparent; /* Fondo invisible */
+        }
+        .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb {
+            background-color: #c1c1c1; /* Gris sutil */
+            border-radius: 10px; /* Bordes redondeados */
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb:hover {
+            background-color: #a0a0a0;
+        }
+        /* ESTILOS GOOGLE FORMS PARA BUILDER */
+        .gform-block-active {
+            border-left: 6px solid #4285f4 !important;
+            transition: all 0.2s ease;
+        }
+        #modalFormulario .modal-content {
+            border-radius: 12px;
+        }
+    </style>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100 overflow-x-hidden">
 
@@ -144,28 +170,30 @@
                     </button>
                     
                     <div class="collapse mt-4 text-start" id="colFormulario">
-                        <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white mx-auto" style="max-width: 800px;">
-                            <h4 class="fw-bold mb-4 font-serif" style="color: #009668;"><i class="bi bi-file-earmark-text-fill me-2"></i> Nuevo Formulario</h4>
+                        <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white mx-auto" style="max-width: 800px; border-top: 8px solid #009668 !important;">
+                            <h4 class="fw-bold mb-4 font-serif" id="form-header-title" style="color: #1a202c;">Nuevo Formulario</h4>
                             <div class="row g-3 mb-4">
-                                <div class="col-md-12"><input type="text" id="form-titulo" class="form-control form-control-lg bg-light border-0 font-serif fw-bold" placeholder="Título Principal del Formulario"></div>
-                                <div class="col-md-12"><textarea id="form-desc" class="form-control bg-light border-0 font-inter" rows="2" placeholder="Descripción, contexto o instrucciones para los participantes..."></textarea></div>
+                                <div class="col-md-12"><input type="text" id="form-titulo" class="form-control form-control-lg bg-light border-0 font-serif fw-bold shadow-none" placeholder="Título Principal del Formulario"></div>
+                                <div class="col-md-12"><textarea id="form-desc" class="form-control bg-light border-0 font-inter shadow-none" rows="2" placeholder="Descripción, contexto o instrucciones para los participantes..."></textarea></div>
                                 <div class="col-md-6">
                                     <label class="small fw-bold text-muted mb-1">Imagen de Cabecera (Opcional):</label>
-                                    <input type="file" id="form-imagen" class="form-control bg-light border-0" accept="image/*">
+                                    <input type="file" id="form-imagen" class="form-control bg-light border-0 shadow-none" accept="image/*">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="small fw-bold text-muted mb-1">Fecha Límite (Opcional):</label>
-                                    <input type="date" id="form-fecha" class="form-control bg-light border-0">
+                                    <input type="date" id="form-fecha" class="form-control bg-light border-0 shadow-none">
                                 </div>
                             </div>
                             
-                            <div class="bg-light p-4 rounded-4 mb-4 border" style="border-color: #e2e8f0 !important;">
-                                <h6 class="fw-bold text-dark mb-3 font-inter">Preguntas</h6>
-                                <div id="contenedor-preguntas-builder" class="mb-3"></div>
-                                <button id="btn-add-pregunta-form" class="btn btn-outline-primary fw-bold rounded-pill shadow-sm"><i class="bi bi-plus-circle me-1"></i> Añadir Pregunta</button>
+                            <div class="p-0 mb-4 border-0">
+                                <div id="contenedor-preguntas-builder" class="mb-4"></div>
+                                <div class="text-center mt-3">
+                                    <button onclick="agregarPreguntaFormBuilder()" class="btn btn-outline-secondary bg-white fw-bold rounded-pill shadow-sm px-4"><i class="bi bi-plus-circle me-1"></i> Añadir Pregunta</button>
+                                </div>
                             </div>
                             
                             <div class="text-end border-top pt-4">
+                                <button class="btn btn-light px-4 py-2 rounded-pill fw-bold fs-6 shadow-sm me-2 text-secondary" onclick="cancelarEdicionFormulario()">Cancelar</button>
                                 <button id="btn-pub-formulario" class="btn btn-success px-5 py-2 rounded-pill fw-bold fs-6 shadow-sm" style="background-color: #009668; border-color:#009668;">Publicar y Activar</button>
                             </div>
                         </div>
@@ -204,7 +232,7 @@
     <!-- MODAL ENCUESTA / DEBATE AVANZADO TIPO GOOGLE FORMS -->
     <div class="modal fade" id="modalFormulario" tabindex="-1" aria-hidden="true" style="z-index: 1080; background-color: rgba(240, 235, 248, 0.95);">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content border-0 bg-transparent">
+            <div class="modal-content border-0 bg-transparent shadow-none">
                 <div class="modal-header border-0 d-flex justify-content-end pb-0 px-4 pt-3 position-absolute w-100" style="z-index: 9;">
                     <button type="button" class="btn-close bg-white rounded-circle p-2 shadow-sm" data-bs-dismiss="modal"></button>
                 </div>
@@ -215,7 +243,7 @@
                         <div id="mf-banner" class="rounded-top-4" style="height: 160px; background-color: #009668; border: 1px solid #007753; background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
                         
                         <!-- Tarjeta Principal (Título) -->
-                        <div class="bg-white p-4 p-md-5 shadow-sm mb-4 border-top border-4" style="border-radius: 0 0 12px 12px; border-color: #004b79 !important; margin-top: -5px;">
+                        <div class="bg-white p-4 p-md-5 shadow mb-4 border-top border-5" style="border-radius: 0 0 12px 12px; border-color: #004b79 !important; margin-top: -5px;">
                             <h2 class="fw-bold font-serif mb-3 text-dark" id="mf-titulo" style="font-size: 2.2rem; line-height: 1.2;"></h2>
                             <p class="text-secondary font-inter mb-0" id="mf-desc" style="font-size: 1.1rem; line-height: 1.6;"></p>
                             <p class="text-danger small mt-3 mb-0 fw-semibold">* Indica que la pregunta es obligatoria</p>

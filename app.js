@@ -5,7 +5,7 @@ import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, quer
 const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1" });
 const auth = getAuth(app); const db = getFirestore(app);
 
-window.postsData = {}; window.editandoId = null; window.modalActual = { id: null, col: null };
+window.postsData = {}; window.editandoId = null; window.editandoFormId = null; window.modalActual = { id: null, col: null };
 let progress = 0; let isFirstLoad = true;
 let currentTab = 'columnas'; let userReputacion = 0; let reqReputacion = 15; let userSub = null;
 
@@ -58,9 +58,10 @@ onAuthStateChanged(auth, async (u) => {
         userReputacion = 0;
     }
     updateReputationVisibility();
+    renderFormularios(); // Re-render para mostrar botones de editar si le pertenecen
 });
 
-window.borrarPost = async (col, id) => { if(confirm("¿Eliminar publicación?")) await deleteDoc(doc(db, col, id)); };
+window.borrarPost = async (col, id) => { if(confirm("¿Estás seguro de eliminar esto? Se perderá permanentemente.")) await deleteDoc(doc(db, col, id)); };
 
 const slugify = (text) => (text ? text.toString() : '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").substring(0, 80) || 'cafe-unp';
 window.compartir = (id, col) => { const d = window.postsData[id]; if(!d) return; const tit = d.titulo || d.pregunta || 'CAFE UNP'; const slug = slugify(tit); const url = window.location.origin + window.location.pathname + `?v=${slug}---${id}---${col}`; if(navigator.share) navigator.share({ title: tit, url: url }); else { navigator.clipboard.writeText(url); alert("Link copiado: " + url); } };
@@ -118,20 +119,28 @@ window.editarArt = (id) => { const d = window.postsData[id]; document.getElement
    SISTEMA DE FORMULARIOS & REPUTACION
 ========================================================================= */
 
-// Traer la reputación requerida desde Firebase
 onSnapshot(doc(db, "config", "reputacion"), (s) => {
     if(s.exists() && s.data().requerida !== undefined) {
         reqReputacion = s.data().requerida;
     }
 });
 
-// Botón "Crear Encuesta" (Validación de Reputación)
 document.getElementById('btn-iniciar-crear-form').onclick = () => {
     const isOwner = document.body.classList.contains('is-owner');
     if (!isOwner && userReputacion < reqReputacion) {
         alert(`☕ Necesitas al menos ${reqReputacion} puntos de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion} cafecitos.\n\n¡Gana +5 de reputación aportando tus respuestas a la comunidad!`);
         return;
     }
+    window.editandoFormId = null;
+    document.getElementById('form-header-title').innerText = "Nuevo Formulario";
+    document.getElementById('btn-pub-formulario').innerText = "Publicar y Activar";
+    document.getElementById('form-titulo').value = ''; 
+    document.getElementById('form-desc').value = ''; 
+    document.getElementById('form-fecha').value = ''; 
+    document.getElementById('form-imagen').value = '';
+    document.getElementById('contenedor-preguntas-builder').innerHTML = ''; 
+    numPreguntasForm = 0;
+    window.agregarPreguntaFormBuilder(); // Agrega una por defecto
     bootstrap.Collapse.getOrCreateInstance(document.getElementById('colFormulario')).toggle();
 };
 
@@ -143,7 +152,27 @@ window.editarReqReputacion = async () => {
     }
 };
 
+window.cancelarEdicionFormulario = () => {
+    window.editandoFormId = null;
+    document.getElementById('form-titulo').value = ''; 
+    document.getElementById('form-desc').value = ''; 
+    document.getElementById('form-fecha').value = ''; 
+    document.getElementById('form-imagen').value = '';
+    document.getElementById('contenedor-preguntas-builder').innerHTML = ''; 
+    numPreguntasForm = 0;
+    bootstrap.Collapse.getInstance(document.getElementById('colFormulario'))?.hide();
+};
+
 let numPreguntasForm = 0;
+
+// Delegación de eventos para aplicar el borde lateral azul al bloque activo de Google Forms
+document.addEventListener('focusin', function(e) {
+    if(e.target.closest('.builder-q-block')) {
+        document.querySelectorAll('.builder-q-block').forEach(b => b.classList.remove('gform-block-active'));
+        e.target.closest('.builder-q-block').classList.add('gform-block-active');
+    }
+});
+
 window.prevQImg = (input) => {
     if(input.files && input.files[0]){
         let reader = new FileReader();
@@ -156,48 +185,89 @@ window.prevQImg = (input) => {
     }
 };
 
-document.getElementById('btn-add-pregunta-form').onclick = () => {
+// Generador de bloques de pregunta (Sirve para crear nuevas y para cargar existentes)
+window.agregarPreguntaFormBuilder = (qData = null) => {
     numPreguntasForm++;
-    const div = document.createElement('div'); div.className = 'builder-q-block position-relative'; div.id = `q-block-${numPreguntasForm}`;
+    const div = document.createElement('div'); 
+    div.className = 'builder-q-block position-relative bg-white p-4 border mb-3 shadow-sm'; 
+    div.id = `q-block-${numPreguntasForm}`;
+    div.style.borderRadius = "8px";
+    div.style.borderLeft = "1px solid #dee2e6"; // Borde inactivo
+
+    const t = qData ? qData.titulo : '';
+    const desc = (qData && qData.desc) ? qData.desc : '';
+    const type = qData ? qData.tipo : 'radio';
+    const opts = (qData && qData.opciones) ? qData.opciones.join(', ') : '';
+    const req = qData ? qData.obligatoria : false;
+    const img = qData ? qData.imagen : '';
+
     div.innerHTML = `
-        <div class="row g-3 align-items-start mb-3">
+        <div class="row g-3 align-items-start mb-2">
             <div class="col-md-7">
-                <input type="text" class="form-control fw-bold q-title font-inter bg-light border-0 border-bottom border-2 border-secondary rounded-0 shadow-none px-2 py-2" placeholder="Pregunta ${numPreguntasForm}">
+                <input type="text" class="form-control fw-bold q-title font-inter bg-light border-0 border-bottom border-2 border-secondary rounded-0 shadow-none px-3 py-2 mb-2" placeholder="Pregunta" value="${escapeHTML(t)}">
+                <input type="text" class="form-control text-muted q-desc font-inter bg-transparent border-0 border-bottom border-1 border-light shadow-none px-2 py-1 small" placeholder="Descripción (opcional)" style="font-size: 0.85rem;" value="${escapeHTML(desc)}">
             </div>
             <div class="col-md-4">
-                <select class="form-select q-type font-inter bg-white border shadow-sm" onchange="toggleQOpts(this)">
-                    <option value="text">⚏ Respuesta corta</option>
-                    <option value="textarea">☰ Párrafo</option>
-                    <option value="radio" selected>◉ Varias opciones</option>
-                    <option value="checkbox">☑ Casillas</option>
-                    <option value="select">▽ Desplegable</option>
-                    <option value="scale">⟷ Escala lineal</option>
-                    <option value="date">📅 Fecha</option>
-                    <option value="time">🕒 Hora</option>
+                <select class="form-select q-type font-inter bg-white border shadow-sm py-2" onchange="toggleQOpts(this)">
+                    <option value="text" ${type==='text'?'selected':''}>⚏ Respuesta corta</option>
+                    <option value="textarea" ${type==='textarea'?'selected':''}>☰ Párrafo</option>
+                    <option value="radio" ${type==='radio'?'selected':''}>◉ Varias opciones</option>
+                    <option value="checkbox" ${type==='checkbox'?'selected':''}>☑ Casillas</option>
+                    <option value="select" ${type==='select'?'selected':''}>▽ Desplegable</option>
+                    <option value="scale" ${type==='scale'?'selected':''}>⟷ Escala lineal</option>
+                    <option value="date" ${type==='date'?'selected':''}>📅 Fecha</option>
+                    <option value="time" ${type==='time'?'selected':''}>🕒 Hora</option>
                 </select>
             </div>
-            <div class="col-md-1 text-end">
-                <button class="btn btn-sm btn-outline-danger border-0 hover-bg-light" onclick="this.parentElement.parentElement.parentElement.remove()"><i class="bi bi-trash fs-5"></i></button>
+            <div class="col-md-1 d-flex flex-column align-items-end gap-2">
+                <button type="button" class="btn btn-sm btn-light border-0 text-secondary hover-bg-light" onclick="duplicarPregunta(this)" title="Duplicar"><i class="bi bi-copy fs-5"></i></button>
+                <button type="button" class="btn btn-sm btn-light border-0 text-danger hover-bg-light" onclick="this.parentElement.parentElement.parentElement.remove()" title="Eliminar"><i class="bi bi-trash fs-5"></i></button>
             </div>
         </div>
         <div class="mb-3 ps-2">
-            <input type="text" class="form-control q-opts font-inter bg-white border shadow-sm" placeholder="Opciones (separadas por comas, ej: Sí, No, Tal vez)">
+            <input type="text" class="form-control q-opts font-inter bg-white border shadow-sm py-2" placeholder="Opciones (separadas por comas, ej: Sí, No, Tal vez)" value="${escapeHTML(opts)}" style="${['text', 'textarea', 'date', 'time', 'scale'].includes(type) ? 'display:none;' : ''}">
         </div>
         <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
             <div class="d-flex align-items-center">
-                <label class="btn btn-sm btn-outline-secondary font-inter rounded-pill me-3 shadow-sm cursor-pointer">
+                <label class="btn btn-sm btn-outline-secondary font-inter rounded-pill me-3 shadow-sm cursor-pointer px-3">
                     <i class="bi bi-image me-1"></i> Añadir Imagen
                     <input type="file" class="q-img-input d-none" accept="image/*" onchange="prevQImg(this)">
                 </label>
-                <img class="q-img-preview rounded shadow-sm border" style="height: 40px; object-fit: cover; display:none;">
+                <img class="q-img-preview rounded shadow-sm border" style="height: 40px; object-fit: cover; ${img ? 'display:block;' : 'display:none;'}" src="${img}">
+                <input type="hidden" class="q-img-existing" value="${img}">
             </div>
-            <div class="form-check form-switch mb-0">
-                <input class="form-check-input q-req cursor-pointer" type="checkbox" role="switch" id="req_${numPreguntasForm}">
-                <label class="form-check-label font-inter small fw-semibold text-muted cursor-pointer" for="req_${numPreguntasForm}">Obligatorio</label>
+            <div class="form-check form-switch mb-0 d-flex align-items-center">
+                <label class="form-check-label font-inter small fw-bold text-dark cursor-pointer me-2" for="req_${numPreguntasForm}">Obligatorio</label>
+                <input class="form-check-input q-req cursor-pointer m-0 fs-5" type="checkbox" role="switch" id="req_${numPreguntasForm}" ${req?'checked':''}>
             </div>
         </div>
     `;
     document.getElementById('contenedor-preguntas-builder').appendChild(div);
+};
+
+window.duplicarPregunta = (btn) => {
+    const block = btn.closest('.builder-q-block');
+    const pTitulo = block.querySelector('.q-title').value;
+    const pDesc = block.querySelector('.q-desc').value;
+    const pType = block.querySelector('.q-type').value;
+    const pOpts = block.querySelector('.q-opts').value;
+    const pReq = block.querySelector('.q-req').checked;
+    const pImgSrc = block.querySelector('.q-img-preview').src;
+    const existImg = block.querySelector('.q-img-existing').value;
+    
+    // Si la preview tiene una imagen cargada temporalmente (base64) úsala, si no, usa la existente del value
+    let finalImg = '';
+    if (pImgSrc && pImgSrc.length > 100) finalImg = pImgSrc; 
+    else if (existImg) finalImg = existImg;
+
+    window.agregarPreguntaFormBuilder({
+        titulo: pTitulo ? pTitulo + " (Copia)" : "Copia",
+        desc: pDesc,
+        tipo: pType,
+        opciones: pOpts ? pOpts.split(',').map(s=>s.trim()) : [],
+        obligatoria: pReq,
+        imagen: finalImg
+    });
 };
 
 window.toggleQOpts = (selectEl) => { 
@@ -209,6 +279,38 @@ window.toggleQOpts = (selectEl) => {
     } 
 };
 
+// Editar un formulario existente
+window.editarFormulario = (id) => {
+    const data = window.postsData[id];
+    if(!data) return;
+    
+    window.editandoFormId = id;
+    document.getElementById('form-header-title').innerText = "Editando Formulario";
+    document.getElementById('btn-pub-formulario').innerText = "Guardar Cambios";
+    
+    document.getElementById('form-titulo').value = data.titulo || '';
+    document.getElementById('form-desc').value = data.descripcion || '';
+    
+    if(data.fechaLimite) {
+        const d = new Date(data.fechaLimite);
+        document.getElementById('form-fecha').value = d.toISOString().split('T')[0];
+    } else {
+        document.getElementById('form-fecha').value = '';
+    }
+    
+    document.getElementById('contenedor-preguntas-builder').innerHTML = '';
+    numPreguntasForm = 0;
+    
+    if(data.preguntas && data.preguntas.length > 0) {
+        data.preguntas.forEach(q => window.agregarPreguntaFormBuilder(q));
+    } else {
+        window.agregarPreguntaFormBuilder();
+    }
+    
+    bootstrap.Collapse.getOrCreateInstance(document.getElementById('colFormulario')).show();
+    window.scrollTo({ top: document.getElementById('colFormulario').offsetTop - 100, behavior: 'smooth' });
+};
+
 document.getElementById('btn-pub-formulario').onclick = async () => {
     const titulo = document.getElementById('form-titulo').value; if(!titulo) return alert("Por favor, asigna un título principal.");
     const descripcion = document.getElementById('form-desc').value;
@@ -218,21 +320,28 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
     if (fechaStr && fechaStr.trim() !== '') limitMillis = new Date(fechaStr + "T23:59:59").getTime(); 
     
     let imgFinal = ''; const imgFile = document.getElementById('form-imagen').files[0]; 
-    if (imgFile) imgFinal = await compressImg(imgFile);
+    if (imgFile) {
+        imgFinal = await compressImg(imgFile);
+    } else if (window.editandoFormId && window.postsData[window.editandoFormId].imagen) {
+        // Mantener imagen anterior si estamos editando y no se subió una nueva
+        imgFinal = window.postsData[window.editandoFormId].imagen;
+    }
 
     let preguntas = [];
     const blocks = document.querySelectorAll('.builder-q-block');
     for (let idx = 0; idx < blocks.length; idx++) {
         const block = blocks[idx];
         const pTitulo = block.querySelector('.q-title').value;
+        const pDesc = block.querySelector('.q-desc').value;
         const pType = block.querySelector('.q-type').value;
         const pOpts = block.querySelector('.q-opts').value;
         const pReq = block.querySelector('.q-req').checked;
+        const pImgExisting = block.querySelector('.q-img-existing').value;
         
-        let qImgFinal = '';
+        let qImgFinal = pImgExisting; // Por defecto la que ya tenía
         const qFileInput = block.querySelector('.q-img-input');
         if (qFileInput && qFileInput.files[0]) {
-            qImgFinal = await compressImg(qFileInput.files[0]);
+            qImgFinal = await compressImg(qFileInput.files[0]); // Se sobreescribe si subió una nueva
         }
 
         if(pTitulo) {
@@ -240,7 +349,7 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
             if(['radio', 'checkbox', 'select'].includes(pType) && pOpts) { 
                 opcionesArr = pOpts.split(',').map(s=>s.trim()).filter(Boolean); 
             }
-            preguntas.push({ id: `pq_${idx}`, titulo: pTitulo, tipo: pType, opciones: opcionesArr, obligatoria: pReq, imagen: qImgFinal });
+            preguntas.push({ id: `pq_${idx}`, titulo: pTitulo, desc: pDesc, tipo: pType, opciones: opcionesArr, obligatoria: pReq, imagen: qImgFinal });
         }
     }
     
@@ -248,15 +357,26 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
     
     const btnPub = document.getElementById('btn-pub-formulario');
     const oldText = btnPub.innerHTML;
-    btnPub.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Publicando...';
+    btnPub.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Guardando...';
     btnPub.disabled = true;
 
     try {
-        await addDoc(collection(db, "formularios"), { titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas, respuestas: [], fecha: serverTimestamp(), autorId: auth.currentUser.uid });
-        document.getElementById('form-titulo').value = ''; document.getElementById('form-desc').value = ''; document.getElementById('form-fecha').value = ''; document.getElementById('form-imagen').value = ''; document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; bootstrap.Collapse.getInstance(document.getElementById('colFormulario'))?.hide();
-        alert("¡Encuesta publicada y activada con éxito!");
+        if (window.editandoFormId) {
+            // Actualizar existente
+            await updateDoc(doc(db, "formularios", window.editandoFormId), { 
+                titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas
+            });
+            alert("¡Cambios guardados con éxito!");
+        } else {
+            // Crear nuevo
+            await addDoc(collection(db, "formularios"), { 
+                titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas, respuestas: [], fecha: serverTimestamp(), autorId: auth.currentUser.uid 
+            });
+            alert("¡Encuesta publicada y activada con éxito!");
+        }
+        window.cancelarEdicionFormulario();
     } catch(e) { 
-        alert("Hubo un error al publicar: " + e.message); 
+        alert("Hubo un error al guardar: " + e.message); 
     } finally {
         btnPub.innerHTML = oldText;
         btnPub.disabled = false;
@@ -276,6 +396,9 @@ function renderFormularios() {
     }
     
     let h = ''; const now = Date.now();
+    const isOwnerGlob = document.body.classList.contains('is-owner');
+    const uid = auth.currentUser ? auth.currentUser.uid : null;
+
     formulariosDataCache.forEach(data => {
         const cerrada = data.fechaLimite && data.fechaLimite < now;
         const statusBadge = cerrada ? `<span class="badge bg-danger rounded-pill fw-semibold" style="font-size: 0.7rem;">Finalizada</span>` : `<span class="badge bg-success rounded-pill fw-semibold" style="font-size: 0.7rem;">Activa</span>`;
@@ -283,6 +406,15 @@ function renderFormularios() {
         const placeholderImg = `<div class="d-flex align-items-center justify-content-center bg-light text-secondary h-100 w-100" style="min-height: 140px; border-right: 1px solid #e2e8f0;"><i class="bi bi-card-checklist fs-1 opacity-50"></i></div>`;
         const imgHTML = data.imagen ? `<img src="${data.imagen}" class="w-100 h-100 object-fit-cover" style="min-height: 140px; border-right: 1px solid #e2e8f0;">` : placeholderImg;
         
+        // Mostrar botones de edición si es dueño del sistema o si es el creador
+        const isCreator = uid && data.autorId === uid;
+        let authButtons = `<i class="bi bi-share-fill text-muted me-3 hover-bg-light p-1 rounded" onclick="event.stopPropagation(); compartir('${data.id}', 'formularios')" title="Compartir"></i>`;
+        
+        if (isOwnerGlob || isCreator) {
+            authButtons += `<i class="bi bi-pencil-fill text-warning me-3 hover-bg-light p-1 rounded" onclick="event.stopPropagation(); editarFormulario('${data.id}')" title="Editar tu Formulario"></i>`;
+            authButtons += `<i class="bi bi-trash-fill text-danger hover-bg-light p-1 rounded" onclick="event.stopPropagation(); borrarPost('formularios', '${data.id}')" title="Eliminar"></i>`;
+        }
+
         h += `<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white form-survey-card cursor-pointer overflow-hidden" onclick="abrirModal('${data.id}', 'formularios')">
             <div class="row g-0 align-items-stretch">
                 <div class="col-4 col-md-3">
@@ -292,10 +424,7 @@ function renderFormularios() {
                     <div class="card-body p-3 p-md-4 position-relative">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div><span class="tag-badge me-2" style="color: #009668; border-color: #d1d5db;">ENCUESTA</span> ${statusBadge}</div>
-                            <div class="text-nowrap ms-2">
-                                <i class="bi bi-share-fill text-muted me-3 hover-bg-light p-1 rounded" onclick="event.stopPropagation(); compartir('${data.id}', 'formularios')"></i>
-                                <i class="bi bi-trash-fill text-danger admin-only-inline hover-bg-light p-1 rounded" onclick="event.stopPropagation(); borrarPost('formularios', '${data.id}')"></i>
-                            </div>
+                            <div class="text-nowrap ms-2">${authButtons}</div>
                         </div>
                         <h4 class="fw-bold font-inter text-dark mb-1 text-truncate" style="font-size: 1.25rem;">${data.titulo}</h4>
                         <p class="text-muted font-inter mb-3 text-truncate-2 small" style="line-height: 1.5;">${escapeHTML(data.descripcion||'')}</p>
@@ -312,34 +441,72 @@ function renderFormularios() {
     if(window.modalActual.col === 'formularios' && window.modalActual.id) abrirModal(window.modalActual.id, 'formularios');
 }
 
+// NUEVO EXCEL AVANZADO (Estructura HTML para .xls envolviendo texto correctamente)
 window.exportarExcel = (id) => {
     const data = window.postsData[id];
     if (!data || !data.respuestas || data.respuestas.length === 0) return alert("No hay respuestas para exportar.");
     
-    let csvContent = "\uFEFF"; 
-    let headers = ["Marca temporal", "Dirección de correo electrónico"];
-    data.preguntas.forEach(q => headers.push(`"${q.titulo.replace(/"/g, '""')}"`));
-    csvContent += headers.join(";") + "\n";
+    // Construir tabla HTML con estilos que MS Excel reconoce
+    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+        <meta charset="UTF-8">
+        <!--[if gte mso 9]>
+        <xml>
+            <x:ExcelWorkbook>
+                <x:ExcelWorksheets>
+                    <x:ExcelWorksheet>
+                        <x:Name>Resultados Encuesta</x:Name>
+                        <x:WorksheetOptions>
+                            <x:DisplayGridlines/>
+                        </x:WorksheetOptions>
+                    </x:ExcelWorksheet>
+                </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+            table { border-collapse: collapse; font-family: Calibri, sans-serif; }
+            th { background-color: #009668; color: #ffffff; font-weight: bold; padding: 10px; border: 1px solid #d1d5db; text-align: left; vertical-align: middle; }
+            td { padding: 8px; border: 1px solid #d1d5db; vertical-align: top; mso-number-format:"\@"; word-wrap: break-word; white-space: normal; }
+            .col-fecha { width: 150px; }
+            .col-email { width: 250px; }
+            .col-pregunta { width: 300px; } /* Forzar que las columnas sean anchas para acomodar el texto */
+        </style>
+    </head>
+    <body>
+        <table>
+            <tr>
+                <th class="col-fecha">Marca temporal</th>
+                <th class="col-email">Dirección de correo electrónico</th>`;
+                
+    data.preguntas.forEach(q => {
+        html += `<th class="col-pregunta">${escapeHTML(q.titulo)}</th>`;
+    });
+    
+    html += `</tr>`;
     
     data.respuestas.forEach(r => {
         const fDate = r.date ? new Date(r.date).toLocaleString('es-PE') : "";
         const fMail = r.email || "No registrado";
-        let row = [`"${fDate}"`, `"${fMail}"`];
+        html += `<tr><td>${fDate}</td><td>${fMail}</td>`;
         
         data.preguntas.forEach(q => {
             let ans = r.datos[q.id] || "";
             if (Array.isArray(ans)) ans = ans.join(", ");
-            let safeAns = ans.toString().replace(/"/g, '""').replace(/\r?\n/g, " "); 
-            row.push(`"${safeAns}"`);
+            // Reemplazar saltos de línea con <br> para que Excel los respete dentro de la celda
+            let safeAns = escapeHTML(ans.toString()).replace(/\n/g, "<br>"); 
+            html += `<td>${safeAns}</td>`;
         });
-        csvContent += row.join(";") + "\n";
+        html += `</tr>`;
     });
     
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    html += `</table></body></html>`;
+    
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Resultados_${slugify(data.titulo)}.csv`);
+    link.setAttribute("download", `Resultados_${slugify(data.titulo)}.xls`); // Extension .xls para que Excel lea el HTML
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -355,9 +522,12 @@ window.renderModalFormulario = (id, data) => {
     else { banner.style.backgroundImage = 'none'; }
     
     const isOwner = document.body.classList.contains('is-owner'); 
+    const isCreator = auth.currentUser && data.autorId === auth.currentUser.uid;
+    const canViewStats = isOwner || isCreator;
+    
     const cont = document.getElementById('mf-contenido'); const btn = document.getElementById('btn-enviar-formulario'); const status = document.getElementById('mf-status'); const footerCont = document.getElementById('mf-footer-container');
 
-    if (!isOwner && !auth.currentUser) {
+    if (!canViewStats && !auth.currentUser) {
         cont.innerHTML = `<div class="bg-white shadow-sm p-5 text-center mt-4" style="border-radius: 12px; border-top: 5px solid #004b79;"><i class="bi bi-google d-block mb-3" style="font-size: 3.5rem; color:#db4437;"></i><h4 class="fw-bold text-dark font-inter">Acceso Restringido</h4><p class="text-secondary mb-4">Debes iniciar sesión con tu cuenta de Google para poder participar en este debate o encuesta.</p><button class="btn btn-ingresar px-5 py-2 shadow-sm fs-6" onclick="document.getElementById('btn-login').click(); bootstrap.Modal.getInstance(document.getElementById('modalFormulario')).hide();">Ingresar con Google</button></div>`;
         btn.style.display = 'none'; footerCont.style.display = 'none';
         return modal.show();
@@ -367,8 +537,8 @@ window.renderModalFormulario = (id, data) => {
     const yaRespondio = data.respuestas && data.respuestas.some(r => r.uid === uid);
     const cerrada = data.fechaLimite && data.fechaLimite < Date.now();
     
-    if (isOwner) { 
-        const exportBtnHtml = `<button class="btn btn-sm text-white fw-bold mt-2 shadow-sm px-3 py-2" style="background-color: #009668; border-color:#009668;" onclick="exportarExcel('${id}')"><i class="bi bi-file-earmark-excel-fill me-1"></i> Descargar Excel (CSV)</button>`;
+    if (canViewStats) { 
+        const exportBtnHtml = `<button class="btn btn-sm text-white fw-bold mt-2 shadow-sm px-3 py-2" style="background-color: #009668; border-color:#009668;" onclick="exportarExcel('${id}')"><i class="bi bi-file-earmark-excel-fill me-1"></i> Descargar Excel (.xls)</button>`;
         status.innerHTML = `<div class="d-flex flex-column align-items-start"><span class="mb-2">Total respuestas: <strong class="text-dark fs-5">${data.respuestas ? data.respuestas.length : 0}</strong></span>${exportBtnHtml}</div>`; 
         btn.style.display = 'none'; footerCont.style.display = 'flex';
         
@@ -376,7 +546,7 @@ window.renderModalFormulario = (id, data) => {
         
         let htmlStats = '';
         data.preguntas.forEach((q, idx) => {
-            htmlStats += `<div class="mb-4 bg-white p-4 p-md-5 shadow-sm" style="border-radius: 12px;"><h5 class="fw-bold text-dark mb-4 font-inter">${idx + 1}. ${q.titulo}</h5>`;
+            htmlStats += `<div class="mb-4 bg-white p-4 p-md-5 shadow-sm" style="border-radius: 12px; border-left: 4px solid #004b79;"><h5 class="fw-bold text-dark mb-4 font-inter">${idx + 1}. ${q.titulo}</h5>`;
             if (['text', 'textarea', 'date', 'time'].includes(q.tipo)) {
                 htmlStats += `<div class="p-3 bg-light rounded-3 text-dark" style="max-height: 250px; overflow-y: auto;">`;
                 let hasAnswers = false;
@@ -408,19 +578,21 @@ window.renderModalFormulario = (id, data) => {
         data.preguntas.forEach((q, idx) => {
             const reqMark = q.obligatoria ? '<span class="text-danger ms-1">*</span>' : '';
             const reqAttr = q.obligatoria ? 'required' : '';
+            const descHtml = q.desc ? `<p class="text-muted small mb-3 font-inter">${escapeHTML(q.desc)}</p>` : '';
             const imgHtml = q.imagen ? `<img src="${q.imagen}" class="img-fluid rounded-3 mb-4 shadow-sm" style="max-height: 350px; width: 100%; object-fit: contain; background: #f8f9fa;">` : '';
             
-            hForm += `<div class="mb-4 bg-white p-4 p-md-5 shadow-sm" style="border-radius: 12px; border-left: 5px solid #004b79;">
-                        <h5 class="fw-bold text-dark mb-3 font-inter" style="font-size: 1.15rem;">${idx + 1}. ${q.titulo}${reqMark}</h5>
+            hForm += `<div class="mb-4 bg-white p-4 p-md-5 shadow-sm" style="border-radius: 12px; border-left: 5px solid #4285f4;">
+                        <h5 class="fw-bold text-dark font-inter mb-1" style="font-size: 1.15rem;">${idx + 1}. ${q.titulo}${reqMark}</h5>
+                        ${descHtml}
                         ${imgHtml}`;
             
-            if (q.tipo === 'text') { hForm += `<input type="text" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input" name="${q.id}" placeholder="Tu respuesta" ${reqAttr}>`; }
-            else if (q.tipo === 'textarea') { hForm += `<textarea class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input" name="${q.id}" rows="3" placeholder="Tu respuesta" ${reqAttr}></textarea>`; }
-            else if (q.tipo === 'radio') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6"><input class="form-check-input border-secondary" type="radio" name="${q.id}" value="${escapeHTML(o)}" id="${q.id}_${i}" ${reqAttr}><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
-            else if (q.tipo === 'checkbox') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6"><input class="form-check-input border-secondary" type="checkbox" name="${q.id}[]" value="${escapeHTML(o)}" id="${q.id}_${i}"><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
-            else if (q.tipo === 'select') { hForm += `<select class="form-select bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter text-dark py-2 px-3 gform-input w-auto" name="${q.id}" ${reqAttr}><option value="">Elegir</option>`; q.opciones.forEach(o => { hForm += `<option value="${escapeHTML(o)}">${escapeHTML(o)}</option>`; }); hForm += `</select>`; }
+            if (q.tipo === 'text') { hForm += `<input type="text" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input mt-2" name="${q.id}" placeholder="Tu respuesta" ${reqAttr}>`; }
+            else if (q.tipo === 'textarea') { hForm += `<textarea class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 gform-input mt-2" name="${q.id}" rows="3" placeholder="Tu respuesta" ${reqAttr}></textarea>`; }
+            else if (q.tipo === 'radio') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6 mt-2"><input class="form-check-input border-secondary" type="radio" name="${q.id}" value="${escapeHTML(o)}" id="${q.id}_${i}" ${reqAttr}><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
+            else if (q.tipo === 'checkbox') { q.opciones.forEach((o, i) => { hForm += `<div class="form-check mb-3 ms-2 fs-6 mt-2"><input class="form-check-input border-secondary" type="checkbox" name="${q.id}[]" value="${escapeHTML(o)}" id="${q.id}_${i}"><label class="form-check-label text-dark font-inter" for="${q.id}_${i}">${escapeHTML(o)}</label></div>`; }); }
+            else if (q.tipo === 'select') { hForm += `<select class="form-select bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter text-dark py-2 px-3 gform-input w-auto mt-2" name="${q.id}" ${reqAttr}><option value="">Elegir</option>`; q.opciones.forEach(o => { hForm += `<option value="${escapeHTML(o)}">${escapeHTML(o)}</option>`; }); hForm += `</select>`; }
             else if (q.tipo === 'scale') { 
-                hForm += `<div class="d-flex align-items-center gap-2 gap-md-4 py-3 overflow-auto">
+                hForm += `<div class="d-flex align-items-center gap-2 gap-md-4 py-3 overflow-auto mt-2">
                             <span class="text-muted small fw-semibold">1</span>`;
                 for(let j=1; j<=5; j++){
                     hForm += `<div class="form-check form-check-inline d-flex flex-column align-items-center mx-1 mx-md-2 mb-0">
@@ -430,8 +602,8 @@ window.renderModalFormulario = (id, data) => {
                 }
                 hForm += `<span class="text-muted small fw-semibold">5</span></div>`;
             }
-            else if (q.tipo === 'date') { hForm += `<input type="date" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 w-auto gform-input" name="${q.id}" ${reqAttr}>`; }
-            else if (q.tipo === 'time') { hForm += `<input type="time" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 w-auto gform-input" name="${q.id}" ${reqAttr}>`; }
+            else if (q.tipo === 'date') { hForm += `<input type="date" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 w-auto gform-input mt-2" name="${q.id}" ${reqAttr}>`; }
+            else if (q.tipo === 'time') { hForm += `<input type="time" class="form-control bg-light border-0 border-bottom border-2 border-secondary rounded-0 font-inter px-3 py-2 w-auto gform-input mt-2" name="${q.id}" ${reqAttr}>`; }
             hForm += `</div>`;
         }); hForm += '</form>'; cont.innerHTML = hForm;
         
