@@ -128,7 +128,7 @@ onSnapshot(doc(db, "config", "reputacion"), (s) => {
 document.getElementById('btn-iniciar-crear-form').onclick = () => {
     const isOwner = document.body.classList.contains('is-owner');
     if (!isOwner && userReputacion < reqReputacion) {
-        alert(`☕ Necesitas al menos ${reqReputacion} puntos de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion} puntos de reputacion.\n\n¡Gana +5 de reputación aportando tus respuestas a la comunidad!`);
+        alert(`☕ Necesitas al menos ${reqReputacion} puntos de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion} puntos de reputacion.\n\n¡Gana +5 de reputación respondiendo cada encuesta!`);
         return;
     }
     window.editandoFormId = null;
