@@ -453,12 +453,12 @@ function renderFormularios() {
     if(window.modalActual.col === 'formularios' && window.modalActual.id) abrirModal(window.modalActual.id, 'formularios');
 }
 
-// NUEVO EXCEL AVANZADO (Estructura HTML para .xls envolviendo texto correctamente)
+// NUEVO EXCEL AVANZADO - ESTILOS GOOGLE FORMS ACTUALIZADOS
 window.exportarExcel = (id) => {
     const data = window.postsData[id];
     if (!data || !data.respuestas || data.respuestas.length === 0) return alert("No hay respuestas para exportar.");
     
-    // Construir tabla HTML con estilos que MS Excel reconoce
+    // Construir tabla HTML con estilos que MS Excel reconoce idénticos a la imagen de Google Forms
     let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
     <head>
         <meta charset="UTF-8">
@@ -477,12 +477,13 @@ window.exportarExcel = (id) => {
         </xml>
         <![endif]-->
         <style>
-            table { border-collapse: collapse; font-family: Calibri, sans-serif; }
-            th { background-color: #009668; color: #ffffff; font-weight: bold; padding: 10px; border: 1px solid #d1d5db; text-align: left; vertical-align: middle; }
-            td { padding: 8px; border: 1px solid #d1d5db; vertical-align: top; mso-number-format:"\@"; word-wrap: break-word; white-space: normal; }
+            table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
+            th { background-color: #8162b5; color: #000000; font-weight: bold; padding: 10px; border: 1px solid #6b4d9e; text-align: left; vertical-align: middle; }
+            td { padding: 8px; border: 1px solid #d1d5db; vertical-align: top; mso-number-format:"\\@"; word-wrap: break-word; white-space: normal; }
+            tr.alt-row td { background-color: #f8f6fa; } /* Color intercalado para las filas */
             .col-fecha { width: 150px; }
             .col-email { width: 250px; }
-            .col-pregunta { width: 300px; } /* Forzar que las columnas sean anchas para acomodar el texto */
+            .col-pregunta { width: 300px; }
         </style>
     </head>
     <body>
@@ -491,16 +492,20 @@ window.exportarExcel = (id) => {
                 <th class="col-fecha">Marca temporal</th>
                 <th class="col-email">Dirección de correo electrónico</th>`;
                 
-    data.preguntas.forEach(q => {
-        html += `<th class="col-pregunta">${escapeHTML(q.titulo)}</th>`;
+    data.preguntas.forEach((q, idx) => {
+        // Añadir el número (1., 2.) antes de la pregunta, igual que en la imagen
+        html += `<th class="col-pregunta">${idx + 1}. ${escapeHTML(q.titulo)}</th>`;
     });
     
     html += `</tr>`;
     
+    let rowIndex = 0;
     data.respuestas.forEach(r => {
+        rowIndex++;
+        const rowClass = rowIndex % 2 === 0 ? ' class="alt-row"' : '';
         const fDate = r.date ? new Date(r.date).toLocaleString('es-PE') : "";
         const fMail = r.email || "No registrado";
-        html += `<tr><td>${fDate}</td><td>${fMail}</td>`;
+        html += `<tr${rowClass}><td>${fDate}</td><td>${fMail}</td>`;
         
         data.preguntas.forEach(q => {
             let ans = r.datos[q.id] || "";
@@ -518,7 +523,7 @@ window.exportarExcel = (id) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Resultados_${slugify(data.titulo)}.xls`); // Extension .xls para que Excel lea el HTML
+    link.setAttribute("download", `Resultados_${slugify(data.titulo)}.xls`); 
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
