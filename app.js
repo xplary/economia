@@ -35,6 +35,7 @@ function updateReputationVisibility() {
     }
 }
 
+// CORRECCIÓN BUG: Renderizar de forma controlada después de comprobar la base de datos
 onAuthStateChanged(auth, async (u) => {
     document.getElementById('btn-login').classList.toggle('d-none', !!u); document.getElementById('btn-logout').classList.toggle('d-none', !u); 
     document.body.classList.remove('is-owner');
@@ -47,18 +48,29 @@ onAuthStateChanged(auth, async (u) => {
         userSub = onSnapshot(ref, (d) => {
             if(d.exists()) {
                 if(d.data().owner) document.body.classList.add('is-owner');
+                else document.body.classList.remove('is-owner');
                 userReputacion = d.data().reputacion || 0;
             } else {
                 setDoc(ref, { nombre: u.displayName, email: u.email, reputacion: 0 });
                 userReputacion = 0;
             }
             document.getElementById('user-reputacion').innerText = userReputacion;
+            updateReputationVisibility();
+            
+            // Renderizamos los formularios DESPUÉS de que sepamos con exactitud si es Owner o no
+            renderFormularios(); 
+            
+            // Si el admin tiene un modal abierto y recarga, actualizar su vista
+            if(window.modalActual.col === 'formularios' && window.modalActual.id) {
+                const curData = window.postsData[window.modalActual.id];
+                if(curData) window.renderModalFormulario(window.modalActual.id, curData);
+            }
         });
     } else {
         userReputacion = 0;
+        updateReputationVisibility();
+        renderFormularios(); // Renderizamos limpio si se cierra sesión
     }
-    updateReputationVisibility();
-    renderFormularios(); // Re-render para mostrar botones de editar si le pertenecen
 });
 
 window.borrarPost = async (col, id) => { if(confirm("¿Estás seguro de eliminar esto? Se perderá permanentemente.")) await deleteDoc(doc(db, col, id)); };
@@ -128,7 +140,7 @@ onSnapshot(doc(db, "config", "reputacion"), (s) => {
 document.getElementById('btn-iniciar-crear-form').onclick = () => {
     const isOwner = document.body.classList.contains('is-owner');
     if (!isOwner && userReputacion < reqReputacion) {
-        alert(`☕ Necesitas al menos ${reqReputacion} puntos de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion} puntos de reputacion.\n\n¡Gana +5 de reputación respondiendo cada encuesta!`);
+        alert(`☕ Necesitas al menos ${reqReputacion} puntos de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion} cafecitos.\n\n¡Gana +5 de reputación aportando tus respuestas a la comunidad!`);
         return;
     }
     window.editandoFormId = null;
@@ -653,3 +665,8 @@ window.renderModalFormulario = (id, data) => {
         modal.show();
     }
 };
+
+// CORRECCIÓN BUG: Limpieza de estado al cerrar modales para evitar que se abran solos al iniciar/cerrar sesión
+document.getElementById('modalNoticia').addEventListener('hidden.bs.modal', () => { if(window.modalActual.col === 'noticias') window.modalActual = { id: null, col: null }; });
+document.getElementById('modalLectura').addEventListener('hidden.bs.modal', () => { if(window.modalActual.col === 'articulos') window.modalActual = { id: null, col: null }; });
+document.getElementById('modalFormulario').addEventListener('hidden.bs.modal', () => { if(window.modalActual.col === 'formularios') window.modalActual = { id: null, col: null }; });
