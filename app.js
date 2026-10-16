@@ -61,7 +61,7 @@ onAuthStateChanged(auth, async (u) => {
                         <span class="fw-bold font-inter text-dark d-block text-truncate mb-2" style="max-width: 210px; margin: 0 auto; font-size: 1.05rem;">${escapeHTML(u.displayName || 'Usuario')}</span>
                         <span class="badge bg-secondary font-inter px-3 py-1 rounded-pill shadow-sm" id="user-plan-badge" style="font-weight: 600; letter-spacing: 0.5px;">Usuario</span>
                     </li>
-                    <li id="admin-panel-link" class="d-none"><a href="admin/index.html" class="dropdown-item fw-bold text-primary py-2 cursor-pointer font-inter text-center hover-bg-light"><i class="bi bi-speedometer2 me-2"></i> Panel Admin</a></li>
+                    <li id="admin-panel-link" class="d-none"><a href="admin/" class="dropdown-item fw-bold text-primary py-2 cursor-pointer font-inter text-center hover-bg-light"><i class="bi bi-speedometer2 me-2"></i> Panel Admin</a></li>
                     <li><a class="dropdown-item fw-bold text-danger py-2 cursor-pointer font-inter text-center hover-bg-light rounded-bottom-4" id="btn-logout-dropdown"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
                 </ul>
             `;
