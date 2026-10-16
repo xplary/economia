@@ -6,7 +6,7 @@ const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", a
 const auth = getAuth(app); const db = getFirestore(app);
 
 window.postsData = {}; window.editandoId = null; window.editandoFormId = null; window.modalActual = { id: null, col: null };
-window.noticiaCropper = null; // Instancia global para el recortador de imágenes
+window.noticiaCropper = null; 
 let progress = 0; let isFirstLoad = true;
 let currentTab = 'columnas'; let userReputacion = 0; let reqReputacion = 15; let userSub = null;
 
@@ -27,12 +27,9 @@ document.getElementById('btn-logout').onclick = () => signOut(auth);
 function updateReputationVisibility() {
     const repCont = document.getElementById('reputacion-container');
     if (auth.currentUser && currentTab === 'ensayos') {
-        repCont.classList.remove('d-none');
-        repCont.classList.add('d-flex');
-        setTimeout(() => repCont.style.opacity = '1', 10);
+        repCont.classList.remove('d-none'); repCont.classList.add('d-flex'); setTimeout(() => repCont.style.opacity = '1', 10);
     } else {
-        repCont.style.opacity = '0';
-        setTimeout(() => { repCont.classList.add('d-none'); repCont.classList.remove('d-flex'); }, 300);
+        repCont.style.opacity = '0'; setTimeout(() => { repCont.classList.add('d-none'); repCont.classList.remove('d-flex'); }, 300);
     }
 }
 
@@ -65,9 +62,7 @@ onAuthStateChanged(auth, async (u) => {
             }
         });
     } else {
-        userReputacion = 0;
-        updateReputationVisibility();
-        renderFormularios(); 
+        userReputacion = 0; updateReputationVisibility(); renderFormularios(); 
     }
 });
 
@@ -102,7 +97,6 @@ window.abrirModal = (id, col) => {
 const checkDeepLink = (id, col) => { if(autoOpenDone) return; const urlP = new URLSearchParams(window.location.search); const v = urlP.get('v'); let tId = urlP.get('p'), tCol = urlP.get('t'); if(v) { const parts = v.split('---'); if(parts.length===3){ tId = parts[1]; tCol = parts[2]; } } if(tId === id && tCol === col) { autoOpenDone = true; setTimeout(() => { abrirModal(id, col); }, 500); } }; let autoOpenDone = false;
 const compressImg = (file) => new Promise((res) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = (e) => { const img = new Image(); img.src = e.target.result; img.onload = () => { const canvas = document.createElement('canvas'); const MAX = 2000; const scale = img.width > MAX ? MAX / img.width : 1; canvas.width = img.width * scale; canvas.height = img.height * scale; canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); res(canvas.toDataURL('image/jpeg', 0.95)); }; }; });
 
-// LOGICA DE RECORTE (CROPPER.JS) PARA COLUMNAS
 document.getElementById('not-imagen').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -137,7 +131,6 @@ window.cancelarEdicion = () => {
     document.getElementById('not-principal').checked = false; 
     document.getElementById('not-form-title').innerText = "Editor de Columnas"; 
     
-    // Limpiar Cropper
     if(window.noticiaCropper) { window.noticiaCropper.destroy(); window.noticiaCropper = null; }
     const cropCont = document.getElementById('cropper-container');
     if(cropCont) { cropCont.style.display = 'none'; document.getElementById('cropper-image').src = ''; }
@@ -149,7 +142,6 @@ window.cancelarEdicion = () => {
 onSnapshot(doc(db, "config", "sidebar"), (s) => { if(s.exists()){ const d = s.data(); if(d.t) document.getElementById('sb-titulo').innerText = d.t; if(d.desc) document.getElementById('sb-desc').innerText = d.desc; } }); window.editarSidebar = async () => { const t = prompt("Título:", document.getElementById('sb-titulo').innerText) || document.getElementById('sb-titulo').innerText; const desc = prompt("Descripción:", document.getElementById('sb-desc').innerText) || document.getElementById('sb-desc').innerText; await setDoc(doc(db, "config", "sidebar"), {t, desc}, {merge:true}); };
 onSnapshot(doc(db, "config", "footer"), (s) => { if(s.exists()){ const d = s.data(); if(d.ubicacion) document.getElementById('f-ubicacion').innerHTML = d.ubicacion.replace(/\n/g, "<br>"); if(d.contacto) document.getElementById('f-contacto').innerHTML = d.contacto.replace(/\n/g, "<br>"); if(d.sobre) document.getElementById('f-sobre').innerHTML = d.sobre.replace(/\n/g, "<br>"); } }); window.editarFooter = async () => { const u = prompt("Ubicación (Usa Enter para saltos de línea):", document.getElementById('f-ubicacion').innerText); const c = prompt("Contacto:", document.getElementById('f-contacto').innerText); const s = prompt("Sobre la Universidad:", document.getElementById('f-sobre').innerText); if(u && c && s) await setDoc(doc(db, "config", "footer"), {ubicacion: u, contacto: c, sobre: s}, {merge:true}); };
 
-// Escuchar cambios de Tabs
 document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => { 
     btn.addEventListener('shown.bs.tab', (e) => { 
         const target = e.target.getAttribute('data-bs-target'); 
@@ -164,6 +156,7 @@ document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => {
 /* NOTICIAS & ARTÍCULOS */
 let noticiasData = []; let qBuscar = ''; let ordDesc = true; document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); }); document.getElementById('btn-ordenar').addEventListener('click', () => { ordDesc = !ordDesc; document.getElementById('btn-ordenar').innerText = ordDesc ? 'Ordenar: Recientes ↓' : 'Ordenar: Antiguos ↑'; renderNoticias(); }); 
 
+// SOLUCION BUG 2: Desactivar automáticamente otras principales en la DB al publicar una nueva
 document.getElementById('btn-pub-noticia').onclick = async () => { 
     const titulo = document.getElementById('not-titulo').value; 
     if(!titulo) return alert("Falta el titular."); 
@@ -172,18 +165,25 @@ document.getElementById('btn-pub-noticia').onclick = async () => {
     let imgFinal = ''; 
     const imgFile = document.getElementById('not-imagen').files[0]; 
     if (window.noticiaCropper) {
-        // Obtener el recorte exacto elegido por el dueño para la card
         imgFinal = window.noticiaCropper.getCroppedCanvas({ maxWidth: 1280, maxHeight: 720 }).toDataURL('image/jpeg', 0.9);
     } else if (imgFile) {
-        // Fallback por seguridad
         imgFinal = await compressImg(imgFile); 
     } else if (window.editandoId && window.postsData[window.editandoId].imagen) {
         imgFinal = window.postsData[window.editandoId].imagen;
     }
     
     const editorContent = tinymce.get('editor-noticias').getContent(); 
-    const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: document.getElementById('not-principal').checked, contenido: editorContent }; 
+    const isPrincipal = document.getElementById('not-principal').checked;
+    const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: isPrincipal, contenido: editorContent }; 
     
+    if (isPrincipal) {
+        noticiasData.forEach(n => {
+            if (n.principal && n.id !== window.editandoId) {
+                updateDoc(doc(db, "noticias", n.id), { principal: false });
+            }
+        });
+    }
+
     if (window.editandoId) await updateDoc(doc(db, "noticias", window.editandoId), data); 
     else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "noticias"), data); } 
     cancelarEdicion(); 
@@ -191,23 +191,33 @@ document.getElementById('btn-pub-noticia').onclick = async () => {
 
 onSnapshot(collection(db, "noticias"), (snap) => { noticiasData = []; snap.forEach(d => { noticiasData.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'noticias'); }); renderNoticias(); if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); if(isFirstLoad) { isFirstLoad = false; clearInterval(splashInterval); if(progBar) progBar.style.width = '100%'; setTimeout(() => { if(splash && splash.parentNode) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); } }, 600); } });
 
+// SOLUCION BUG 1 Y BUG 2: Fijar una única principal definitiva y enviar las demás a la lista
 function renderNoticias() { 
     let filtradas = noticiasData.filter(n => (n.titulo||'').toLowerCase().includes(qBuscar) || (n.contenido||'').toLowerCase().includes(qBuscar)); 
+    
+    // Identificar la principal más reciente para dejarla fija arriba
+    let principalDefinitiva = null;
+    const principales = filtradas.filter(n => n.principal);
+    if (principales.length > 0) {
+        principales.sort((a,b) => { let tA = a.fecha?.toMillis()||0; let tB = b.fecha?.toMillis()||0; return tB - tA; });
+        principalDefinitiva = principales[0];
+    }
+
+    // Ordenar toda la lista según el botón de ordenar
     filtradas.sort((a,b) => { let tA = a.fecha?.toMillis()||0; let tB = b.fecha?.toMillis()||0; return ordDesc ? tB - tA : tA - tB; }); 
+    
     const cLista = document.getElementById('contenedor-noticias-lista'); 
     const cPrinc = document.getElementById('contenedor-noticia-principal'); 
     if (filtradas.length === 0) { cPrinc.innerHTML=''; cLista.innerHTML='<div class="text-center text-muted">No hay resultados.</div>'; return; } 
     
-    let hLista = ''; let hPrinc = ''; let pFound = false; 
+    let hLista = ''; let hPrinc = ''; 
     
     filtradas.forEach(d => { 
         const date = d.fecha ? d.fecha.toDate().toLocaleDateString() : 'Reciente'; 
         const avgStr = getPromedioStars(d.comentarios); 
         const textoLimpioPreview = (d.contenido || '').replace(/<[^>]*>?/gm, ''); 
         
-        if (d.principal && !pFound) { 
-            pFound = true; 
-            // NUEVO DISEÑO PARA LA TARJETA PRINCIPAL (Igual a la imagen)
+        if (principalDefinitiva && d.id === principalDefinitiva.id) { 
             const tHTMLPrincipal = (d.etiquetas||[]).map(t => `<span class="badge border text-secondary bg-transparent rounded-1 me-2 px-2 py-1 font-inter" style="border-color: #cbd5e1 !important; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">${escapeHTML(t)}</span>`).join('');
             const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-3 shadow-sm cursor-pointer" style="height:350px; object-fit: cover; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-3 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:350px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; 
             hPrinc = `
@@ -230,13 +240,12 @@ function renderNoticias() {
             <div style="height: 2px; background-color: #009668; width: 100%; margin-bottom: 2.5rem; opacity: 0.3;"></div>
             `; 
         } else {
-            // Diseño lista standard
             const tHTMLLista = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join('');
             const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; 
             hLista += `<div class="card border-0 border-bottom rounded-0 mb-4 pb-4 bg-transparent"><div class="row g-4 align-items-center"><div class="col-md-5">${imgH}</div><div class="col-md-7 d-flex flex-column"><div class="d-flex justify-content-between mb-2"><div>${tHTMLLista}</div><div><i class="bi bi-share text-muted me-2 cursor-pointer" onclick="compartir('${d.id}', 'noticias')"></i><i class="bi bi-pencil-fill text-warning me-2 admin-only-inline cursor-pointer" onclick="editarNoticia('${d.id}')"></i><i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i></div></div><h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif text-dark" style="font-size: 1.5rem;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h3><small class="text-muted fw-semibold mt-1"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2">${avgStr}</span></small></div></div></div>`;
         }
     }); 
-    cPrinc.innerHTML = pFound ? hPrinc : ''; 
+    cPrinc.innerHTML = principalDefinitiva ? hPrinc : ''; 
     cLista.innerHTML = hLista; 
 }
 
@@ -271,7 +280,7 @@ document.getElementById('btn-iniciar-crear-form').onclick = () => {
     document.getElementById('form-imagen').value = '';
     document.getElementById('contenedor-preguntas-builder').innerHTML = ''; 
     numPreguntasForm = 0;
-    window.agregarPreguntaFormBuilder(); // Agrega una por defecto
+    window.agregarPreguntaFormBuilder(); 
     bootstrap.Collapse.getOrCreateInstance(document.getElementById('colFormulario')).toggle();
 };
 
