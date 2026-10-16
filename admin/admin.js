@@ -2,19 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebas
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE",
-    authDomain: "economia-41d20.firebaseapp.com",
-    databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com",
-    projectId: "economia-41d20",
-    storageBucket: "economia-41d20.firebasestorage.app",
-    messagingSenderId: "750639619847",
-    appId: "1:750639619847:web:9a036501539ca6e3ceafa2",
-    measurementId: "G-BWV82ZTSW1"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1" });
+const auth = getAuth(app); 
 const db = getFirestore(app);
 
 let allUsers = [];
@@ -24,17 +13,21 @@ let allUsers = [];
 // ==========================================
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-        if (userDoc.exists() && userDoc.data().owner === true) {
-            
-            document.getElementById('loading-screen').style.display = 'none';
-            document.getElementById('dashboard-wrapper').style.display = 'block';
-            document.getElementById('admin-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
-            document.getElementById('admin-name').innerText = user.displayName || 'Admin';
-            
-            cargarDatosDashboard();
-            cargarUsuarios();
-        } else {
+        try {
+            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+            if (userDoc.exists() && userDoc.data().owner === true) {
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('dashboard-wrapper').style.display = 'block';
+                document.getElementById('admin-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
+                document.getElementById('admin-name').innerText = user.displayName || 'Admin';
+                
+                cargarDatosDashboard();
+                cargarUsuarios();
+            } else {
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('access-denied').style.display = 'flex';
+            }
+        } catch (error) {
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('access-denied').style.display = 'flex';
         }
@@ -48,16 +41,10 @@ onAuthStateChanged(auth, async (user) => {
 // ==========================================
 document.querySelectorAll('#sidebar-nav .nav-link').forEach(link => {
     link.addEventListener('click', (e) => {
-        if(link.getAttribute('href')) return; // ignorar "volver a la web"
-        
-        // Estilos del menú
+        if(link.getAttribute('href')) return; 
         document.querySelectorAll('#sidebar-nav .nav-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
-        
-        // Título de la página
         document.getElementById('page-title').innerText = link.innerText.trim();
-
-        // Ocultar todas las secciones y mostrar la seleccionada
         const targetId = link.getAttribute('data-target');
         document.querySelectorAll('.admin-section').forEach(sec => sec.style.display = 'none');
         document.getElementById(targetId).style.display = 'block';
@@ -65,14 +52,15 @@ document.querySelectorAll('#sidebar-nav .nav-link').forEach(link => {
 });
 
 // ==========================================
-// 3. CARGAR GRÁFICOS (DASHBOARD)
+// 3. CARGAR GRÁFICOS (DASHBOARD REAL)
 // ==========================================
 async function cargarDatosDashboard() {
     try {
-        const [noticiasSnap, articulosSnap, formsSnap] = await Promise.all([
+        const [noticiasSnap, articulosSnap, formsSnap, statsDoc] = await Promise.all([
             getDocs(collection(db, "noticias")),
             getDocs(collection(db, "articulos")),
-            getDocs(collection(db, "formularios"))
+            getDocs(collection(db, "formularios")),
+            getDoc(doc(db, "config", "estadisticas"))
         ]);
 
         let todasPublicaciones = [];
@@ -98,13 +86,25 @@ async function cargarDatosDashboard() {
 
         todasPublicaciones.sort((a, b) => b.vistas - a.vistas);
 
-        const totalVistas = todasPublicaciones.reduce((acc, curr) => acc + curr.vistas, 0);
+        const totalVistasPosts = todasPublicaciones.reduce((acc, curr) => acc + curr.vistas, 0);
         const totalPosts = todasPublicaciones.length;
-        const promedio = totalPosts > 0 ? (totalVistas / totalPosts).toFixed(1) : 0;
+        
+        let globalViews = totalVistasPosts;
+        if(statsDoc.exists() && statsDoc.data().visitasGlobales) {
+            globalViews = statsDoc.data().visitasGlobales;
+        }
 
-        document.getElementById('kpi-vistas').innerText = totalVistas.toLocaleString();
+        // Si prefieres mostrar las vistas globales en el dashboard o las vistas en post:
+        // Vamos a cambiar los KPI en el HTML de index.html con estos datos.
+        document.getElementById('kpi-vistas').innerText = globalViews.toLocaleString();
         document.getElementById('kpi-posts').innerText = totalPosts;
-        document.getElementById('kpi-avg').innerText = promedio;
+        
+        // Ahora el kpi-avg mostrará total de Vistas exclusivamente en Posts
+        const avgEl = document.getElementById('kpi-avg');
+        if(avgEl) {
+            avgEl.innerText = totalVistasPosts.toLocaleString(); 
+            avgEl.previousElementSibling.innerText = "VISTAS EN POSTS"; 
+        }
 
         const top5 = todasPublicaciones.slice(0, 5);
         new Chart(document.getElementById('barChart').getContext('2d'), {
@@ -124,7 +124,9 @@ async function cargarDatosDashboard() {
             },
             options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
         });
-    } catch(e) { console.error("Error Dashboard:", e); }
+    } catch(e) { 
+        console.error("Error Dashboard:", e); 
+    }
 }
 
 // ==========================================
@@ -138,9 +140,7 @@ async function cargarUsuarios() {
             allUsers.push({ id: d.id, ...d.data() });
         });
         renderUsuarios(allUsers);
-    } catch(e) {
-        console.error("Error al cargar usuarios:", e);
-    }
+    } catch(e) {}
 }
 
 function renderUsuarios(usersList) {
@@ -159,18 +159,18 @@ function renderUsuarios(usersList) {
         const rep = u.reputacion || 0;
         
         const badge = isAdmin 
-            ? '<span class="badge bg-primary px-3 rounded-pill">Admin</span>' 
-            : '<span class="badge bg-secondary px-3 rounded-pill">Usuario</span>';
+            ? '<span class="badge bg-primary px-3 rounded-pill shadow-sm">Admin</span>' 
+            : '<span class="badge bg-secondary px-3 rounded-pill shadow-sm">Usuario</span>';
             
         const btnAccion = isAdmin
-            ? `<button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" onclick="window.cambiarRol('${u.id}', false)">Quitar Admin</button>`
-            : `<button class="btn btn-sm btn-success rounded-pill px-3 fw-semibold" style="background-color: #009668; border: none;" onclick="window.cambiarRol('${u.id}', true)">Hacer Admin</button>`;
+            ? `<button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold shadow-sm" onclick="window.cambiarRol('${u.id}', false)">Quitar Admin</button>`
+            : `<button class="btn btn-sm btn-success rounded-pill px-3 fw-semibold shadow-sm" style="background-color: #009668; border: none;" onclick="window.cambiarRol('${u.id}', true)">Hacer Admin</button>`;
 
         tbody.innerHTML += `
             <tr>
-                <td class="fw-semibold text-dark">${nombre}</td>
-                <td class="text-secondary">${email}</td>
-                <td class="fw-bold" style="color: #004b79;"><i class="bi bi-cup-hot-fill text-warning me-1"></i> ${rep}</td>
+                <td class="fw-semibold text-dark font-inter">${nombre}</td>
+                <td class="text-secondary font-inter">${email}</td>
+                <td class="fw-bold font-inter" style="color: #004b79;"><i class="bi bi-cup-hot-fill text-warning me-1"></i> ${rep}</td>
                 <td>${badge}</td>
                 <td class="text-center">${btnAccion}</td>
             </tr>
@@ -178,7 +178,6 @@ function renderUsuarios(usersList) {
     });
 }
 
-// Buscador de usuarios
 document.getElementById('buscar-usuario').addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();
     const filtrados = allUsers.filter(u => 
@@ -188,29 +187,23 @@ document.getElementById('buscar-usuario').addEventListener('input', (e) => {
     renderUsuarios(filtrados);
 });
 
-// Función Global para que los botones de la tabla puedan usarla
 window.cambiarRol = async (uid, nuevoEstadoOwner) => {
     const msj = nuevoEstadoOwner 
-        ? "¿Estás seguro de que quieres darle permisos de Administrador a este usuario?"
-        : "¿Estás seguro de que quieres quitarle los permisos de Administrador a este usuario?";
+        ? "¿Dar permisos de Administrador a este usuario?"
+        : "¿Quitar los permisos de Administrador a este usuario?";
         
     if(confirm(msj)) {
         try {
             await updateDoc(doc(db, "usuarios", uid), { owner: nuevoEstadoOwner });
-            // Actualizar arreglo local y re-renderizar (ahorra lecturas a Firebase)
             const index = allUsers.findIndex(u => u.id === uid);
             if(index !== -1) allUsers[index].owner = nuevoEstadoOwner;
             
-            // Volver a renderizar respetando la búsqueda actual
             const q = document.getElementById('buscar-usuario').value.toLowerCase();
             const filtrados = allUsers.filter(u => 
                 (u.nombre && u.nombre.toLowerCase().includes(q)) || 
                 (u.email && u.email.toLowerCase().includes(q))
             );
             renderUsuarios(filtrados);
-            
-        } catch(e) {
-            alert("Error al actualizar los permisos: " + e.message);
-        }
+        } catch(e) { alert("Error: " + e.message); }
     }
 };
