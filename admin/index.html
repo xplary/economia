@@ -3,359 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin | CAFE UNP</title>
+    <title>Panel de Administración | CAFE UNP</title>
     
-    <!-- Dependencias UI -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Librería de Gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9;
-            color: #1e293b;
-        }
-        /* Sidebar Styling */
-        .sidebar {
-            width: 260px;
-            background: #003657; /* Match Navbar original */
-            color: #fff;
-            position: fixed;
-            height: 100vh;
-            left: 0;
-            top: 0;
-            padding-top: 1.5rem;
-            z-index: 10;
-        }
-        .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.75);
-            font-weight: 500;
-            padding: 0.8rem 1.5rem;
-            transition: all 0.2s;
-        }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 4px solid #009668;
-        }
-        
-        /* Main Content Wrapper */
-        .main-content {
-            margin-left: 260px;
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        
-        /* KPI Cards */
-        .kpi-card {
-            background: #fff;
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s;
-        }
-        .kpi-card:hover { transform: translateY(-5px); }
-        .kpi-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-        
-        /* Carga / Bloqueo */
-        #loading-screen, #access-denied {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #f1f5f9; z-index: 9999; display: flex; 
-            align-items: center; justify-content: center; flex-direction: column;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
-            .main-content { margin-left: 0; padding: 1rem; }
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+        .sidebar { width: 260px; background: #003657; color: #fff; position: fixed; height: 100vh; left: 0; top: 0; padding-top: 1.5rem; z-index: 10; }
+        .sidebar .nav-link { color: rgba(255, 255, 255, 0.75); font-weight: 500; padding: 0.8rem 1.5rem; transition: all 0.2s; cursor: pointer; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255, 255, 255, 0.1); border-left: 4px solid #009668; }
+        .main-content { margin-left: 260px; padding: 2rem; min-height: 100vh; }
+        .kpi-card { background: #fff; border-radius: 12px; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .kpi-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        #loading-screen, #access-denied { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f1f5f9; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .main-content { margin-left: 0; padding: 1rem; } }
     </style>
 </head>
 <body>
 
-    <!-- PANTALLA DE CARGA -->
+    <!-- Pantallas de Estado -->
     <div id="loading-screen">
-        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
-        <h4 class="fw-bold">Comprobando Credenciales...</h4>
+        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+        <h4 class="fw-bold">Verificando Permisos...</h4>
     </div>
 
-    <!-- PANTALLA DE ACCESO DENEGADO (Oculta por defecto) -->
     <div id="access-denied" style="display: none;">
         <i class="bi bi-shield-lock-fill text-danger mb-3" style="font-size: 5rem;"></i>
         <h2 class="fw-bold">Acceso Denegado</h2>
-        <p class="text-muted mb-4">No tienes permisos de Administrador para ver esta página.</p>
+        <p class="text-muted mb-4">No tienes permisos de Administrador.</p>
         <a href="../index.html" class="btn btn-primary rounded-pill px-4">Volver al Sitio</a>
     </div>
 
-    <!-- DASHBOARD CONTENIDO -->
+    <!-- Contenido Principal -->
     <div id="dashboard-wrapper" style="display: none;">
         
-        <!-- SIDEBAR -->
         <div class="sidebar shadow">
             <div class="px-4 mb-5 d-flex align-items-center">
-                <i class="bi bi-bar-chart-fill me-2 fs-3 text-white"></i>
+                <i class="bi bi-gear-fill me-2 fs-3 text-white"></i>
                 <h4 class="m-0 fw-bold">Admin Panel</h4>
             </div>
-            <ul class="nav flex-column mb-auto">
-                <li class="nav-item"><a href="#" class="nav-link active"><i class="bi bi-grid-1x2-fill me-2"></i> Resumen de Vistas</a></li>
-                <li class="nav-item"><a href="../index.html" class="nav-link"><i class="bi bi-box-arrow-up-right me-2"></i> Volver a la Web</a></li>
+            <ul class="nav flex-column mb-auto" id="sidebar-nav">
+                <li class="nav-item"><a class="nav-link active" data-target="dashboard-tab"><i class="bi bi-grid-1x2-fill me-2"></i> Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" data-target="usuarios-tab"><i class="bi bi-people-fill me-2"></i> Gestión de Usuarios</a></li>
+                <li class="nav-item mt-4"><a href="../index.html" class="nav-link text-warning"><i class="bi bi-box-arrow-up-right me-2"></i> Volver a la Web</a></li>
             </ul>
         </div>
 
-        <!-- MAIN AREA -->
         <div class="main-content">
             
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-bold m-0">Estadísticas de Visualizaciones</h2>
+                <h2 class="fw-bold m-0" id="page-title">Dashboard</h2>
                 <div class="d-flex align-items-center bg-white px-3 py-2 rounded-pill shadow-sm">
                     <img src="" id="admin-avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
                     <span class="fw-semibold text-dark" id="admin-name" style="font-size: 0.9rem;">Admin</span>
                 </div>
             </div>
 
-            <!-- KPI ROW -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-4">
-                    <div class="card kpi-card p-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <p class="text-muted fw-semibold mb-1 small">VISUALIZACIONES TOTALES</p>
-                                <h3 class="fw-bold m-0" id="kpi-vistas">0</h3>
+            <!-- SECCIÓN 1: DASHBOARD -->
+            <div id="dashboard-tab" class="admin-section">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div><p class="text-muted fw-semibold mb-1 small">VISUALIZACIONES TOTALES</p><h3 class="fw-bold m-0" id="kpi-vistas">0</h3></div>
+                                <div class="kpi-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-eye-fill"></i></div>
                             </div>
-                            <div class="kpi-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-eye-fill"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div><p class="text-muted fw-semibold mb-1 small">PUBLICACIONES</p><h3 class="fw-bold m-0" id="kpi-posts">0</h3></div>
+                                <div class="kpi-icon bg-success bg-opacity-10 text-success"><i class="bi bi-file-earmark-text-fill"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card kpi-card p-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div><p class="text-muted fw-semibold mb-1 small">PROMEDIO VISTAS/POST</p><h3 class="fw-bold m-0" id="kpi-avg">0</h3></div>
+                                <div class="kpi-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-graph-up-arrow"></i></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card kpi-card p-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <p class="text-muted fw-semibold mb-1 small">PUBLICACIONES ACTIVAS</p>
-                                <h3 class="fw-bold m-0" id="kpi-posts">0</h3>
-                            </div>
-                            <div class="kpi-icon bg-success bg-opacity-10 text-success"><i class="bi bi-file-earmark-text-fill"></i></div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-8">
+                        <div class="card kpi-card p-4 h-100">
+                            <h5 class="fw-bold mb-4">Top 5 Publicaciones Más Vistas</h5>
+                            <canvas id="barChart" style="max-height: 300px;"></canvas>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card kpi-card p-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <p class="text-muted fw-semibold mb-1 small">PROMEDIO DE VISTAS/POST</p>
-                                <h3 class="fw-bold m-0" id="kpi-avg">0</h3>
+                    <div class="col-lg-4">
+                        <div class="card kpi-card p-4 h-100">
+                            <h5 class="fw-bold mb-4">Tráfico por Categoría</h5>
+                            <div class="d-flex justify-content-center align-items-center h-100 pb-3">
+                                <canvas id="doughnutChart" style="max-height: 250px;"></canvas>
                             </div>
-                            <div class="kpi-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-graph-up-arrow"></i></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- CHARTS ROW -->
-            <div class="row g-4 mb-4">
-                <div class="col-lg-8">
-                    <div class="card kpi-card p-4 h-100">
-                        <h5 class="fw-bold mb-4">Top 5 Publicaciones Más Vistas</h5>
-                        <canvas id="barChart" style="max-height: 300px;"></canvas>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="card kpi-card p-4 h-100">
-                        <h5 class="fw-bold mb-4">Tráfico por Categoría</h5>
-                        <div class="d-flex justify-content-center align-items-center h-100 pb-3">
-                            <canvas id="doughnutChart" style="max-height: 250px;"></canvas>
+            <!-- SECCIÓN 2: GESTIÓN DE USUARIOS -->
+            <div id="usuarios-tab" class="admin-section" style="display: none;">
+                <div class="card kpi-card p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+                        <h5 class="fw-bold m-0">Lista de Usuarios Registrados</h5>
+                        <div class="input-group" style="max-width: 300px;">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="text" id="buscar-usuario" class="form-control border-start-0 shadow-none" placeholder="Buscar nombre o correo...">
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- TABLE ROW -->
-            <div class="card kpi-card p-4">
-                <h5 class="fw-bold mb-4">Desglose de Todas las Publicaciones</h5>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Título</th>
-                                <th>Categoría</th>
-                                <th>Visualizaciones</th>
-                                <th>Comentarios</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-body">
-                            <!-- Inyectado por JS -->
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Correo Electrónico</th>
+                                    <th>Reputación</th>
+                                    <th>Rol Actual</th>
+                                    <th class="text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usuarios-table-body">
+                                <!-- Inyectado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- LOGICA FIREBASE Y GRAFICOS -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-
-        // Mismas credenciales que app.js
-        const firebaseConfig = {
-            apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE",
-            authDomain: "economia-41d20.firebaseapp.com",
-            databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com",
-            projectId: "economia-41d20",
-            storageBucket: "economia-41d20.firebasestorage.app",
-            messagingSenderId: "750639619847",
-            appId: "1:750639619847:web:9a036501539ca6e3ceafa2",
-            measurementId: "G-BWV82ZTSW1"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Control de Sesión y Permisos
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-                if (userDoc.exists() && userDoc.data().owner === true) {
-                    // Es administrador, mostrar dashboard
-                    document.getElementById('loading-screen').style.display = 'none';
-                    document.getElementById('dashboard-wrapper').style.display = 'block';
-                    document.getElementById('admin-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
-                    document.getElementById('admin-name').innerText = user.displayName;
-                    
-                    cargarDatos(); // Iniciar cálculos
-                } else {
-                    // No es owner
-                    document.getElementById('loading-screen').style.display = 'none';
-                    document.getElementById('access-denied').style.display = 'flex';
-                }
-            } else {
-                // No autenticado
-                window.location.href = "../index.html"; 
-            }
-        });
-
-        async function cargarDatos() {
-            try {
-                // Traer colecciones simultáneamente
-                const [noticiasSnap, articulosSnap, formsSnap] = await Promise.all([
-                    getDocs(collection(db, "noticias")),
-                    getDocs(collection(db, "articulos")),
-                    getDocs(collection(db, "formularios"))
-                ]);
-
-                let todasPublicaciones = [];
-                let statsCat = { 'Opinión': 0, 'Papers': 0, 'Encuestas': 0 };
-
-                // Procesar Columnas de Opinión (Noticias)
-                noticiasSnap.forEach(d => {
-                    const data = d.data();
-                    const vistas = data.vistas || 0;
-                    todasPublicaciones.push({ id: d.id, titulo: data.titulo, tipo: 'Opinión', vistas: vistas, coms: (data.comentarios||[]).length });
-                    statsCat['Opinión'] += vistas;
-                });
-
-                // Procesar Papers (Artículos)
-                articulosSnap.forEach(d => {
-                    const data = d.data();
-                    const vistas = data.vistas || 0;
-                    todasPublicaciones.push({ id: d.id, titulo: data.titulo, tipo: 'Paper', vistas: vistas, coms: (data.comentarios||[]).length });
-                    statsCat['Papers'] += vistas;
-                });
-
-                // Procesar Formularios (Encuestas)
-                formsSnap.forEach(d => {
-                    const data = d.data();
-                    const vistas = data.vistas || 0;
-                    todasPublicaciones.push({ id: d.id, titulo: data.titulo, tipo: 'Encuesta', vistas: vistas, coms: (data.respuestas||[]).length });
-                    statsCat['Encuestas'] += vistas;
-                });
-
-                // Ordenar por vistas (Mayor a menor)
-                todasPublicaciones.sort((a, b) => b.vistas - a.vistas);
-
-                // ==============================
-                // 1. LLENAR KPIs
-                // ==============================
-                const totalVistas = todasPublicaciones.reduce((acc, curr) => acc + curr.vistas, 0);
-                const totalPosts = todasPublicaciones.length;
-                const promedio = totalPosts > 0 ? (totalVistas / totalPosts).toFixed(1) : 0;
-
-                document.getElementById('kpi-vistas').innerText = totalVistas.toLocaleString();
-                document.getElementById('kpi-posts').innerText = totalPosts;
-                document.getElementById('kpi-avg').innerText = promedio;
-
-                // ==============================
-                // 2. CREAR TABLA
-                // ==============================
-                const tbody = document.getElementById('table-body');
-                tbody.innerHTML = '';
-                todasPublicaciones.forEach(p => {
-                    let badgeColor = p.tipo === 'Opinión' ? 'bg-primary' : (p.tipo === 'Paper' ? 'bg-secondary' : 'bg-success');
-                    tbody.innerHTML += `
-                        <tr>
-                            <td class="fw-semibold text-dark">${p.titulo.substring(0, 60)}${p.titulo.length>60?'...':''}</td>
-                            <td><span class="badge ${badgeColor} bg-opacity-75">${p.tipo}</span></td>
-                            <td class="fw-bold"><i class="bi bi-eye text-muted me-1"></i> ${p.vistas}</td>
-                            <td><i class="bi bi-chat-square-text text-muted me-1"></i> ${p.coms}</td>
-                        </tr>
-                    `;
-                });
-
-                // ==============================
-                // 3. GRAFICO DE BARRAS (TOP 5)
-                // ==============================
-                const top5 = todasPublicaciones.slice(0, 5);
-                const barCtx = document.getElementById('barChart').getContext('2d');
-                new Chart(barCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: top5.map(t => t.titulo.length > 20 ? t.titulo.substring(0, 20)+'...' : t.titulo),
-                        datasets: [{
-                            label: 'Vistas',
-                            data: top5.map(t => t.vistas),
-                            backgroundColor: '#004b79',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
-
-                // ==============================
-                // 4. GRAFICO DE DONA (CATEGORIAS)
-                // ==============================
-                const donutCtx = document.getElementById('doughnutChart').getContext('2d');
-                new Chart(donutCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: Object.keys(statsCat),
-                        datasets: [{
-                            data: Object.values(statsCat),
-                            backgroundColor: ['#009668', '#4285f4', '#fbbc05'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
-                });
-
-            } catch(e) {
-                console.error("Error al cargar datos del panel", e);
-                alert("Hubo un error cargando las estadísticas.");
-            }
-        }
-    </script>
+    <!-- VINCULAMOS EL NUEVO SCRIPT ADMIN -->
+    <script type="module" src="admin.js"></script>
 </body>
 </html>
