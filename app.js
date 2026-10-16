@@ -6,6 +6,7 @@ const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", a
 const auth = getAuth(app); const db = getFirestore(app);
 
 window.postsData = {}; window.editandoId = null; window.editandoFormId = null; window.modalActual = { id: null, col: null };
+window.noticiaCropper = null; // Instancia global para el recortador de imágenes
 let progress = 0; let isFirstLoad = true;
 let currentTab = 'columnas'; let userReputacion = 0; let reqReputacion = 15; let userSub = null;
 
@@ -35,7 +36,6 @@ function updateReputationVisibility() {
     }
 }
 
-// CORRECCIÓN BUG: Renderizar de forma controlada después de comprobar la base de datos
 onAuthStateChanged(auth, async (u) => {
     document.getElementById('btn-login').classList.toggle('d-none', !!u); document.getElementById('btn-logout').classList.toggle('d-none', !u); 
     document.body.classList.remove('is-owner');
@@ -57,10 +57,8 @@ onAuthStateChanged(auth, async (u) => {
             document.getElementById('user-reputacion').innerText = userReputacion;
             updateReputationVisibility();
             
-            // Renderizamos los formularios DESPUÉS de que sepamos con exactitud si es Owner o no
             renderFormularios(); 
             
-            // Si el admin tiene un modal abierto y recarga, actualizar su vista
             if(window.modalActual.col === 'formularios' && window.modalActual.id) {
                 const curData = window.postsData[window.modalActual.id];
                 if(curData) window.renderModalFormulario(window.modalActual.id, curData);
@@ -69,7 +67,7 @@ onAuthStateChanged(auth, async (u) => {
     } else {
         userReputacion = 0;
         updateReputationVisibility();
-        renderFormularios(); // Renderizamos limpio si se cierra sesión
+        renderFormularios(); 
     }
 });
 
@@ -103,7 +101,51 @@ window.abrirModal = (id, col) => {
 
 const checkDeepLink = (id, col) => { if(autoOpenDone) return; const urlP = new URLSearchParams(window.location.search); const v = urlP.get('v'); let tId = urlP.get('p'), tCol = urlP.get('t'); if(v) { const parts = v.split('---'); if(parts.length===3){ tId = parts[1]; tCol = parts[2]; } } if(tId === id && tCol === col) { autoOpenDone = true; setTimeout(() => { abrirModal(id, col); }, 500); } }; let autoOpenDone = false;
 const compressImg = (file) => new Promise((res) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = (e) => { const img = new Image(); img.src = e.target.result; img.onload = () => { const canvas = document.createElement('canvas'); const MAX = 2000; const scale = img.width > MAX ? MAX / img.width : 1; canvas.width = img.width * scale; canvas.height = img.height * scale; canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); res(canvas.toDataURL('image/jpeg', 0.95)); }; }; });
-window.cancelarEdicion = () => { window.editandoId = null; document.querySelectorAll('input:not([type="color"]), textarea').forEach(i => i.value = ''); if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(''); document.getElementById('not-principal').checked = false; document.getElementById('not-form-title').innerText = "Editor de Columnas"; bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide(); };
+
+// LOGICA DE RECORTE (CROPPER.JS) PARA COLUMNAS
+document.getElementById('not-imagen').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const imgEl = document.getElementById('cropper-image');
+            imgEl.src = event.target.result;
+            document.getElementById('cropper-container').style.display = 'block';
+            if(window.noticiaCropper) { window.noticiaCropper.destroy(); }
+            window.noticiaCropper = new Cropper(imgEl, {
+                aspectRatio: 16 / 9,
+                viewMode: 2,
+                dragMode: 'move',
+                autoCropArea: 1,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+window.cancelarEdicion = () => { 
+    window.editandoId = null; 
+    document.querySelectorAll('input:not([type="color"]), textarea').forEach(i => i.value = ''); 
+    if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(''); 
+    document.getElementById('not-principal').checked = false; 
+    document.getElementById('not-form-title').innerText = "Editor de Columnas"; 
+    
+    // Limpiar Cropper
+    if(window.noticiaCropper) { window.noticiaCropper.destroy(); window.noticiaCropper = null; }
+    const cropCont = document.getElementById('cropper-container');
+    if(cropCont) { cropCont.style.display = 'none'; document.getElementById('cropper-image').src = ''; }
+    
+    bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide(); 
+    bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide(); 
+};
+
 onSnapshot(doc(db, "config", "sidebar"), (s) => { if(s.exists()){ const d = s.data(); if(d.t) document.getElementById('sb-titulo').innerText = d.t; if(d.desc) document.getElementById('sb-desc').innerText = d.desc; } }); window.editarSidebar = async () => { const t = prompt("Título:", document.getElementById('sb-titulo').innerText) || document.getElementById('sb-titulo').innerText; const desc = prompt("Descripción:", document.getElementById('sb-desc').innerText) || document.getElementById('sb-desc').innerText; await setDoc(doc(db, "config", "sidebar"), {t, desc}, {merge:true}); };
 onSnapshot(doc(db, "config", "footer"), (s) => { if(s.exists()){ const d = s.data(); if(d.ubicacion) document.getElementById('f-ubicacion').innerHTML = d.ubicacion.replace(/\n/g, "<br>"); if(d.contacto) document.getElementById('f-contacto').innerHTML = d.contacto.replace(/\n/g, "<br>"); if(d.sobre) document.getElementById('f-sobre').innerHTML = d.sobre.replace(/\n/g, "<br>"); } }); window.editarFooter = async () => { const u = prompt("Ubicación (Usa Enter para saltos de línea):", document.getElementById('f-ubicacion').innerText); const c = prompt("Contacto:", document.getElementById('f-contacto').innerText); const s = prompt("Sobre la Universidad:", document.getElementById('f-sobre').innerText); if(u && c && s) await setDoc(doc(db, "config", "footer"), {ubicacion: u, contacto: c, sobre: s}, {merge:true}); };
 
@@ -120,9 +162,86 @@ document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => {
 });
 
 /* NOTICIAS & ARTÍCULOS */
-let noticiasData = []; let qBuscar = ''; let ordDesc = true; document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); }); document.getElementById('btn-ordenar').addEventListener('click', () => { ordDesc = !ordDesc; document.getElementById('btn-ordenar').innerText = ordDesc ? 'Ordenar: Recientes ↓' : 'Ordenar: Antiguos ↑'; renderNoticias(); }); document.getElementById('btn-pub-noticia').onclick = async () => { const titulo = document.getElementById('not-titulo').value; if(!titulo) return alert("Falta el titular."); const etiquetas = document.getElementById('not-tags').value ? document.getElementById('not-tags').value.split(',').map(t=>t.trim()).filter(Boolean) : ['Opinión']; let imgFinal = ''; const imgFile = document.getElementById('not-imagen').files[0]; if (imgFile) imgFinal = await compressImg(imgFile); else if (window.editandoId && window.postsData[window.editandoId].imagen) imgFinal = window.postsData[window.editandoId].imagen; const editorContent = tinymce.get('editor-noticias').getContent(); const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: document.getElementById('not-principal').checked, contenido: editorContent }; if (window.editandoId) await updateDoc(doc(db, "noticias", window.editandoId), data); else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "noticias"), data); } cancelarEdicion(); }; onSnapshot(collection(db, "noticias"), (snap) => { noticiasData = []; snap.forEach(d => { noticiasData.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'noticias'); }); renderNoticias(); if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); if(isFirstLoad) { isFirstLoad = false; clearInterval(splashInterval); if(progBar) progBar.style.width = '100%'; setTimeout(() => { if(splash && splash.parentNode) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); } }, 600); } });
-function renderNoticias() { let filtradas = noticiasData.filter(n => (n.titulo||'').toLowerCase().includes(qBuscar) || (n.contenido||'').toLowerCase().includes(qBuscar)); filtradas.sort((a,b) => { let tA = a.fecha?.toMillis()||0; let tB = b.fecha?.toMillis()||0; return ordDesc ? tB - tA : tA - tB; }); const cLista = document.getElementById('contenedor-noticias-lista'); const cPrinc = document.getElementById('contenedor-noticia-principal'); if (filtradas.length === 0) { cPrinc.innerHTML=''; cLista.innerHTML='<div class="text-center text-muted">No hay resultados.</div>'; return; } let hLista = ''; let hPrinc = ''; let pFound = false; filtradas.forEach(d => { const date = d.fecha ? d.fecha.toDate().toLocaleDateString() : 'Reciente'; const avgStr = getPromedioStars(d.comentarios); const tHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join(''); const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; const textoLimpioPreview = (d.contenido || '').replace(/<[^>]*>?/gm, ''); if (d.principal && !pFound) { pFound = true; const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-4 shadow-sm cursor-pointer" style="height:380px; object-fit: contain; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-4 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:380px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; hPrinc = `<div class="row mb-5 border-bottom pb-5 align-items-center"><div class="col-lg-7 mb-4 mb-lg-0">${imgP}</div><div class="col-lg-5 ps-lg-4"><div class="mb-3">${tHTML}</div><h2 class="fw-bold mb-3 font-serif cursor-pointer" style="font-size: 2.2rem; color: #1a202c; line-height: 1.3;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h2><div class="text-muted mb-4 text-truncate-3 font-inter" style="font-size: 1.1rem;">${textoLimpioPreview}</div><div class="d-flex justify-content-between"><small class="text-muted fw-semibold"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2">${avgStr}</span></small><small class="text-muted fw-semibold cursor-pointer" onclick="compartir('${d.id}', 'noticias')"><i class="bi bi-share me-1"></i> Compartir</small></div></div></div>`; } hLista += `<div class="card border-0 border-bottom rounded-0 mb-4 pb-4 bg-transparent"><div class="row g-4 align-items-center"><div class="col-md-5">${imgH}</div><div class="col-md-7 d-flex flex-column"><div class="d-flex justify-content-between mb-2"><div>${tHTML}</div><div><i class="bi bi-share text-muted me-2 cursor-pointer" onclick="compartir('${d.id}', 'noticias')"></i><i class="bi bi-pencil-fill text-warning me-2 admin-only-inline cursor-pointer" onclick="editarNoticia('${d.id}')"></i><i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i></div></div><h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif text-dark" style="font-size: 1.5rem;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h3><small class="text-muted fw-semibold mt-1"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2">${avgStr}</span></small></div></div></div>`; }); cPrinc.innerHTML = pFound ? hPrinc : ''; cLista.innerHTML = hLista; }
+let noticiasData = []; let qBuscar = ''; let ordDesc = true; document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); }); document.getElementById('btn-ordenar').addEventListener('click', () => { ordDesc = !ordDesc; document.getElementById('btn-ordenar').innerText = ordDesc ? 'Ordenar: Recientes ↓' : 'Ordenar: Antiguos ↑'; renderNoticias(); }); 
+
+document.getElementById('btn-pub-noticia').onclick = async () => { 
+    const titulo = document.getElementById('not-titulo').value; 
+    if(!titulo) return alert("Falta el titular."); 
+    const etiquetas = document.getElementById('not-tags').value ? document.getElementById('not-tags').value.split(',').map(t=>t.trim()).filter(Boolean) : ['Opinión']; 
+    
+    let imgFinal = ''; 
+    const imgFile = document.getElementById('not-imagen').files[0]; 
+    if (window.noticiaCropper) {
+        // Obtener el recorte exacto elegido por el dueño para la card
+        imgFinal = window.noticiaCropper.getCroppedCanvas({ maxWidth: 1280, maxHeight: 720 }).toDataURL('image/jpeg', 0.9);
+    } else if (imgFile) {
+        // Fallback por seguridad
+        imgFinal = await compressImg(imgFile); 
+    } else if (window.editandoId && window.postsData[window.editandoId].imagen) {
+        imgFinal = window.postsData[window.editandoId].imagen;
+    }
+    
+    const editorContent = tinymce.get('editor-noticias').getContent(); 
+    const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: document.getElementById('not-principal').checked, contenido: editorContent }; 
+    
+    if (window.editandoId) await updateDoc(doc(db, "noticias", window.editandoId), data); 
+    else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "noticias"), data); } 
+    cancelarEdicion(); 
+}; 
+
+onSnapshot(collection(db, "noticias"), (snap) => { noticiasData = []; snap.forEach(d => { noticiasData.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'noticias'); }); renderNoticias(); if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); if(isFirstLoad) { isFirstLoad = false; clearInterval(splashInterval); if(progBar) progBar.style.width = '100%'; setTimeout(() => { if(splash && splash.parentNode) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); } }, 600); } });
+
+function renderNoticias() { 
+    let filtradas = noticiasData.filter(n => (n.titulo||'').toLowerCase().includes(qBuscar) || (n.contenido||'').toLowerCase().includes(qBuscar)); 
+    filtradas.sort((a,b) => { let tA = a.fecha?.toMillis()||0; let tB = b.fecha?.toMillis()||0; return ordDesc ? tB - tA : tA - tB; }); 
+    const cLista = document.getElementById('contenedor-noticias-lista'); 
+    const cPrinc = document.getElementById('contenedor-noticia-principal'); 
+    if (filtradas.length === 0) { cPrinc.innerHTML=''; cLista.innerHTML='<div class="text-center text-muted">No hay resultados.</div>'; return; } 
+    
+    let hLista = ''; let hPrinc = ''; let pFound = false; 
+    
+    filtradas.forEach(d => { 
+        const date = d.fecha ? d.fecha.toDate().toLocaleDateString() : 'Reciente'; 
+        const avgStr = getPromedioStars(d.comentarios); 
+        const textoLimpioPreview = (d.contenido || '').replace(/<[^>]*>?/gm, ''); 
+        
+        if (d.principal && !pFound) { 
+            pFound = true; 
+            // NUEVO DISEÑO PARA LA TARJETA PRINCIPAL (Igual a la imagen)
+            const tHTMLPrincipal = (d.etiquetas||[]).map(t => `<span class="badge border text-secondary bg-transparent rounded-1 me-2 px-2 py-1 font-inter" style="border-color: #cbd5e1 !important; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">${escapeHTML(t)}</span>`).join('');
+            const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-3 shadow-sm cursor-pointer" style="height:350px; object-fit: cover; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-3 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:350px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; 
+            hPrinc = `
+            <div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-white mx-auto" style="border: 1px solid #e2e8f0 !important; max-width: 100%;">
+                <div class="row g-0 align-items-center">
+                    <div class="col-lg-7 pe-lg-4 mb-4 mb-lg-0">
+                        ${imgP}
+                    </div>
+                    <div class="col-lg-5 ps-lg-2 pe-lg-3 d-flex flex-column h-100">
+                        <div class="mb-3">${tHTMLPrincipal}</div>
+                        <h2 class="fw-bold mb-3 font-serif cursor-pointer text-dark" style="font-size: 2.2rem; line-height: 1.25;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h2>
+                        <div class="text-secondary mb-4 text-truncate-3 font-inter" style="font-size: 1.05rem; line-height: 1.6;">${textoLimpioPreview}</div>
+                        <div class="d-flex justify-content-between align-items-center mt-auto pt-2">
+                            <small class="text-muted fw-semibold font-inter"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2">${avgStr}</span></small>
+                            <small class="text-muted fw-semibold cursor-pointer font-inter hover-text-primary" onclick="compartir('${d.id}', 'noticias')"><i class="bi bi-share me-1"></i> Compartir</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="height: 2px; background-color: #009668; width: 100%; margin-bottom: 2.5rem; opacity: 0.3;"></div>
+            `; 
+        } else {
+            // Diseño lista standard
+            const tHTMLLista = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join('');
+            const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; 
+            hLista += `<div class="card border-0 border-bottom rounded-0 mb-4 pb-4 bg-transparent"><div class="row g-4 align-items-center"><div class="col-md-5">${imgH}</div><div class="col-md-7 d-flex flex-column"><div class="d-flex justify-content-between mb-2"><div>${tHTMLLista}</div><div><i class="bi bi-share text-muted me-2 cursor-pointer" onclick="compartir('${d.id}', 'noticias')"></i><i class="bi bi-pencil-fill text-warning me-2 admin-only-inline cursor-pointer" onclick="editarNoticia('${d.id}')"></i><i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i></div></div><h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif text-dark" style="font-size: 1.5rem;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h3><small class="text-muted fw-semibold mt-1"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2">${avgStr}</span></small></div></div></div>`;
+        }
+    }); 
+    cPrinc.innerHTML = pFound ? hPrinc : ''; 
+    cLista.innerHTML = hLista; 
+}
+
 window.editarNoticia = (id) => { const d = window.postsData[id]; document.getElementById('not-titulo').value = d.titulo; document.getElementById('not-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('not-color').value = d.colorTag || '#004b79'; document.getElementById('not-principal').checked = d.principal; if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(d.contenido || ''); window.editandoId = id; document.getElementById('not-form-title').innerText = "Editando Columna"; document.getElementById('btn-pub-noticia').innerText = "Guardar"; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colNoticia')).show(); window.scrollTo(0,0); };
+
 document.getElementById('btn-pub-articulo').onclick = async () => { const t = document.getElementById('art-titulo').value; const l = document.getElementById('art-link').value; if(!t||!l) return alert("Falta Título o Link."); const et = document.getElementById('art-tags').value ? document.getElementById('art-tags').value.split(',').map(x=>x.trim()).filter(Boolean) : ['Paper']; const data = { titulo: t, link: l, resumen: document.getElementById('art-resumen').value, etiquetas: et, colorTag: document.getElementById('art-color').value }; if(window.editandoId) await updateDoc(doc(db, "articulos", window.editandoId), data); else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "articulos"), data); } cancelarEdicion(); };
 onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) => { const cont = document.getElementById('contenedor-articulos'); if(snap.empty) return cont.innerHTML = '<div class="col-12 text-center text-muted font-inter">No hay papers.</div>'; let h = ''; snap.forEach(d => { const data = d.data(); window.postsData[d.id] = data; checkDeepLink(d.id, 'articulos'); const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios); const tHTML = (data.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${data.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join(''); h += `<article class="col-12 mb-5 pb-4 border-bottom border-light-subtle"><div class="row align-items-start"><div class="col-md-2 col-4 cursor-pointer" onclick="abrirModal('${d.id}', 'articulos')"><div class="paper-cover mx-auto rounded-1"><i class="bi bi-file-earmark-pdf-fill text-secondary fs-1"></i><div class="mt-2" style="width: 80%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-1" style="width: 60%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-auto" style="width: 40%; height: 4px; background: #cbd5e1; border-radius: 2px;"></div></div></div><div class="col-md-10 col-8 d-flex flex-column h-100 ps-md-4"><div class="d-flex justify-content-between align-items-start mb-2"><div>${tHTML} <span class="badge bg-secondary ms-1 fw-semibold font-inter" style="letter-spacing: 0.5px;">Acceso Abierto</span></div><div class="text-nowrap ms-3"><i class="bi bi-share-fill text-primary cursor-pointer me-3" onclick="compartir('${d.id}', 'articulos')"></i><i class="bi bi-pencil-fill text-warning me-3 admin-only-inline cursor-pointer" onclick="editarArt('${d.id}')"></i><i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('articulos', '${d.id}')"></i></div></div><a href="javascript:void(0)" onclick="abrirModal('${d.id}', 'articulos')" class="paper-title-link fw-bold font-serif mb-1" style="font-size: 1.45rem;">${d.data().titulo}</a><div class="text-muted small mb-3 font-inter">${data.fecha ? '(Publicado el ' + data.fecha.toDate().toLocaleDateString() + ')' : ''}</div><p class="text-muted mb-3 font-inter text-truncate-3" style="font-size: 1.05rem; line-height: 1.6;">${escapeHTML(data.resumen)}</p><div class="mt-auto d-flex align-items-center"><button class="btn btn-sm text-primary fw-bold font-inter rounded-pill me-3 shadow-sm" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${d.id}', 'articulos')">Leer documento <i class="bi bi-arrow-right ms-1"></i></button><span class="ms-2">${avgStr}</span></div></div></div></article>`; }); cont.innerHTML = h; if(window.modalActual.col === 'articulos' && window.modalActual.id) abrirModal(window.modalActual.id, 'articulos'); });
 window.editarArt = (id) => { const d = window.postsData[id]; document.getElementById('art-titulo').value = d.titulo; document.getElementById('art-link').value = d.link; document.getElementById('art-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('art-color').value = d.colorTag || '#004b79'; document.getElementById('art-resumen').value = d.resumen; window.editandoId = id; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colArticulo')).show(); window.scrollTo(0,0); };
@@ -177,7 +296,6 @@ window.cancelarEdicionFormulario = () => {
 
 let numPreguntasForm = 0;
 
-// Delegación de eventos para aplicar el borde lateral azul al bloque activo de Google Forms
 document.addEventListener('focusin', function(e) {
     if(e.target.closest('.builder-q-block')) {
         document.querySelectorAll('.builder-q-block').forEach(b => b.classList.remove('gform-block-active'));
@@ -197,14 +315,13 @@ window.prevQImg = (input) => {
     }
 };
 
-// Generador de bloques de pregunta (Sirve para crear nuevas y para cargar existentes)
 window.agregarPreguntaFormBuilder = (qData = null) => {
     numPreguntasForm++;
     const div = document.createElement('div'); 
     div.className = 'builder-q-block position-relative bg-white p-4 border mb-3 shadow-sm'; 
     div.id = `q-block-${numPreguntasForm}`;
     div.style.borderRadius = "8px";
-    div.style.borderLeft = "1px solid #dee2e6"; // Borde inactivo
+    div.style.borderLeft = "1px solid #dee2e6"; 
 
     const t = qData ? qData.titulo : '';
     const desc = (qData && qData.desc) ? qData.desc : '';
@@ -267,7 +384,6 @@ window.duplicarPregunta = (btn) => {
     const pImgSrc = block.querySelector('.q-img-preview').src;
     const existImg = block.querySelector('.q-img-existing').value;
     
-    // Si la preview tiene una imagen cargada temporalmente (base64) úsala, si no, usa la existente del value
     let finalImg = '';
     if (pImgSrc && pImgSrc.length > 100) finalImg = pImgSrc; 
     else if (existImg) finalImg = existImg;
@@ -291,7 +407,6 @@ window.toggleQOpts = (selectEl) => {
     } 
 };
 
-// Editar un formulario existente
 window.editarFormulario = (id) => {
     const data = window.postsData[id];
     if(!data) return;
@@ -335,7 +450,6 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
     if (imgFile) {
         imgFinal = await compressImg(imgFile);
     } else if (window.editandoFormId && window.postsData[window.editandoFormId].imagen) {
-        // Mantener imagen anterior si estamos editando y no se subió una nueva
         imgFinal = window.postsData[window.editandoFormId].imagen;
     }
 
@@ -350,10 +464,10 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
         const pReq = block.querySelector('.q-req').checked;
         const pImgExisting = block.querySelector('.q-img-existing').value;
         
-        let qImgFinal = pImgExisting; // Por defecto la que ya tenía
+        let qImgFinal = pImgExisting; 
         const qFileInput = block.querySelector('.q-img-input');
         if (qFileInput && qFileInput.files[0]) {
-            qImgFinal = await compressImg(qFileInput.files[0]); // Se sobreescribe si subió una nueva
+            qImgFinal = await compressImg(qFileInput.files[0]); 
         }
 
         if(pTitulo) {
@@ -374,13 +488,11 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
 
     try {
         if (window.editandoFormId) {
-            // Actualizar existente
             await updateDoc(doc(db, "formularios", window.editandoFormId), { 
                 titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas
             });
             alert("¡Cambios guardados con éxito!");
         } else {
-            // Crear nuevo
             await addDoc(collection(db, "formularios"), { 
                 titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas, respuestas: [], fecha: serverTimestamp(), autorId: auth.currentUser.uid 
             });
@@ -418,7 +530,6 @@ function renderFormularios() {
         const placeholderImg = `<div class="d-flex align-items-center justify-content-center bg-light text-secondary h-100 w-100" style="min-height: 140px; border-right: 1px solid #e2e8f0;"><i class="bi bi-card-checklist fs-1 opacity-50"></i></div>`;
         const imgHTML = data.imagen ? `<img src="${data.imagen}" class="w-100 h-100 object-fit-cover" style="min-height: 140px; border-right: 1px solid #e2e8f0;">` : placeholderImg;
         
-        // Mostrar botones de edición si es dueño del sistema o si es el creador
         const isCreator = uid && data.autorId === uid;
         let authButtons = `<i class="bi bi-share-fill text-muted me-3 hover-bg-light p-1 rounded" onclick="event.stopPropagation(); compartir('${data.id}', 'formularios')" title="Compartir"></i>`;
         
@@ -453,12 +564,10 @@ function renderFormularios() {
     if(window.modalActual.col === 'formularios' && window.modalActual.id) abrirModal(window.modalActual.id, 'formularios');
 }
 
-// NUEVO EXCEL AVANZADO - ESTILOS GOOGLE FORMS ACTUALIZADOS
 window.exportarExcel = (id) => {
     const data = window.postsData[id];
     if (!data || !data.respuestas || data.respuestas.length === 0) return alert("No hay respuestas para exportar.");
     
-    // Construir tabla HTML con estilos que MS Excel reconoce idénticos a la imagen de Google Forms
     let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
     <head>
         <meta charset="UTF-8">
@@ -480,7 +589,7 @@ window.exportarExcel = (id) => {
             table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
             th { background-color: #8162b5; color: #000000; font-weight: bold; padding: 10px; border: 1px solid #6b4d9e; text-align: left; vertical-align: middle; }
             td { padding: 8px; border: 1px solid #d1d5db; vertical-align: top; mso-number-format:"\\@"; word-wrap: break-word; white-space: normal; }
-            tr.alt-row td { background-color: #f8f6fa; } /* Color intercalado para las filas */
+            tr.alt-row td { background-color: #f8f6fa; } 
             .col-fecha { width: 150px; }
             .col-email { width: 250px; }
             .col-pregunta { width: 300px; }
@@ -493,7 +602,6 @@ window.exportarExcel = (id) => {
                 <th class="col-email">Dirección de correo electrónico</th>`;
                 
     data.preguntas.forEach((q, idx) => {
-        // Añadir el número (1., 2.) antes de la pregunta, igual que en la imagen
         html += `<th class="col-pregunta">${idx + 1}. ${escapeHTML(q.titulo)}</th>`;
     });
     
@@ -510,7 +618,6 @@ window.exportarExcel = (id) => {
         data.preguntas.forEach(q => {
             let ans = r.datos[q.id] || "";
             if (Array.isArray(ans)) ans = ans.join(", ");
-            // Reemplazar saltos de línea con <br> para que Excel los respete dentro de la celda
             let safeAns = escapeHTML(ans.toString()).replace(/\n/g, "<br>"); 
             html += `<td>${safeAns}</td>`;
         });
@@ -671,7 +778,6 @@ window.renderModalFormulario = (id, data) => {
     }
 };
 
-// CORRECCIÓN BUG: Limpieza de estado al cerrar modales para evitar que se abran solos al iniciar/cerrar sesión
 document.getElementById('modalNoticia').addEventListener('hidden.bs.modal', () => { if(window.modalActual.col === 'noticias') window.modalActual = { id: null, col: null }; });
 document.getElementById('modalLectura').addEventListener('hidden.bs.modal', () => { if(window.modalActual.col === 'articulos') window.modalActual = { id: null, col: null }; });
 document.getElementById('modalFormulario').addEventListener('hidden.bs.modal', () => { if(window.modalActual.col === 'formularios') window.modalActual = { id: null, col: null }; });

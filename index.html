@@ -3,24 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cafe UNP | Plataforma Académica</title>
+    <title>CAFE UNP - Plataforma Académica</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- CROPPER.JS para recortar imágenes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         /* SCROLLBAR SUTIL Y PEGADO AL LADO DERECHO PARA MODALES */
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar {
-            width: 8px; /* Más delgada */
+            width: 8px;
             background-color: transparent;
         }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track {
-            background-color: transparent; /* Fondo invisible */
+            background-color: transparent;
         }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb {
-            background-color: #c1c1c1; /* Gris sutil */
-            border-radius: 10px; /* Bordes redondeados */
+            background-color: #c1c1c1;
+            border-radius: 10px;
             border: 2px solid rgba(255,255,255,0.1);
         }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb:hover {
@@ -33,6 +36,36 @@
         }
         #modalFormulario .modal-content {
             border-radius: 12px;
+        }
+        
+        /* NUEVOS ESTILOS PARA NAVBAR Y BOTON INGRESAR */
+        .bg-gradient-navbar {
+            background: linear-gradient(90deg, #009668 0%, #004b79 100%);
+        }
+        .nav-underline .nav-link {
+            color: rgba(255, 255, 255, 0.7) !important;
+            border-bottom-color: transparent !important;
+            padding-bottom: 0.5rem;
+        }
+        .nav-underline .nav-link:hover {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+        .nav-underline .nav-link.active {
+            color: #ffffff !important;
+            border-bottom-color: #ffffff !important;
+            border-bottom-width: 2px;
+            font-weight: 600;
+        }
+        .btn-ingresar-navbar {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+        .btn-ingresar-navbar:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
         }
     </style>
 </head>
@@ -51,26 +84,30 @@
         </div>
     </div>
 
-    <!-- NAVBAR ESCRITORIO -->
-    <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm py-3 mb-4 sticky-top" style="z-index: 1060;">
+    <!-- NAVBAR ESCRITORIO CON DEGRADADO -->
+    <nav class="navbar navbar-expand-lg bg-gradient-navbar shadow-sm py-3 mb-4 sticky-top" style="z-index: 1060;">
         <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand m-0 d-flex align-items-center" href="index.html">
-                <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg>
-                <span class="fs-4 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span>
+                <!-- SVG EN BLANCO -->
+                <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
+                    <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#ffffff"/>
+                    <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#ffffff"/>
+                </svg>
+                <span class="fs-4 fw-bold font-inter text-white" style="letter-spacing: -0.5px;">CAFE UNP</span>
             </a>
             <ul class="nav nav-underline d-none d-md-flex" id="pills-tab" role="tablist">
-                <li class="nav-item"><button class="nav-link text-dark active px-3 fw-semibold font-inter" data-bs-toggle="pill" data-bs-target="#columnas">Columnas de Opinión</button></li>
-                <li class="nav-item"><button class="nav-link text-dark px-3 fw-semibold font-inter" data-bs-toggle="pill" data-bs-target="#investigacion">Investigación & Papers</button></li>
-                <li class="nav-item"><button class="nav-link text-dark px-3 fw-semibold font-inter" data-bs-toggle="pill" data-bs-target="#ensayos">Debates y Encuestas</button></li>
+                <li class="nav-item"><button class="nav-link text-white active px-3 font-inter" data-bs-toggle="pill" data-bs-target="#columnas">Columnas de Opinión</button></li>
+                <li class="nav-item"><button class="nav-link text-white px-3 font-inter" data-bs-toggle="pill" data-bs-target="#investigacion">Investigación & Papers</button></li>
+                <li class="nav-item"><button class="nav-link text-white px-3 font-inter" data-bs-toggle="pill" data-bs-target="#ensayos">Debates y Encuestas</button></li>
             </ul>
             <div class="d-flex align-items-center">
                 <!-- CAFECITO DE REPUTACIÓN -->
-                <div id="reputacion-container" class="d-none me-3 align-items-center bg-white px-3 py-1 rounded-pill border shadow-sm" style="transition: opacity 0.3s ease; opacity: 0;" title="Tu Reputación">
-                    <i class="bi bi-cup-hot-fill me-2" style="background: linear-gradient(135deg, #8B4513, #D2691E); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.2rem;"></i>
-                    <span class="fw-bold font-inter text-dark" style="font-size: 0.95rem;" id="user-reputacion">0</span>
+                <div id="reputacion-container" class="d-none me-3 align-items-center px-3 py-1 rounded-pill border border-light shadow-sm bg-white bg-opacity-25" style="transition: opacity 0.3s ease; opacity: 0;" title="Tu Reputación">
+                    <i class="bi bi-cup-hot-fill me-2" style="color: #ffcc00; font-size: 1.2rem;"></i>
+                    <span class="fw-bold font-inter text-white" style="font-size: 0.95rem;" id="user-reputacion">0</span>
                 </div>
-                <button id="btn-login" class="btn btn-ingresar shadow-sm">Ingresar <i class="bi bi-arrow-right ms-1"></i></button>
-                <button id="btn-logout" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-bold shadow-sm d-none">Salir</button>
+                <button id="btn-login" class="btn btn-ingresar-navbar rounded-pill px-4 font-inter shadow-sm">Ingresar <i class="bi bi-arrow-right ms-1"></i></button>
+                <button id="btn-logout" class="btn btn-outline-light btn-sm rounded-pill px-4 fw-bold shadow-sm d-none">Salir</button>
             </div>
         </div>
     </nav>
@@ -97,6 +134,16 @@
                                 <div class="col-md-5"><label class="small fw-bold text-muted mb-1">Subir Imagen:</label><input type="file" id="not-imagen" class="form-control bg-light border-0" accept="image/*"></div>
                                 <div class="col-md-5"><label class="small fw-bold text-muted mb-1">Etiquetas (comas):</label><input type="text" id="not-tags" class="form-control bg-light border-0" placeholder="Ej: UNP, Política"></div>
                                 <div class="col-md-2"><label class="small fw-bold text-muted mb-1">Color Tag:</label><input type="color" id="not-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#004b79"></div>
+                                
+                                <!-- CONTENEDOR CROPPER -->
+                                <div class="col-md-12 mt-3" id="cropper-container" style="display:none;">
+                                    <label class="small fw-bold text-dark mb-2"><i class="bi bi-crop me-1 text-primary"></i> Ajusta tu imagen para la portada (arrastra para encuadrar al formato 16:9):</label>
+                                    <div class="border rounded-3 overflow-hidden shadow-sm" style="max-height: 500px; width: 100%; background: #f8f9fa;">
+                                        <img id="cropper-image" src="" style="max-width: 100%; display: block;">
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">Esta será la imagen que se mostrará en la tarjeta principal.</small>
+                                </div>
+
                             </div>
                             <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="not-principal"><label class="form-check-label fw-bold text-primary small">Marcar como Principal (Grande)</label></div>
                             <div class="mb-3"><textarea id="editor-noticias"></textarea></div>
@@ -106,16 +153,19 @@
                 </div>
 
                 <div id="contenedor-noticia-principal">
-                    <div class="row mb-5 border-bottom pb-5 align-items-center">
-                        <div class="col-lg-7 mb-4 mb-lg-0"><div class="skeleton-box w-100 rounded-4" style="height:380px;"></div></div>
-                        <div class="col-lg-5 ps-lg-4"><div class="skeleton-box w-25 mb-3" style="height:24px; border-radius:12px;"></div><div class="skeleton-box w-100 mb-3" style="height:45px; border-radius:8px;"></div><div class="skeleton-box w-75 mb-4" style="height:45px; border-radius:8px;"></div><div class="skeleton-box w-100 mb-2" style="height:15px; border-radius:8px;"></div><div class="skeleton-box w-50" style="height:15px; border-radius:8px;"></div></div>
+                    <!-- Esqueleto se reemplazará por la nueva tarjeta visual principal -->
+                    <div class="card border-0 shadow-sm rounded-4 mb-5 p-3 bg-white mx-auto" style="border: 1px solid #e2e8f0 !important;">
+                        <div class="row g-0 align-items-center">
+                            <div class="col-lg-7 pe-lg-4 mb-4 mb-lg-0"><div class="skeleton-box w-100 rounded-3" style="height:350px;"></div></div>
+                            <div class="col-lg-5 ps-lg-2 pe-lg-3"><div class="skeleton-box w-25 mb-3" style="height:24px; border-radius:12px;"></div><div class="skeleton-box w-100 mb-3" style="height:45px; border-radius:8px;"></div><div class="skeleton-box w-75 mb-4" style="height:45px; border-radius:8px;"></div><div class="skeleton-box w-100 mb-2" style="height:15px; border-radius:8px;"></div><div class="skeleton-box w-50" style="height:15px; border-radius:8px;"></div></div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="row mb-4 mt-2">
                     <div class="col-md-8">
                         <div class="d-flex gap-2">
-                            <div class="input-group shadow-sm rounded-3 overflow-hidden"><span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-search"></i></span><input type="text" id="input-buscar" class="form-control border-0 py-2 font-inter" placeholder="Buscar columnas..."></div>
+                            <div class="input-group shadow-sm rounded-3 overflow-hidden border"><span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-search"></i></span><input type="text" id="input-buscar" class="form-control border-0 py-2 font-inter shadow-none" placeholder="Buscar columnas..."></div>
                             <button id="btn-ordenar" class="btn btn-white border shadow-sm px-3 text-nowrap fw-semibold font-inter">Ordenar: Recientes ↓</button>
                         </div>
                     </div>
@@ -126,7 +176,7 @@
                         <div class="skeleton-box w-100 mb-4" style="height: 180px;"></div>
                     </div>
                     <div class="col-lg-4 ps-lg-4 mt-4 mt-lg-0">
-                        <div class="p-4 bg-white shadow-sm position-relative rounded-4" style="border: 2px solid #ffffff;">
+                        <div class="p-4 bg-white shadow-sm position-relative rounded-4" style="border: 1px solid #e2e8f0;">
                             <button class="btn btn-sm btn-warning position-absolute top-0 end-0 m-2 admin-only-inline shadow-sm" onclick="editarSidebar()"><i class="bi bi-pencil-fill"></i></button>
                             <h4 id="sb-titulo" class="fw-bold mb-3 font-serif" style="color: #1a202c; font-size: 1.4rem; line-height: 1.4;">Te damos la bienvenida a nuestro nuevo INTEGRATE</h4>
                             <p id="sb-desc" class="mb-3 fw-bold font-inter" style="font-size: 0.95rem; color: #2d3748; line-height: 1.6;">Conferencia Internacional: Empleabilidad, IA y competencias...</p>
@@ -159,12 +209,10 @@
 
             <!-- DEBATES Y ENCUESTAS -->
             <div class="tab-pane fade" id="ensayos">
-                <!-- BOTÓN SUTIL CENTRADO -->
                 <div class="auth-only d-none mb-4 text-center">
                     <button id="btn-iniciar-crear-form" class="btn btn-sm bg-white border rounded-pill shadow-sm px-4 py-2 fw-bold font-inter d-inline-flex align-items-center" style="color: #004b79;">
                         <i class="bi bi-ui-checks-grid me-2 text-primary fs-6"></i> Crear Debate o Encuesta
                     </button>
-                    <!-- Engranaje solo para dueños -->
                     <button class="btn btn-sm btn-light border admin-only-inline ms-2 rounded-pill shadow-sm d-inline-flex align-items-center" onclick="editarReqReputacion()" title="Configurar Reputación Requerida" style="padding: 0.4rem 0.6rem;">
                         <i class="bi bi-gear-fill text-muted"></i>
                     </button>
@@ -226,7 +274,7 @@
     </div>
 
     <div class="modal fade" id="modalLectura" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
-        <div class="modal-dialog modal-fullscreen"><div class="modal-content bg-white"><div class="modal-header border-bottom py-3 px-4 shadow-sm z-1"><div class="d-flex align-items-center w-100 justify-content-between"><div class="d-flex align-items-center"><svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg><span class="fs-4 fw-bold brand-text font-inter" style="letter-spacing: -0.5px;">CAFE UNP</span></div><button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button></div></div><div class="modal-body p-0"><div class="row h-100 g-0"><div class="col-lg-7 border-end h-100 overflow-y-auto px-4 py-4 bg-light d-flex flex-column align-items-center justify-content-start" id="modal-left-col"><img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 85vh; object-fit: contain; background-color: #fff; display: none;"><iframe id="modal-iframe" src="" class="w-100 rounded-3 shadow-sm bg-white" style="height: 85vh; border: 1px solid #dee2e6; display: none;"></iframe></div><div class="col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column" id="modal-right-col"><div id="modal-tags" class="mb-2"></div><h2 id="modal-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2rem; line-height: 1.25;"></h2><div class="text-muted small mb-3 pb-3 d-flex justify-content-between align-items-center border-bottom font-inter"><div><span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span><span id="modal-promedio-estrellas" class="fw-bold fs-6"></span></div></div><div id="modal-contenido" class="text-secondary mb-4" style="font-size: 1.1rem; line-height: 1.8;"></div><h5 class="fw-bold mb-3 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color:#009668;"></i> Discusión y Aportes</h5><div class="bg-light p-3 rounded-4 mb-4 border shadow-sm"><div class="d-flex align-items-center mb-3"><span class="text-dark small fw-bold me-3 fs-6 font-inter">Tu calificación:</span><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="1"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="2"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="3"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="4"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="5"></i><span class="text-muted small ms-3 font-inter" id="rating-text-ml"></span></div><textarea id="ml-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="2" placeholder="Escribe tu opinión..."></textarea><div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-1 font-inter shadow-sm" id="btn-enviar-comentario-ml">Publicar</button></div></div><div id="ml-lista-comentarios" class="flex-grow-1 pe-2 comments-scrollbar"></div></div></div></div></div></div>
+        <div class="modal-dialog modal-fullscreen"><div class="modal-content bg-white"><div class="modal-header border-bottom py-3 px-4 shadow-sm z-1 bg-gradient-navbar"><div class="d-flex align-items-center w-100 justify-content-between"><div class="d-flex align-items-center"><svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#ffffff"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#ffffff"/></svg><span class="fs-4 fw-bold font-inter text-white" style="letter-spacing: -0.5px;">CAFE UNP</span></div><button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal"></button></div></div><div class="modal-body p-0"><div class="row h-100 g-0"><div class="col-lg-7 border-end h-100 overflow-y-auto px-4 py-4 bg-light d-flex flex-column align-items-center justify-content-start" id="modal-left-col"><img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 85vh; object-fit: contain; background-color: #fff; display: none;"><iframe id="modal-iframe" src="" class="w-100 rounded-3 shadow-sm bg-white" style="height: 85vh; border: 1px solid #dee2e6; display: none;"></iframe></div><div class="col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column" id="modal-right-col"><div id="modal-tags" class="mb-2"></div><h2 id="modal-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2rem; line-height: 1.25;"></h2><div class="text-muted small mb-3 pb-3 d-flex justify-content-between align-items-center border-bottom font-inter"><div><span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span><span id="modal-promedio-estrellas" class="fw-bold fs-6"></span></div></div><div id="modal-contenido" class="text-secondary mb-4" style="font-size: 1.1rem; line-height: 1.8;"></div><h5 class="fw-bold mb-3 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color:#009668;"></i> Discusión y Aportes</h5><div class="bg-light p-3 rounded-4 mb-4 border shadow-sm"><div class="d-flex align-items-center mb-3"><span class="text-dark small fw-bold me-3 fs-6 font-inter">Tu calificación:</span><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="1"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="2"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="3"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="4"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="5"></i><span class="text-muted small ms-3 font-inter" id="rating-text-ml"></span></div><textarea id="ml-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="2" placeholder="Escribe tu opinión..."></textarea><div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-1 font-inter shadow-sm" id="btn-enviar-comentario-ml">Publicar</button></div></div><div id="ml-lista-comentarios" class="flex-grow-1 pe-2 comments-scrollbar"></div></div></div></div></div></div>
     </div>
 
     <!-- MODAL ENCUESTA / DEBATE AVANZADO TIPO GOOGLE FORMS -->
@@ -239,20 +287,16 @@
                 <div class="modal-body p-0 d-flex justify-content-center w-100 pb-5" style="padding-top: 3rem !important;">
                     <div class="w-100 px-3 px-md-0" style="max-width: 800px;">
                         
-                        <!-- Header Verde Decorativo -->
                         <div id="mf-banner" class="rounded-top-4" style="height: 160px; background-color: #009668; border: 1px solid #007753; background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
                         
-                        <!-- Tarjeta Principal (Título) -->
                         <div class="bg-white p-4 p-md-5 shadow mb-4 border-top border-5" style="border-radius: 0 0 12px 12px; border-color: #004b79 !important; margin-top: -5px;">
                             <h2 class="fw-bold font-serif mb-3 text-dark" id="mf-titulo" style="font-size: 2.2rem; line-height: 1.2;"></h2>
                             <p class="text-secondary font-inter mb-0" id="mf-desc" style="font-size: 1.1rem; line-height: 1.6;"></p>
                             <p class="text-danger small mt-3 mb-0 fw-semibold">* Indica que la pregunta es obligatoria</p>
                         </div>
                         
-                        <!-- Contenedor de las Preguntas o Mensaje de Error/Login -->
                         <div id="mf-contenido" class="font-inter"></div>
                         
-                        <!-- Footer de Botón de Envío -->
                         <div class="d-flex justify-content-between align-items-center mt-4 bg-white p-4 shadow-sm" style="border-radius: 12px; display: none;" id="mf-footer-container">
                             <span id="mf-status" class="small fw-bold text-muted"></span>
                             <button type="button" class="btn btn-success px-4 py-2 rounded-3 fw-bold shadow-sm" id="btn-enviar-formulario" style="background-color: #009668; border-color:#009668;">Enviar Respuestas</button>
