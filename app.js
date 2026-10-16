@@ -16,7 +16,7 @@ tinymce.init({ selector: '#editor-noticias', height: 450, menubar: false, plugin
 if(!localStorage.getItem('uid')) localStorage.setItem('uid', 'anon_'+Math.random().toString(36).substring(2,11));
 const getUid = () => auth.currentUser ? auth.currentUser.uid : localStorage.getItem('uid');
 document.getElementById('btn-login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
-document.getElementById('btn-logout').onclick = () => signOut(auth);
+if(document.getElementById('btn-logout')) document.getElementById('btn-logout').onclick = () => signOut(auth);
 
 function updateReputationVisibility() {
     const repCont = document.getElementById('reputacion-container');
@@ -27,23 +27,59 @@ function updateReputationVisibility() {
     }
 }
 
+// SISTEMA DE DROPDOWN Y AVATAR CON PLAN
 onAuthStateChanged(auth, async (u) => {
-    document.getElementById('btn-login').classList.toggle('d-none', !!u); document.getElementById('btn-logout').classList.toggle('d-none', !u); 
-    document.body.classList.remove('is-owner');
+    const btnLogin = document.getElementById('btn-login');
+    const oldLogout = document.getElementById('btn-logout');
     document.querySelectorAll('.auth-only').forEach(el => el.classList.toggle('d-none', !u));
     
     if(userSub) userSub();
     
     if(u) { 
+        btnLogin.classList.add('d-none');
+        if(oldLogout) oldLogout.classList.add('d-none'); // Ocultar el boton de salir antiguo
+
+        // Crear o actualizar el menu desplegable de la cuenta
+        let ddCont = document.getElementById('user-dropdown-container');
+        if(!ddCont) {
+            ddCont = document.createElement('div');
+            ddCont.id = 'user-dropdown-container';
+            ddCont.className = 'dropdown d-inline-block ms-2';
+            ddCont.innerHTML = `
+                <div class="position-relative" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+                    <img src="${u.photoURL || 'https://via.placeholder.com/42'}" id="user-avatar-img" class="rounded-circle border border-2 border-white shadow-sm" style="width: 42px; height: 42px; object-fit: cover; background: #fff;" alt="Perfil">
+                </div>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 rounded-4 py-2" style="min-width: 220px; z-index: 1070;">
+                    <li class="px-3 py-3 border-bottom mb-2 text-center bg-light rounded-top-4 mx-2">
+                        <span class="small text-muted fw-bold font-inter d-block mb-2">PLAN ASIGNADO</span>
+                        <span class="badge bg-secondary font-inter fs-6 px-3 py-2 rounded-pill w-100 shadow-sm" id="user-plan-badge">Usuario</span>
+                    </li>
+                    <li><a class="dropdown-item fw-bold text-danger py-2 cursor-pointer font-inter text-center" id="btn-logout-dropdown"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
+                </ul>
+            `;
+            btnLogin.parentNode.insertBefore(ddCont, btnLogin.nextSibling);
+            document.getElementById('btn-logout-dropdown').onclick = () => signOut(auth);
+        } else {
+            ddCont.classList.remove('d-none');
+            document.getElementById('user-avatar-img').src = u.photoURL || 'https://via.placeholder.com/42';
+        }
+
         const ref = doc(db, "usuarios", u.uid);
         userSub = onSnapshot(ref, (d) => {
+            const badge = document.getElementById('user-plan-badge');
             if(d.exists()) {
-                if(d.data().owner) document.body.classList.add('is-owner');
-                else document.body.classList.remove('is-owner');
+                if(d.data().owner) {
+                    document.body.classList.add('is-owner');
+                    if(badge) { badge.innerText = 'Administrador'; badge.className = 'badge font-inter fs-6 px-3 py-2 rounded-pill w-100 shadow-sm text-white'; badge.style.backgroundColor = '#004b79'; }
+                } else {
+                    document.body.classList.remove('is-owner');
+                    if(badge) { badge.innerText = 'Usuario'; badge.className = 'badge bg-secondary font-inter fs-6 px-3 py-2 rounded-pill w-100 shadow-sm text-white'; badge.style.backgroundColor = ''; }
+                }
                 userReputacion = d.data().reputacion || 0;
             } else {
                 setDoc(ref, { nombre: u.displayName, email: u.email, reputacion: 0 });
                 userReputacion = 0;
+                if(badge) { badge.innerText = 'Usuario'; badge.className = 'badge bg-secondary font-inter fs-6 px-3 py-2 rounded-pill w-100 shadow-sm text-white'; badge.style.backgroundColor = ''; }
             }
             document.getElementById('user-reputacion').innerText = userReputacion;
             updateReputationVisibility();
@@ -56,7 +92,13 @@ onAuthStateChanged(auth, async (u) => {
             }
         });
     } else {
+        btnLogin.classList.remove('d-none');
+        const ddCont = document.getElementById('user-dropdown-container');
+        if(ddCont) ddCont.classList.add('d-none');
+        if(oldLogout) oldLogout.classList.add('d-none');
+        
         userReputacion = 0; updateReputationVisibility(); renderFormularios(); 
+        document.body.classList.remove('is-owner');
     }
 });
 
@@ -65,7 +107,6 @@ window.borrarPost = async (col, id) => {
     if(confirm("¿Estás seguro de eliminar esto? Se perderá permanentemente.")) {
         try {
             const d = window.postsData[id];
-            // Si el post es un formulario, lo borró su creador (no owner)
             if (col === 'formularios' && d && d.autorId === getUid() && !document.body.classList.contains('is-owner')) {
                 const userRef = doc(db, "usuarios", getUid());
                 await updateDoc(userRef, { reputacion: increment(reqReputacion) });
@@ -96,7 +137,7 @@ const formatEmbedUrl = (url) => { if(!url) return ''; const match = url.match(/\
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return; window.modalActual = { id, col };
     
-    // --- INYECCION DE ESQUELETOS ---
+    // INYECCION DE ESQUELETOS
     if (col === 'formularios') {
         const cont = document.getElementById('mf-contenido');
         document.getElementById('mf-titulo').innerHTML = `<div class="skeleton-box w-75 mb-2" style="height: 40px; border-radius:8px;"></div>`;
@@ -131,7 +172,7 @@ window.abrirModal = (id, col) => {
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLectura')).show();
     }
 
-    // --- LLENADO DE DATOS REALES CON FLUIDEZ ---
+    // LLENADO DE DATOS REALES CON FLUIDEZ
     setTimeout(() => {
         if (col === 'formularios') {
             document.getElementById('mf-banner').innerHTML = ''; 
@@ -525,7 +566,6 @@ window.editarFormulario = (id) => {
     window.scrollTo({ top: document.getElementById('colFormulario').offsetTop - 100, behavior: 'smooth' });
 };
 
-// CONSUMO DE REPUTACION AL PUBLICAR NUEVA ENCUESTA
 document.getElementById('btn-pub-formulario').onclick = async () => {
     const titulo = document.getElementById('form-titulo').value; if(!titulo) return alert("Por favor, asigna un título principal.");
     const descripcion = document.getElementById('form-desc').value;
@@ -581,7 +621,6 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
             });
             alert("¡Cambios guardados con éxito!");
         } else {
-            // DESCONTAR REPUTACION AL USUARIO NORMAL ANTES DE CREAR
             if (!document.body.classList.contains('is-owner')) {
                 const userRef = doc(db, "usuarios", auth.currentUser.uid);
                 await updateDoc(userRef, { reputacion: increment(-reqReputacion) });
