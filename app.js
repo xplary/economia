@@ -7,13 +7,7 @@ const auth = getAuth(app); const db = getFirestore(app);
 
 window.postsData = {}; window.editandoId = null; window.editandoFormId = null; window.modalActual = { id: null, col: null };
 window.noticiaCropper = null; 
-let progress = 0; let isFirstLoad = true;
 let currentTab = 'columnas'; let userReputacion = 0; let reqReputacion = 15; let userSub = null;
-
-const progBar = document.getElementById('splash-progress'); const splash = document.getElementById('splash-screen');
-const splashInterval = setInterval(() => { progress += Math.random() * 15 + 5; if(progress > 85) progress = 85; if(progBar) progBar.style.width = progress + '%'; }, 200);
-
-setTimeout(() => { clearInterval(splashInterval); if(progBar) progBar.style.width = '100%'; if(splash && splash.parentNode) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); } }, 3000);
 
 document.getElementById('current-year').innerText = new Date().getFullYear();
 
@@ -66,7 +60,22 @@ onAuthStateChanged(auth, async (u) => {
     }
 });
 
-window.borrarPost = async (col, id) => { if(confirm("¿Estás seguro de eliminar esto? Se perderá permanentemente.")) await deleteDoc(doc(db, col, id)); };
+// DEVOLVER PUNTOS AL BORRAR FORMULARIO
+window.borrarPost = async (col, id) => { 
+    if(confirm("¿Estás seguro de eliminar esto? Se perderá permanentemente.")) {
+        try {
+            const d = window.postsData[id];
+            // Si el post es un formulario, lo borró su creador (no owner)
+            if (col === 'formularios' && d && d.autorId === getUid() && !document.body.classList.contains('is-owner')) {
+                const userRef = doc(db, "usuarios", getUid());
+                await updateDoc(userRef, { reputacion: increment(reqReputacion) });
+            }
+            await deleteDoc(doc(db, col, id)); 
+        } catch(e) {
+            alert("Error al eliminar: " + e.message + "\n\n⚠️ RECUERDA: Debes actualizar las reglas de Firebase permitiendo a los creadores borrar su propio post.");
+        }
+    }
+};
 
 const slugify = (text) => (text ? text.toString() : '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").substring(0, 80) || 'cafe-unp';
 window.compartir = (id, col) => { const d = window.postsData[id]; if(!d) return; const tit = d.titulo || d.pregunta || 'CAFE UNP'; const slug = slugify(tit); const url = window.location.origin + window.location.pathname + `?v=${slug}---${id}---${col}`; if(navigator.share) navigator.share({ title: tit, url: url }); else { navigator.clipboard.writeText(url); alert("Link copiado: " + url); } };
@@ -83,15 +92,87 @@ window.aprobarComentario = async (cid) => { const ref = doc(db, window.modalActu
 const renderComentarios = (comentarios, containerId) => { const box = document.getElementById(containerId); if(!box) return; const isOwner = document.body.classList.contains('is-owner'); let comsToShow = comentarios || []; if(!isOwner) comsToShow = comsToShow.filter(c => c.aprobado !== false); if(comsToShow.length===0) return box.innerHTML = '<div class="text-center mt-4 text-muted"><i class="bi bi-chat-dots fs-3"></i><p class="mt-2 small">Sé el primero en aportar.</p></div>'; box.innerHTML = comsToShow.map(c => { const starsHTML = `<span class="star-gradient" style="font-size:0.9rem;">${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)}</span>`; const pendingBadge = c.aprobado === false ? `<span class="badge bg-warning text-dark ms-2 fw-semibold" style="font-size:0.65rem;">Pendiente</span>` : ''; const approveBtn = (c.aprobado === false && isOwner) ? `<button class="btn btn-sm btn-success py-0 px-2 ms-2 fw-bold" style="font-size:0.7rem;" onclick="aprobarComentario(${c.id})"><i class="bi bi-check-lg"></i> Aprobar</button>` : ''; return `<div class="mb-4 pb-3 border-bottom"><div class="d-flex justify-content-between align-items-center mb-1"><strong class="font-inter text-dark small">${c.autor} ${pendingBadge}</strong><div>${starsHTML}${approveBtn}<i class="bi bi-trash text-danger ms-2 cursor-pointer admin-only-inline" onclick="borrarComentario(${c.id})"></i></div></div><p class="text-secondary font-inter mb-1" style="font-size: 0.95rem;">${c.texto}</p><div class="text-muted small font-inter text-end" style="font-size: 0.75rem;">${c.date}</div></div>`; }).join(''); };
 const formatEmbedUrl = (url) => { if(!url) return ''; const match = url.match(/\/(?:d|file\/d)\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/); if (match && match[1]) return `https://drive.google.com/file/d/${match[1]}/preview`; return url; };
 
+// EFECTO SKELETON AL ABRIR CUALQUIER MODAL
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return; window.modalActual = { id, col };
-    if(col === 'formularios') return renderModalFormulario(id, d);
-    const tagsHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join('');
-    if (col === 'noticias') {
-        document.getElementById('mn-titulo').innerText = d.titulo; document.getElementById('mn-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`; document.getElementById('mn-promedio-estrellas').innerHTML = getPromedioStars(d.comentarios); document.getElementById('mn-tags').innerHTML = tagsHTML; const imgEl = document.getElementById('mn-imagen'); if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; } document.getElementById('mn-contenido').innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${escapeHTML(d.resumen||'')}</div>`; renderComentarios(d.comentarios, 'mn-lista-comentarios'); bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNoticia')).show();
+    
+    // --- INYECCION DE ESQUELETOS ---
+    if (col === 'formularios') {
+        const cont = document.getElementById('mf-contenido');
+        document.getElementById('mf-titulo').innerHTML = `<div class="skeleton-box w-75 mb-2" style="height: 40px; border-radius:8px;"></div>`;
+        document.getElementById('mf-desc').innerHTML = `<div class="skeleton-box w-100 mt-2" style="height: 20px; border-radius:4px;"></div><div class="skeleton-box w-50 mt-1" style="height: 20px; border-radius:4px;"></div>`;
+        document.getElementById('mf-req-text').style.display = 'none';
+        document.getElementById('mf-banner').style.backgroundImage = 'none';
+        document.getElementById('mf-banner').innerHTML = `<div class="skeleton-box w-100 h-100 rounded-top-4"></div>`;
+        document.getElementById('mf-footer-container').style.display = 'none';
+        cont.innerHTML = `<div class="mb-4 bg-white p-4 shadow-sm" style="border-radius: 12px;"><div class="skeleton-box w-50 mb-3" style="height:25px;"></div><div class="skeleton-box w-100 mb-2" style="height:45px;"></div></div>`.repeat(3);
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalFormulario')).show();
+    } else if (col === 'noticias') {
+        document.getElementById('mn-tags').innerHTML = `<div class="skeleton-box w-25" style="height:25px; border-radius:15px;"></div>`;
+        document.getElementById('mn-titulo').innerHTML = `<div class="skeleton-box w-100 mb-2 mt-2" style="height:40px;"></div><div class="skeleton-box w-75" style="height:40px;"></div>`;
+        document.getElementById('mn-fecha').innerHTML = `<div class="skeleton-box w-50" style="height:20px;"></div>`;
+        document.getElementById('mn-promedio-estrellas').innerHTML = '';
+        document.getElementById('mn-imagen').style.display = 'none';
+        document.getElementById('mn-contenido').innerHTML = `<div class="skeleton-box w-100 mb-4 rounded-4" style="height:400px;"></div><div class="skeleton-box w-100 mb-2" style="height:20px;"></div><div class="skeleton-box w-100 mb-2" style="height:20px;"></div><div class="skeleton-box w-75" style="height:20px;"></div>`;
+        document.getElementById('mn-lista-comentarios').innerHTML = '';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalNoticia')).show();
     } else {
-        document.getElementById('modal-titulo').innerText = d.titulo || d.pregunta; document.getElementById('modal-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`; document.getElementById('modal-promedio-estrellas').innerHTML = getPromedioStars(d.comentarios); document.getElementById('modal-tags').innerHTML = tagsHTML; const imgEl = document.getElementById('modal-imagen'); const iframeEl = document.getElementById('modal-iframe'); const contEl = document.getElementById('modal-contenido'); const leftCol = document.getElementById('modal-left-col'); const rightCol = document.getElementById('modal-right-col'); let hasLeftContent = false; if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; hasLeftContent = true; } else { imgEl.style.display = 'none'; } if(d.link) { iframeEl.src = formatEmbedUrl(d.link); iframeEl.style.display = 'block'; hasLeftContent = true; } else { iframeEl.style.display = 'none'; iframeEl.src = ''; } if(hasLeftContent) { leftCol.classList.remove('d-none'); leftCol.classList.add('d-flex'); rightCol.className = 'col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column'; rightCol.style.maxWidth = 'none'; } else { leftCol.classList.remove('d-flex'); leftCol.classList.add('d-none'); rightCol.className = 'col-12 h-100 overflow-y-auto bg-white px-4 px-md-5 py-4 py-md-5 d-flex flex-column mx-auto'; rightCol.style.maxWidth = '900px'; } contEl.innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${escapeHTML(d.resumen||'')}</div>`; renderComentarios(d.comentarios, 'ml-lista-comentarios'); bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLectura')).show();
+        document.getElementById('modal-tags').innerHTML = `<div class="skeleton-box w-25" style="height:25px; border-radius:15px;"></div>`;
+        document.getElementById('modal-titulo').innerHTML = `<div class="skeleton-box w-100 mb-2 mt-2" style="height:40px;"></div><div class="skeleton-box w-75" style="height:40px;"></div>`;
+        document.getElementById('modal-fecha').innerHTML = `<div class="skeleton-box w-50" style="height:20px;"></div>`;
+        document.getElementById('modal-promedio-estrellas').innerHTML = '';
+        document.getElementById('modal-imagen').style.display = 'none';
+        document.getElementById('modal-iframe').style.display = 'none';
+        document.getElementById('modal-left-col').classList.remove('d-none');
+        document.getElementById('modal-left-col').classList.add('d-flex');
+        document.getElementById('modal-left-col').innerHTML = `<div class="skeleton-box w-100 h-100 rounded-4"></div>`; 
+        document.getElementById('modal-contenido').innerHTML = `<div class="skeleton-box w-100 mb-2 mt-4" style="height:20px;"></div><div class="skeleton-box w-100 mb-2" style="height:20px;"></div><div class="skeleton-box w-75" style="height:20px;"></div>`;
+        document.getElementById('ml-lista-comentarios').innerHTML = '';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLectura')).show();
     }
+
+    // --- LLENADO DE DATOS REALES CON FLUIDEZ ---
+    setTimeout(() => {
+        if (col === 'formularios') {
+            document.getElementById('mf-banner').innerHTML = ''; 
+            document.getElementById('mf-req-text').style.display = 'block';
+            window.renderModalFormulario(id, d); 
+        } else if (col === 'noticias') {
+            const tagsHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join('');
+            document.getElementById('mn-titulo').innerText = d.titulo; 
+            document.getElementById('mn-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`; 
+            document.getElementById('mn-promedio-estrellas').innerHTML = getPromedioStars(d.comentarios); 
+            document.getElementById('mn-tags').innerHTML = tagsHTML; 
+            const imgEl = document.getElementById('mn-imagen'); 
+            if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; } 
+            document.getElementById('mn-contenido').innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${escapeHTML(d.resumen||'')}</div>`; 
+            renderComentarios(d.comentarios, 'mn-lista-comentarios'); 
+        } else {
+            const tagsHTML = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join('');
+            document.getElementById('modal-left-col').innerHTML = `<img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 85vh; object-fit: contain; background-color: #fff; display: none;"><iframe id="modal-iframe" src="" class="w-100 rounded-3 shadow-sm bg-white" style="height: 85vh; border: 1px solid #dee2e6; display: none;"></iframe>`;
+            document.getElementById('modal-titulo').innerText = d.titulo || d.pregunta; 
+            document.getElementById('modal-fecha').innerHTML = `<i class="bi bi-calendar3 me-2"></i> ${d.fecha ? d.fecha.toDate().toLocaleDateString() : ''}`; 
+            document.getElementById('modal-promedio-estrellas').innerHTML = getPromedioStars(d.comentarios); 
+            document.getElementById('modal-tags').innerHTML = tagsHTML; 
+            const imgEl = document.getElementById('modal-imagen'); 
+            const iframeEl = document.getElementById('modal-iframe'); 
+            const contEl = document.getElementById('modal-contenido'); 
+            const leftCol = document.getElementById('modal-left-col'); 
+            const rightCol = document.getElementById('modal-right-col'); 
+            let hasLeftContent = false; 
+            if(d.imagen && d.imagen.length > 20) { imgEl.src = d.imagen; imgEl.style.display = 'block'; hasLeftContent = true; } else { imgEl.style.display = 'none'; } 
+            if(d.link) { iframeEl.src = formatEmbedUrl(d.link); iframeEl.style.display = 'block'; hasLeftContent = true; } else { iframeEl.style.display = 'none'; iframeEl.src = ''; } 
+            if(hasLeftContent) { 
+                leftCol.classList.remove('d-none'); leftCol.classList.add('d-flex'); 
+                rightCol.className = 'col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column'; rightCol.style.maxWidth = 'none'; 
+            } else { 
+                leftCol.classList.remove('d-flex'); leftCol.classList.add('d-none'); 
+                rightCol.className = 'col-12 h-100 overflow-y-auto bg-white px-4 px-md-5 py-4 py-md-5 d-flex flex-column mx-auto'; rightCol.style.maxWidth = '900px'; 
+            } 
+            contEl.innerHTML = d.contenido ? `<div class="contenido-apa">${d.contenido}</div>` : `<div class="contenido-apa">${escapeHTML(d.resumen||'')}</div>`; 
+            renderComentarios(d.comentarios, 'ml-lista-comentarios'); 
+        }
+    }, 400);
 };
 
 const checkDeepLink = (id, col) => { if(autoOpenDone) return; const urlP = new URLSearchParams(window.location.search); const v = urlP.get('v'); let tId = urlP.get('p'), tCol = urlP.get('t'); if(v) { const parts = v.split('---'); if(parts.length===3){ tId = parts[1]; tCol = parts[2]; } } if(tId === id && tCol === col) { autoOpenDone = true; setTimeout(() => { abrirModal(id, col); }, 500); } }; let autoOpenDone = false;
@@ -188,7 +269,7 @@ document.getElementById('btn-pub-noticia').onclick = async () => {
     cancelarEdicion(); 
 }; 
 
-onSnapshot(collection(db, "noticias"), (snap) => { noticiasData = []; snap.forEach(d => { noticiasData.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'noticias'); }); renderNoticias(); if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); if(isFirstLoad) { isFirstLoad = false; clearInterval(splashInterval); if(progBar) progBar.style.width = '100%'; setTimeout(() => { if(splash && splash.parentNode) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); } }, 600); } });
+onSnapshot(collection(db, "noticias"), (snap) => { noticiasData = []; snap.forEach(d => { noticiasData.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'noticias'); }); renderNoticias(); if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias'); });
 
 function renderNoticias() { 
     let filtradas = noticiasData.filter(n => (n.titulo||'').toLowerCase().includes(qBuscar) || (n.contenido||'').toLowerCase().includes(qBuscar)); 
@@ -213,7 +294,6 @@ function renderNoticias() {
         const avgStr = getPromedioStars(d.comentarios); 
         const textoLimpioPreview = (d.contenido || '').replace(/<[^>]*>?/gm, ''); 
         
-        // Renderizar la principal arriba si corresponde
         if (principalDefinitiva && d.id === principalDefinitiva.id) { 
             const tHTMLPrincipal = (d.etiquetas||[]).map(t => `<span class="badge border text-secondary bg-transparent rounded-1 me-2 px-2 py-1 font-inter" style="border-color: #cbd5e1 !important; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">${escapeHTML(t)}</span>`).join('');
             const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-3 shadow-sm cursor-pointer" style="height:350px; object-fit: cover; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-3 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:350px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; 
@@ -238,7 +318,6 @@ function renderNoticias() {
             `; 
         } 
         
-        // Agregamos SIEMPRE TODAS las publicaciones a la lista de abajo (incluyendo la principal)
         const tHTMLLista = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join('');
         const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; 
         hLista += `<div class="card border-0 border-bottom rounded-0 mb-4 pb-4 bg-transparent"><div class="row g-4 align-items-center"><div class="col-md-5">${imgH}</div><div class="col-md-7 d-flex flex-column"><div class="d-flex justify-content-between mb-2"><div>${tHTMLLista}</div><div><i class="bi bi-share text-muted me-2 cursor-pointer" onclick="compartir('${d.id}', 'noticias')"></i><i class="bi bi-pencil-fill text-warning me-2 admin-only-inline cursor-pointer" onclick="editarNoticia('${d.id}')"></i><i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i></div></div><h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif text-dark" style="font-size: 1.5rem;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h3><small class="text-muted fw-semibold mt-1"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2">${avgStr}</span></small></div></div></div>`;
@@ -446,6 +525,7 @@ window.editarFormulario = (id) => {
     window.scrollTo({ top: document.getElementById('colFormulario').offsetTop - 100, behavior: 'smooth' });
 };
 
+// CONSUMO DE REPUTACION AL PUBLICAR NUEVA ENCUESTA
 document.getElementById('btn-pub-formulario').onclick = async () => {
     const titulo = document.getElementById('form-titulo').value; if(!titulo) return alert("Por favor, asigna un título principal.");
     const descripcion = document.getElementById('form-desc').value;
@@ -501,6 +581,12 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
             });
             alert("¡Cambios guardados con éxito!");
         } else {
+            // DESCONTAR REPUTACION AL USUARIO NORMAL ANTES DE CREAR
+            if (!document.body.classList.contains('is-owner')) {
+                const userRef = doc(db, "usuarios", auth.currentUser.uid);
+                await updateDoc(userRef, { reputacion: increment(-reqReputacion) });
+            }
+            
             await addDoc(collection(db, "formularios"), { 
                 titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas, respuestas: [], fecha: serverTimestamp(), autorId: auth.currentUser.uid 
             });
@@ -569,7 +655,6 @@ function renderFormularios() {
         </div>`;
     }); 
     cont.innerHTML = h; 
-    if(window.modalActual.col === 'formularios' && window.modalActual.id) abrirModal(window.modalActual.id, 'formularios');
 }
 
 window.exportarExcel = (id) => {
@@ -661,7 +746,7 @@ window.renderModalFormulario = (id, data) => {
 
     if (!canViewStats && !auth.currentUser) {
         cont.innerHTML = `<div class="bg-white shadow-sm p-5 text-center mt-4" style="border-radius: 12px; border-top: 5px solid #004b79;"><i class="bi bi-google d-block mb-3" style="font-size: 3.5rem; color:#db4437;"></i><h4 class="fw-bold text-dark font-inter">Acceso Restringido</h4><p class="text-secondary mb-4">Debes iniciar sesión con tu cuenta de Google para poder participar en este debate o encuesta.</p><button class="btn btn-ingresar px-5 py-2 shadow-sm fs-6" onclick="document.getElementById('btn-login').click(); bootstrap.Modal.getInstance(document.getElementById('modalFormulario')).hide();">Ingresar con Google</button></div>`;
-        btn.style.display = 'none'; footerCont.style.display = 'none';
+        btn.style.display = 'none'; footerCont.style.display = 'none'; document.getElementById('mf-req-text').style.display = 'none';
         return modal.show();
     }
     
@@ -670,6 +755,7 @@ window.renderModalFormulario = (id, data) => {
     const cerrada = data.fechaLimite && data.fechaLimite < Date.now();
     
     if (canViewStats) { 
+        document.getElementById('mf-req-text').style.display = 'none';
         const exportBtnHtml = `<button class="btn btn-sm text-white fw-bold mt-2 shadow-sm px-3 py-2" style="background-color: #009668; border-color:#009668;" onclick="exportarExcel('${id}')"><i class="bi bi-file-earmark-excel-fill me-1"></i> Descargar Excel (.xls)</button>`;
         status.innerHTML = `<div class="d-flex flex-column align-items-start"><span class="mb-2">Total respuestas: <strong class="text-dark fs-5">${data.respuestas ? data.respuestas.length : 0}</strong></span>${exportBtnHtml}</div>`; 
         btn.style.display = 'none'; footerCont.style.display = 'flex';
@@ -701,8 +787,9 @@ window.renderModalFormulario = (id, data) => {
         }); cont.innerHTML = htmlStats; modal.show();
         
     } else { 
-        if (cerrada) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #dc3545;"><i class="bi bi-lock-fill d-block mb-3 text-danger" style="font-size: 3rem;"></i><h4 class="fw-bold text-dark font-inter">Formulario cerrado</h4><p class="text-secondary mb-0">El tiempo para participar en esta encuesta ha terminado.</p></div>'; return modal.show(); }
-        if (yaRespondio) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">Respuestas Registradas</h4><p class="text-secondary mb-0">Ya hemos recibido tu información. ¡Muchas gracias por participar!</p></div>'; return modal.show(); }
+        document.getElementById('mf-req-text').style.display = 'block';
+        if (cerrada) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; document.getElementById('mf-req-text').style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #dc3545;"><i class="bi bi-lock-fill d-block mb-3 text-danger" style="font-size: 3rem;"></i><h4 class="fw-bold text-dark font-inter">Formulario cerrado</h4><p class="text-secondary mb-0">El tiempo para participar en esta encuesta ha terminado.</p></div>'; return modal.show(); }
+        if (yaRespondio) { status.innerText = ''; btn.style.display = 'none'; footerCont.style.display = 'none'; document.getElementById('mf-req-text').style.display = 'none'; cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">Respuestas Registradas</h4><p class="text-secondary mb-0">Ya hemos recibido tu información. ¡Muchas gracias por participar!</p></div>'; return modal.show(); }
         
         status.innerHTML = '☕ Ganarás <strong class="text-success">+5</strong> de Reputación.'; btn.style.display = 'block'; footerCont.style.display = 'flex';
         let hForm = '<form id="form-responder">';
@@ -779,7 +866,7 @@ window.renderModalFormulario = (id, data) => {
                 await updateDoc(ref, { respuestas: d.respuestas });
                 
                 cont.innerHTML = '<div class="alert bg-white shadow-sm p-5 text-center mt-4" style="border-radius: 12px; border-left: 5px solid #009668;"><i class="bi bi-check-circle-fill d-block mb-3" style="font-size: 3rem; color:#009668;"></i><h4 class="fw-bold text-dark font-inter">¡Respuestas Enviadas!</h4><p class="text-secondary mb-0">Tus respuestas han sido guardadas y has ganado <strong class="text-success">+5</strong> de reputación. ¡Gracias por participar!</p></div>'; 
-                btn.style.display = 'none'; status.innerHTML = 'Completado.';
+                btn.style.display = 'none'; document.getElementById('mf-req-text').style.display = 'none'; status.innerHTML = 'Completado.';
             }
         };
         modal.show();

@@ -38,7 +38,7 @@
             border-radius: 12px;
         }
         
-        /* NUEVOS ESTILOS PARA NAVBAR Y BOTON INGRESAR */
+        /* ESTILOS PARA NAVBAR Y BOTON INGRESAR */
         .bg-gradient-navbar {
             background: linear-gradient(90deg, #009668 0%, #004b79 100%);
         }
@@ -71,24 +71,10 @@
 </head>
 <body class="bg-light d-flex flex-column min-vh-100 overflow-x-hidden">
 
-    <!-- SPLASH SCREEN -->
-    <div id="splash-screen" class="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-white" style="z-index: 9999; transition: opacity 0.5s ease;">
-        <div class="breathe-anim d-flex flex-column align-items-center">
-            <div class="d-flex align-items-center mb-4">
-                <svg width="65" height="65" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#009668"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#004b79"/></svg>
-                <h1 class="m-0 fw-bold brand-text" style="font-size: 3.5rem;">CAFE UNP</h1>
-            </div>
-            <div class="progress rounded-pill bg-light border shadow-sm" style="width: 250px; height: 8px;">
-                <div id="splash-progress" class="progress-bar rounded-pill" role="progressbar" style="width: 0%; transition: width 0.3s ease; background-color: #8c98a4;"></div>
-            </div>
-        </div>
-    </div>
-
     <!-- NAVBAR ESCRITORIO CON DEGRADADO -->
     <nav class="navbar navbar-expand-lg bg-gradient-navbar shadow-sm py-3 mb-4 sticky-top" style="z-index: 1060;">
         <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand m-0 d-flex align-items-center" href="index.html">
-                <!-- SVG EN BLANCO -->
                 <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
                     <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#ffffff"/>
                     <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#ffffff"/>
@@ -96,7 +82,7 @@
                 <span class="fs-4 fw-bold font-inter text-white" style="letter-spacing: -0.5px;">CAFE UNP</span>
             </a>
             <ul class="nav nav-underline d-none d-md-flex" id="pills-tab" role="tablist">
-                <li class="nav-item"><button class="nav-link text-white active px-3 font-inter" data-bs-toggle="pill" data-bs-target="#columnas">Articulos y Opinión</button></li>
+                <li class="nav-item"><button class="nav-link text-white active px-3 font-inter" data-bs-toggle="pill" data-bs-target="#columnas">Columnas de Opinión</button></li>
                 <li class="nav-item"><button class="nav-link text-white px-3 font-inter" data-bs-toggle="pill" data-bs-target="#investigacion">Investigación & Papers</button></li>
                 <li class="nav-item"><button class="nav-link text-white px-3 font-inter" data-bs-toggle="pill" data-bs-target="#ensayos">Debates y Encuestas</button></li>
             </ul>
@@ -153,7 +139,6 @@
                 </div>
 
                 <div id="contenedor-noticia-principal">
-                    <!-- Esqueleto se reemplazará por la nueva tarjeta visual principal -->
                     <div class="card border-0 shadow-sm rounded-4 mb-5 p-3 bg-white mx-auto" style="border: 1px solid #e2e8f0 !important;">
                         <div class="row g-0 align-items-center">
                             <div class="col-lg-7 pe-lg-4 mb-4 mb-lg-0"><div class="skeleton-box w-100 rounded-3" style="height:350px;"></div></div>
@@ -204,7 +189,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="row" id="contenedor-articulos"></div>
+                <div class="row" id="contenedor-articulos">
+                    <article class="col-12 mb-5 pb-4 border-bottom border-light-subtle"><div class="row align-items-start"><div class="col-md-2 col-4"><div class="skeleton-box w-100 rounded-3" style="height: 120px;"></div></div><div class="col-md-10 col-8"><div class="skeleton-box w-25 mb-2" style="height: 20px;"></div><div class="skeleton-box w-75 mb-3" style="height: 30px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div></div></div></article>
+                    <article class="col-12 mb-5 pb-4 border-bottom border-light-subtle"><div class="row align-items-start"><div class="col-md-2 col-4"><div class="skeleton-box w-100 rounded-3" style="height: 120px;"></div></div><div class="col-md-10 col-8"><div class="skeleton-box w-25 mb-2" style="height: 20px;"></div><div class="skeleton-box w-75 mb-3" style="height: 30px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div></div></div></article>
+                </div>
             </div>
 
             <!-- DEBATES Y ENCUESTAS -->
@@ -249,7 +237,10 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-lg-8 col-md-10 mx-auto" id="contenedor-formularios"></div>
+                    <div class="col-lg-8 col-md-10 mx-auto" id="contenedor-formularios">
+                        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white"><div class="row g-0"><div class="col-4 col-md-3"><div class="skeleton-box w-100 h-100" style="min-height: 140px;"></div></div><div class="col-8 col-md-9"><div class="card-body"><div class="skeleton-box w-25 mb-2" style="height: 20px;"></div><div class="skeleton-box w-75 mb-3" style="height: 30px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div></div></div></div></div>
+                        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white"><div class="row g-0"><div class="col-4 col-md-3"><div class="skeleton-box w-100 h-100" style="min-height: 140px;"></div></div><div class="col-8 col-md-9"><div class="card-body"><div class="skeleton-box w-25 mb-2" style="height: 20px;"></div><div class="skeleton-box w-75 mb-3" style="height: 30px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div></div></div></div></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -292,7 +283,7 @@
                         <div class="bg-white p-4 p-md-5 shadow mb-4 border-top border-5" style="border-radius: 0 0 12px 12px; border-color: #004b79 !important; margin-top: -5px;">
                             <h2 class="fw-bold font-serif mb-3 text-dark" id="mf-titulo" style="font-size: 2.2rem; line-height: 1.2;"></h2>
                             <p class="text-secondary font-inter mb-0" id="mf-desc" style="font-size: 1.1rem; line-height: 1.6;"></p>
-                            <p class="text-danger small mt-3 mb-0 fw-semibold">* Indica que la pregunta es obligatoria</p>
+                            <p class="text-danger small mt-3 mb-0 fw-semibold" id="mf-req-text">* Indica que la pregunta es obligatoria</p>
                         </div>
                         
                         <div id="mf-contenido" class="font-inter"></div>
