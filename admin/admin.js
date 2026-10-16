@@ -52,7 +52,7 @@ document.querySelectorAll('#sidebar-nav .nav-link').forEach(link => {
 });
 
 // ==========================================
-// 3. CARGAR GRÁFICOS (DASHBOARD REAL)
+// 3. CARGAR GRÁFICOS Y TABLAS (DASHBOARD REAL)
 // ==========================================
 async function cargarDatosDashboard() {
     try {
@@ -84,38 +84,39 @@ async function cargarDatosDashboard() {
             statsCat['Encuestas'] += vistas;
         });
 
+        // Ordenamos las publicaciones de más vistas a menos vistas
         todasPublicaciones.sort((a, b) => b.vistas - a.vistas);
 
+        // Calcular Vistas Totales Reales en Posts sumando lo recolectado
         const totalVistasPosts = todasPublicaciones.reduce((acc, curr) => acc + curr.vistas, 0);
         const totalPosts = todasPublicaciones.length;
         
+        // Vistas globales a la web en general (se suma al cargar la pag)
         let globalViews = totalVistasPosts;
         if(statsDoc.exists() && statsDoc.data().visitasGlobales) {
             globalViews = statsDoc.data().visitasGlobales;
         }
 
-        // Si prefieres mostrar las vistas globales en el dashboard o las vistas en post:
-        // Vamos a cambiar los KPI en el HTML de index.html con estos datos.
+        // Actualizar tarjetas (KPIs)
         document.getElementById('kpi-vistas').innerText = globalViews.toLocaleString();
         document.getElementById('kpi-posts').innerText = totalPosts;
         
-        // Ahora el kpi-avg mostrará total de Vistas exclusivamente en Posts
+        // KPI de vistas reales en posts
         const avgEl = document.getElementById('kpi-avg');
-        if(avgEl) {
-            avgEl.innerText = totalVistasPosts.toLocaleString(); 
-            avgEl.previousElementSibling.innerText = "VISTAS EN POSTS"; 
-        }
+        if(avgEl) avgEl.innerText = totalVistasPosts.toLocaleString(); 
 
+        // Rellenar Gráfico de Barras
         const top5 = todasPublicaciones.slice(0, 5);
         new Chart(document.getElementById('barChart').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: top5.map(t => t.titulo.length > 20 ? t.titulo.substring(0, 20)+'...' : t.titulo),
-                datasets: [{ label: 'Vistas', data: top5.map(t => t.vistas), backgroundColor: '#004b79', borderRadius: 6 }]
+                datasets: [{ label: 'Vistas Reales', data: top5.map(t => t.vistas), backgroundColor: '#004b79', borderRadius: 6 }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
 
+        // Rellenar Gráfico de Donut
         new Chart(document.getElementById('doughnutChart').getContext('2d'), {
             type: 'doughnut',
             data: {
@@ -124,6 +125,39 @@ async function cargarDatosDashboard() {
             },
             options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
         });
+
+        // ==========================================
+        // NUEVO: Rellenar la Tabla de Publicaciones
+        // ==========================================
+        const tbodyPosts = document.getElementById('posts-table-body');
+        if (tbodyPosts) {
+            tbodyPosts.innerHTML = '';
+            
+            if (todasPublicaciones.length === 0) {
+                tbodyPosts.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-4">No hay publicaciones aún.</td></tr>';
+            } else {
+                todasPublicaciones.forEach(post => {
+                    let badgeColor = '';
+                    if(post.tipo === 'Opinión') badgeColor = 'bg-primary';
+                    else if(post.tipo === 'Paper') badgeColor = 'bg-success';
+                    else if(post.tipo === 'Encuesta') badgeColor = 'bg-warning text-dark';
+
+                    // Insertar fila en la tabla
+                    tbodyPosts.innerHTML += `
+                        <tr>
+                            <td class="fw-semibold text-dark font-inter" style="max-width: 350px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${post.titulo}
+                            </td>
+                            <td><span class="badge ${badgeColor} px-3 py-1 rounded-pill shadow-sm" style="font-size: 0.75rem;">${post.tipo}</span></td>
+                            <td class="text-center fw-bold font-inter" style="color: #004b79;">
+                                <i class="bi bi-eye text-muted me-1"></i> ${post.vistas.toLocaleString()}
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
     } catch(e) { 
         console.error("Error Dashboard:", e); 
     }
