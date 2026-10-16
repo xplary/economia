@@ -27,7 +27,9 @@ function updateReputationVisibility() {
     }
 }
 
-// SISTEMA DE DROPDOWN Y AVATAR CON PLAN
+const escapeHTML = (str) => (str ? str.toString() : '').replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t));
+
+// SISTEMA DE DROPDOWN Y AVATAR INTEGRADO EN NAVBAR
 onAuthStateChanged(auth, async (u) => {
     const btnLogin = document.getElementById('btn-login');
     const oldLogout = document.getElementById('btn-logout');
@@ -37,24 +39,25 @@ onAuthStateChanged(auth, async (u) => {
     
     if(u) { 
         btnLogin.classList.add('d-none');
-        if(oldLogout) oldLogout.classList.add('d-none'); // Ocultar el boton de salir antiguo
+        if(oldLogout) oldLogout.classList.add('d-none');
 
-        // Crear o actualizar el menu desplegable de la cuenta
+        // Construir el dropdown estilizado
         let ddCont = document.getElementById('user-dropdown-container');
         if(!ddCont) {
             ddCont = document.createElement('div');
             ddCont.id = 'user-dropdown-container';
-            ddCont.className = 'dropdown d-inline-block ms-2';
+            ddCont.className = 'dropdown d-inline-block ms-1'; 
             ddCont.innerHTML = `
-                <div class="position-relative" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
-                    <img src="${u.photoURL || 'https://via.placeholder.com/42'}" id="user-avatar-img" class="rounded-circle border border-2 border-white shadow-sm" style="width: 42px; height: 42px; object-fit: cover; background: #fff;" alt="Perfil">
+                <div class="position-relative cursor-pointer" data-bs-toggle="dropdown" aria-expanded="false" title="Mi Cuenta">
+                    <img src="${u.photoURL || 'https://via.placeholder.com/42'}" id="user-avatar-img" class="rounded-circle shadow-sm" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid rgba(255,255,255,0.4); transition: border-color 0.2s ease;" alt="Perfil" onmouseover="this.style.borderColor='#ffffff'" onmouseout="this.style.borderColor='rgba(255,255,255,0.4)'">
                 </div>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 rounded-4 py-2" style="min-width: 220px; z-index: 1070;">
-                    <li class="px-3 py-3 border-bottom mb-2 text-center bg-light rounded-top-4 mx-2">
-                        <span class="small text-muted fw-bold font-inter d-block mb-2">PLAN ASIGNADO</span>
-                        <span class="badge bg-secondary font-inter fs-6 px-3 py-2 rounded-pill w-100 shadow-sm" id="user-plan-badge">Usuario</span>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 rounded-4 py-2" style="min-width: 250px; z-index: 1070; right: 0;">
+                    <li class="px-4 py-3 border-bottom mb-2 text-center">
+                        <img src="${u.photoURL || 'https://via.placeholder.com/60'}" class="rounded-circle mb-3 shadow-sm border" style="width: 55px; height: 55px; object-fit: cover;" id="user-avatar-img-large">
+                        <span class="fw-bold font-inter text-dark d-block text-truncate mb-2" style="max-width: 210px; margin: 0 auto; font-size: 1.05rem;">${escapeHTML(u.displayName || 'Usuario')}</span>
+                        <span class="badge bg-secondary font-inter px-3 py-1 rounded-pill shadow-sm" id="user-plan-badge" style="font-weight: 600; letter-spacing: 0.5px;">Usuario</span>
                     </li>
-                    <li><a class="dropdown-item fw-bold text-danger py-2 cursor-pointer font-inter text-center" id="btn-logout-dropdown"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
+                    <li><a class="dropdown-item fw-bold text-danger py-2 cursor-pointer font-inter text-center hover-bg-light rounded-bottom-4" id="btn-logout-dropdown"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
                 </ul>
             `;
             btnLogin.parentNode.insertBefore(ddCont, btnLogin.nextSibling);
@@ -62,6 +65,8 @@ onAuthStateChanged(auth, async (u) => {
         } else {
             ddCont.classList.remove('d-none');
             document.getElementById('user-avatar-img').src = u.photoURL || 'https://via.placeholder.com/42';
+            const largeAvatar = document.getElementById('user-avatar-img-large');
+            if(largeAvatar) largeAvatar.src = u.photoURL || 'https://via.placeholder.com/60';
         }
 
         const ref = doc(db, "usuarios", u.uid);
@@ -70,16 +75,16 @@ onAuthStateChanged(auth, async (u) => {
             if(d.exists()) {
                 if(d.data().owner) {
                     document.body.classList.add('is-owner');
-                    if(badge) { badge.innerText = 'Administrador'; badge.className = 'badge font-inter fs-6 px-3 py-2 rounded-pill w-100 shadow-sm text-white'; badge.style.backgroundColor = '#004b79'; }
+                    if(badge) { badge.innerText = 'Administrador'; badge.className = 'badge font-inter px-3 py-1 rounded-pill shadow-sm text-white'; badge.style.backgroundColor = '#004b79'; }
                 } else {
                     document.body.classList.remove('is-owner');
-                    if(badge) { badge.innerText = 'Usuario'; badge.className = 'badge bg-secondary font-inter fs-6 px-3 py-2 rounded-pill w-100 shadow-sm text-white'; badge.style.backgroundColor = ''; }
+                    if(badge) { badge.innerText = 'Usuario'; badge.className = 'badge bg-secondary font-inter px-3 py-1 rounded-pill shadow-sm text-white'; badge.style.backgroundColor = ''; }
                 }
                 userReputacion = d.data().reputacion || 0;
             } else {
                 setDoc(ref, { nombre: u.displayName, email: u.email, reputacion: 0 });
                 userReputacion = 0;
-                if(badge) { badge.innerText = 'Usuario'; badge.className = 'badge bg-secondary font-inter fs-6 px-3 py-2 rounded-pill w-100 shadow-sm text-white'; badge.style.backgroundColor = ''; }
+                if(badge) { badge.innerText = 'Usuario'; badge.className = 'badge bg-secondary font-inter px-3 py-1 rounded-pill shadow-sm text-white'; badge.style.backgroundColor = ''; }
             }
             document.getElementById('user-reputacion').innerText = userReputacion;
             updateReputationVisibility();
@@ -123,7 +128,6 @@ window.compartir = (id, col) => { const d = window.postsData[id]; if(!d) return;
 
 let currentRating = 0; const setupStars = (selector, textId) => { document.querySelectorAll(selector).forEach(st => { st.onclick = function() { currentRating = parseInt(this.getAttribute('data-val')); const cleanClass = selector.replace('.', ''); document.querySelectorAll(selector).forEach(s => { let val = parseInt(s.getAttribute('data-val')); s.className = val <= currentRating ? `bi bi-star-fill star-gradient cursor-pointer fs-3 me-1 ${cleanClass}` : `bi bi-star text-muted cursor-pointer fs-3 me-1 ${cleanClass}`; }); document.getElementById(textId).innerText = `(${currentRating} Estrellas)`; } }); }; setupStars('.star-btn-mn', 'rating-text-mn'); setupStars('.star-btn-ml', 'rating-text-ml'); 
 const getPromedioStars = (comentarios) => { if(!comentarios || comentarios.length === 0) return ''; const valid = comentarios.filter(c => c.rating > 0 && c.aprobado !== false); if(valid.length === 0) return ''; return `<span class="star-gradient fw-bold">⭐ ${(valid.reduce((acc, c) => acc + c.rating, 0) / valid.length).toFixed(1)} (${valid.length})</span>`; };
-const escapeHTML = (str) => (str ? str.toString() : '').replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t));
 
 const enviarComentario = async (txtId, selector, textId) => { const txt = document.getElementById(txtId).value; if(!txt) return alert("Escribe un comentario"); const isOwner = document.body.classList.contains('is-owner'); if (!isOwner) { const lastTime = localStorage.getItem('last_comment_time'); const now = Date.now(); if (lastTime && now - parseInt(lastTime) < 120000) { const wait = Math.ceil((120000 - (now - parseInt(lastTime))) / 1000); return alert(`Anti-Spam: Por favor, espera ${wait} segundos para comentar de nuevo.`); } } const ref = doc(db, window.modalActual.col, window.modalActual.id); const snap = await getDoc(ref); if(snap.exists()) { const arr = snap.data().comentarios || []; arr.push({ id: Date.now(), autor: auth.currentUser ? auth.currentUser.displayName || "Usuario" : "Anónimo", texto: escapeHTML(txt), rating: currentRating, date: new Date().toLocaleDateString(), aprobado: isOwner }); await updateDoc(ref, { comentarios: arr }); if (!isOwner) { localStorage.setItem('last_comment_time', Date.now()); alert("Tu comentario fue enviado y está pendiente de aprobación."); } document.getElementById(txtId).value = ''; currentRating = 0; document.querySelectorAll(selector).forEach(s => s.className = `bi bi-star text-muted cursor-pointer fs-3 me-1 ${selector.replace('.','')}`); document.getElementById(textId).innerText = ''; } };
 document.getElementById('btn-enviar-comentario-mn').onclick = () => enviarComentario('mn-comentario-texto', '.star-btn-mn', 'rating-text-mn'); document.getElementById('btn-enviar-comentario-ml').onclick = () => enviarComentario('ml-comentario-texto', '.star-btn-ml', 'rating-text-ml');
@@ -381,6 +385,8 @@ window.editarArt = (id) => { const d = window.postsData[id]; document.getElement
 onSnapshot(doc(db, "config", "reputacion"), (s) => {
     if(s.exists() && s.data().requerida !== undefined) {
         reqReputacion = s.data().requerida;
+        const reqEl = document.getElementById('req-rep-text');
+        if(reqEl) reqEl.innerText = reqReputacion;
     }
 });
 

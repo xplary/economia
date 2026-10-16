@@ -14,59 +14,27 @@
     <link rel="stylesheet" href="style.css">
     <style>
         /* SCROLLBAR SUTIL Y PEGADO AL LADO DERECHO PARA MODALES */
-        .modal-dialog-scrollable .modal-body::-webkit-scrollbar {
-            width: 8px;
-            background-color: transparent;
-        }
-        .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track {
-            background-color: transparent;
-        }
-        .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb {
-            background-color: #c1c1c1;
-            border-radius: 10px;
-            border: 2px solid rgba(255,255,255,0.1);
-        }
-        .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb:hover {
-            background-color: #a0a0a0;
-        }
+        .modal-dialog-scrollable .modal-body::-webkit-scrollbar { width: 8px; background-color: transparent; }
+        .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track { background-color: transparent; }
+        .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb { background-color: #c1c1c1; border-radius: 10px; border: 2px solid rgba(255,255,255,0.1); }
+        .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb:hover { background-color: #a0a0a0; }
+        
         /* ESTILOS GOOGLE FORMS PARA BUILDER */
-        .gform-block-active {
-            border-left: 6px solid #4285f4 !important;
-            transition: all 0.2s ease;
-        }
-        #modalFormulario .modal-content {
-            border-radius: 12px;
-        }
+        .gform-block-active { border-left: 6px solid #4285f4 !important; transition: all 0.2s ease; }
+        #modalFormulario .modal-content { border-radius: 12px; }
         
         /* ESTILOS PARA NAVBAR Y BOTON INGRESAR */
-        .bg-gradient-navbar {
-            background: linear-gradient(90deg, #009668 0%, #004b79 100%);
-        }
-        .nav-underline .nav-link {
-            color: rgba(255, 255, 255, 0.7) !important;
-            border-bottom-color: transparent !important;
-            padding-bottom: 0.5rem;
-        }
-        .nav-underline .nav-link:hover {
-            color: rgba(255, 255, 255, 0.9) !important;
-        }
-        .nav-underline .nav-link.active {
-            color: #ffffff !important;
-            border-bottom-color: #ffffff !important;
-            border-bottom-width: 2px;
-            font-weight: 600;
-        }
-        .btn-ingresar-navbar {
-            background: rgba(255, 255, 255, 0.15);
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(5px);
-            transition: all 0.3s ease;
-        }
-        .btn-ingresar-navbar:hover {
-            background: rgba(255, 255, 255, 0.25);
-            color: #ffffff;
-        }
+        .bg-gradient-navbar { background: linear-gradient(90deg, #009668 0%, #004b79 100%); }
+        .nav-underline .nav-link { color: rgba(255, 255, 255, 0.7) !important; border-bottom-color: transparent !important; padding-bottom: 0.5rem; }
+        .nav-underline .nav-link:hover { color: rgba(255, 255, 255, 0.9) !important; }
+        .nav-underline .nav-link.active { color: #ffffff !important; border-bottom-color: #ffffff !important; border-bottom-width: 2px; font-weight: 600; }
+        
+        .btn-ingresar-navbar { background: rgba(255, 255, 255, 0.15); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(5px); transition: all 0.3s ease; }
+        .btn-ingresar-navbar:hover { background: rgba(255, 255, 255, 0.25); color: #ffffff; }
+
+        /* ANIMACIÓN DE INTERACCIÓN PARA EL BOTÓN DE REPUTACIÓN */
+        .reputacion-hover { cursor: pointer; transition: all 0.2s ease !important; }
+        .reputacion-hover:hover { background-color: rgba(255, 255, 255, 0.4) !important; transform: scale(1.05); }
     </style>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100 overflow-x-hidden">
@@ -87,13 +55,13 @@
                 <li class="nav-item"><button class="nav-link text-white px-3 font-inter" data-bs-toggle="pill" data-bs-target="#ensayos">Debates y Encuestas</button></li>
             </ul>
             <div class="d-flex align-items-center">
-                <!-- CAFECITO DE REPUTACIÓN -->
-                <div id="reputacion-container" class="d-none me-3 align-items-center px-3 py-1 rounded-pill border border-light shadow-sm bg-white bg-opacity-25" style="transition: opacity 0.3s ease; opacity: 0;" title="Tu Reputación">
+                <!-- CAFECITO DE REPUTACIÓN AHORA ES UN BOTÓN INTERACTIVO -->
+                <div id="reputacion-container" class="d-none me-3 align-items-center px-3 py-1 rounded-pill border border-light shadow-sm bg-white bg-opacity-25 reputacion-hover" data-bs-toggle="modal" data-bs-target="#modalReputacion" style="opacity: 0;" title="Ver Información de Reputación">
                     <i class="bi bi-cup-hot-fill me-2" style="color: #ffcc00; font-size: 1.2rem;"></i>
                     <span class="fw-bold font-inter text-white" style="font-size: 0.95rem;" id="user-reputacion">0</span>
                 </div>
+                
                 <button id="btn-login" class="btn btn-ingresar-navbar rounded-pill px-4 font-inter shadow-sm">Ingresar <i class="bi bi-arrow-right ms-1"></i></button>
-                <button id="btn-logout" class="btn btn-outline-light btn-sm rounded-pill px-4 fw-bold shadow-sm d-none">Salir</button>
             </div>
         </div>
     </nav>
@@ -259,6 +227,45 @@
         <div class="text-center text-white small font-inter py-3 position-relative" style="background-color: #003657; z-index: 1060;">&copy; <span id="current-year"></span> CAFE UNP. Todos los derechos reservados.</div>
     </footer>
 
+    <!-- MODAL REPUTACIÓN E INFORMACIÓN -->
+    <div class="modal fade" id="modalReputacion" tabindex="-1" aria-hidden="true" style="z-index: 1080;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+                <div class="modal-header border-0 pb-0 justify-content-end position-absolute w-100" style="z-index: 2;">
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-0">
+                    <div class="pt-5 pb-4 px-4 px-md-5" style="background: linear-gradient(135deg, #009668 0%, #004b79 100%);">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-white rounded-circle mb-3 shadow-sm" style="width: 80px; height: 80px;">
+                            <i class="bi bi-cup-hot-fill" style="color: #ffcc00; font-size: 2.5rem;"></i>
+                        </div>
+                        <h3 class="fw-bold font-serif mb-1 text-white">Tus Cafecitos</h3>
+                        <p class="text-white opacity-75 font-inter small mb-0">Sistema de reputación de CAFE UNP</p>
+                    </div>
+                    
+                    <div class="px-4 px-md-5 py-4 pt-4 bg-white">
+                        <p class="text-secondary font-inter mb-4 text-center" style="font-size: 0.95rem;">Los <strong>Cafecitos</strong> representan tu nivel de participación e influencia académica en la comunidad estudiantil.</p>
+                        
+                        <div class="row g-3 text-start mb-2">
+                            <div class="col-12">
+                                <div class="p-3 bg-light rounded-3 border-start shadow-sm border-4" style="border-color: #009668 !important;">
+                                    <h6 class="fw-bold font-inter text-dark mb-2"><i class="bi bi-star-fill text-warning me-2 fs-5"></i>¿Cómo ganar puntos?</h6>
+                                    <p class="small text-muted mb-0 font-inter">Ganas <strong>+5 cafecitos</strong> automáticamente cada vez que participas y envías tus respuestas de forma válida en una encuesta o debate.</p>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="p-3 bg-light rounded-3 border-start shadow-sm border-4" style="border-color: #004b79 !important;">
+                                    <h6 class="fw-bold font-inter text-dark mb-2"><i class="bi bi-unlock-fill text-primary me-2 fs-5"></i>¿Para qué sirven?</h6>
+                                    <p class="small text-muted mb-0 font-inter">Al acumular <strong id="req-rep-text" style="color:#004b79;">15</strong> cafecitos, la plataforma te desbloquea el permiso especial para crear y publicar tus propias encuestas o debates.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODALES STANDARD -->
     <div class="modal fade" id="modalNoticia" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen m-0"><div class="modal-content border-0 bg-white rounded-0"><div class="modal-body p-0 d-flex justify-content-center align-items-start" style="padding-top: 5.5rem !important; padding-bottom: 3.5rem !important;"><div class="p-4 p-md-5 position-relative" style="width: 100%; max-width: 900px; min-height: 100vh;"><button type="button" class="btn-close shadow-none position-absolute top-0 end-0 m-4" data-bs-dismiss="modal"></button><div id="mn-tags" class="mb-3 mt-3"></div><h1 id="mn-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2.5rem; line-height: 1.25;"></h1><div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom text-muted small font-inter"><span id="mn-fecha" class="fw-semibold"></span><span id="mn-promedio-estrellas" class="fw-bold fs-6"></span></div><img id="mn-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 550px; object-fit: contain; background: #f8f9fa; display: none;"><div id="mn-contenido" class="contenido-apa mb-5 text-dark" style="font-size: 1.15rem;"></div><h4 class="fw-bold mb-4 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color: #009668;"></i> Comentarios</h4><div class="bg-light p-4 rounded-4 mb-4 border shadow-sm"><div class="d-flex align-items-center mb-3"><span class="text-dark small fw-bold me-3 fs-6 font-inter">Tu calificación:</span><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="1"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="2"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="3"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="4"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="5"></i><span class="text-muted small ms-3 font-inter" id="rating-text-mn"></span></div><textarea id="mn-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión..."></textarea><div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-2 font-inter shadow-sm" id="btn-enviar-comentario-mn">Publicar Comentario</button></div></div><div id="mn-lista-comentarios"></div></div></div></div></div>
@@ -268,7 +275,6 @@
         <div class="modal-dialog modal-fullscreen"><div class="modal-content bg-white"><div class="modal-header border-bottom py-3 px-4 shadow-sm z-1 bg-gradient-navbar"><div class="d-flex align-items-center w-100 justify-content-between"><div class="d-flex align-items-center"><svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#ffffff"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#ffffff"/></svg><span class="fs-4 fw-bold font-inter text-white" style="letter-spacing: -0.5px;">CAFE UNP</span></div><button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal"></button></div></div><div class="modal-body p-0"><div class="row h-100 g-0"><div class="col-lg-7 border-end h-100 overflow-y-auto px-4 py-4 bg-light d-flex flex-column align-items-center justify-content-start" id="modal-left-col"><img id="modal-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 85vh; object-fit: contain; background-color: #fff; display: none;"><iframe id="modal-iframe" src="" class="w-100 rounded-3 shadow-sm bg-white" style="height: 85vh; border: 1px solid #dee2e6; display: none;"></iframe></div><div class="col-lg-5 h-100 overflow-y-auto bg-white px-4 py-4 d-flex flex-column" id="modal-right-col"><div id="modal-tags" class="mb-2"></div><h2 id="modal-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2rem; line-height: 1.25;"></h2><div class="text-muted small mb-3 pb-3 d-flex justify-content-between align-items-center border-bottom font-inter"><div><span id="modal-fecha" class="fw-semibold me-3"><i class="bi bi-calendar3 me-1"></i></span><span id="modal-promedio-estrellas" class="fw-bold fs-6"></span></div></div><div id="modal-contenido" class="text-secondary mb-4" style="font-size: 1.1rem; line-height: 1.8;"></div><h5 class="fw-bold mb-3 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color:#009668;"></i> Discusión y Aportes</h5><div class="bg-light p-3 rounded-4 mb-4 border shadow-sm"><div class="d-flex align-items-center mb-3"><span class="text-dark small fw-bold me-3 fs-6 font-inter">Tu calificación:</span><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="1"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="2"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="3"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="4"></i><i class="bi bi-star cursor-pointer star-btn-ml fs-3 me-1 text-muted" data-val="5"></i><span class="text-muted small ms-3 font-inter" id="rating-text-ml"></span></div><textarea id="ml-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="2" placeholder="Escribe tu opinión..."></textarea><div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-1 font-inter shadow-sm" id="btn-enviar-comentario-ml">Publicar</button></div></div><div id="ml-lista-comentarios" class="flex-grow-1 pe-2 comments-scrollbar"></div></div></div></div></div></div>
     </div>
 
-    <!-- MODAL ENCUESTA / DEBATE AVANZADO TIPO GOOGLE FORMS -->
     <div class="modal fade" id="modalFormulario" tabindex="-1" aria-hidden="true" style="z-index: 1080; background-color: rgba(240, 235, 248, 0.95);">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content border-0 bg-transparent shadow-none">
