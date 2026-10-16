@@ -41,7 +41,6 @@ onAuthStateChanged(auth, async (u) => {
         btnLogin.classList.add('d-none');
         if(oldLogout) oldLogout.classList.add('d-none');
 
-        // Construir el dropdown estilizado
         let ddCont = document.getElementById('user-dropdown-container');
         if(!ddCont) {
             ddCont = document.createElement('div');
@@ -57,6 +56,7 @@ onAuthStateChanged(auth, async (u) => {
                         <span class="fw-bold font-inter text-dark d-block text-truncate mb-2" style="max-width: 210px; margin: 0 auto; font-size: 1.05rem;">${escapeHTML(u.displayName || 'Usuario')}</span>
                         <span class="badge bg-secondary font-inter px-3 py-1 rounded-pill shadow-sm" id="user-plan-badge" style="font-weight: 600; letter-spacing: 0.5px;">Usuario</span>
                     </li>
+                    <li id="admin-panel-link" class="d-none"><a href="admin/index.html" class="dropdown-item fw-bold text-primary py-2 cursor-pointer font-inter text-center hover-bg-light"><i class="bi bi-speedometer2 me-2"></i> Panel Admin</a></li>
                     <li><a class="dropdown-item fw-bold text-danger py-2 cursor-pointer font-inter text-center hover-bg-light rounded-bottom-4" id="btn-logout-dropdown"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
                 </ul>
             `;
@@ -72,19 +72,23 @@ onAuthStateChanged(auth, async (u) => {
         const ref = doc(db, "usuarios", u.uid);
         userSub = onSnapshot(ref, (d) => {
             const badge = document.getElementById('user-plan-badge');
+            const adminLink = document.getElementById('admin-panel-link');
             if(d.exists()) {
                 if(d.data().owner) {
                     document.body.classList.add('is-owner');
                     if(badge) { badge.innerText = 'Administrador'; badge.className = 'badge font-inter px-3 py-1 rounded-pill shadow-sm text-white'; badge.style.backgroundColor = '#004b79'; }
+                    if(adminLink) adminLink.classList.remove('d-none');
                 } else {
                     document.body.classList.remove('is-owner');
                     if(badge) { badge.innerText = 'Usuario'; badge.className = 'badge bg-secondary font-inter px-3 py-1 rounded-pill shadow-sm text-white'; badge.style.backgroundColor = ''; }
+                    if(adminLink) adminLink.classList.add('d-none');
                 }
                 userReputacion = d.data().reputacion || 0;
             } else {
                 setDoc(ref, { nombre: u.displayName, email: u.email, reputacion: 0 });
                 userReputacion = 0;
                 if(badge) { badge.innerText = 'Usuario'; badge.className = 'badge bg-secondary font-inter px-3 py-1 rounded-pill shadow-sm text-white'; badge.style.backgroundColor = ''; }
+                if(adminLink) adminLink.classList.add('d-none');
             }
             document.getElementById('user-reputacion').innerText = userReputacion;
             updateReputationVisibility();
@@ -137,9 +141,15 @@ window.aprobarComentario = async (cid) => { const ref = doc(db, window.modalActu
 const renderComentarios = (comentarios, containerId) => { const box = document.getElementById(containerId); if(!box) return; const isOwner = document.body.classList.contains('is-owner'); let comsToShow = comentarios || []; if(!isOwner) comsToShow = comsToShow.filter(c => c.aprobado !== false); if(comsToShow.length===0) return box.innerHTML = '<div class="text-center mt-4 text-muted"><i class="bi bi-chat-dots fs-3"></i><p class="mt-2 small">Sé el primero en aportar.</p></div>'; box.innerHTML = comsToShow.map(c => { const starsHTML = `<span class="star-gradient" style="font-size:0.9rem;">${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)}</span>`; const pendingBadge = c.aprobado === false ? `<span class="badge bg-warning text-dark ms-2 fw-semibold" style="font-size:0.65rem;">Pendiente</span>` : ''; const approveBtn = (c.aprobado === false && isOwner) ? `<button class="btn btn-sm btn-success py-0 px-2 ms-2 fw-bold" style="font-size:0.7rem;" onclick="aprobarComentario(${c.id})"><i class="bi bi-check-lg"></i> Aprobar</button>` : ''; return `<div class="mb-4 pb-3 border-bottom"><div class="d-flex justify-content-between align-items-center mb-1"><strong class="font-inter text-dark small">${c.autor} ${pendingBadge}</strong><div>${starsHTML}${approveBtn}<i class="bi bi-trash text-danger ms-2 cursor-pointer admin-only-inline" onclick="borrarComentario(${c.id})"></i></div></div><p class="text-secondary font-inter mb-1" style="font-size: 0.95rem;">${c.texto}</p><div class="text-muted small font-inter text-end" style="font-size: 0.75rem;">${c.date}</div></div>`; }).join(''); };
 const formatEmbedUrl = (url) => { if(!url) return ''; const match = url.match(/\/(?:d|file\/d)\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/); if (match && match[1]) return `https://drive.google.com/file/d/${match[1]}/preview`; return url; };
 
-// EFECTO SKELETON AL ABRIR CUALQUIER MODAL
+// EFECTO SKELETON AL ABRIR Y TRACKING DE VISTAS
 window.abrirModal = (id, col) => {
     const d = window.postsData[id]; if(!d) return; window.modalActual = { id, col };
+    
+    // TRACKING DE VISTAS (Silencioso en segundo plano)
+    try {
+        const refDoc = doc(db, col, id);
+        updateDoc(refDoc, { vistas: increment(1) }).catch(()=>{});
+    } catch(e) {}
     
     // INYECCION DE ESQUELETOS
     if (col === 'formularios') {
@@ -299,7 +309,7 @@ document.getElementById('btn-pub-noticia').onclick = async () => {
     
     const editorContent = tinymce.get('editor-noticias').getContent(); 
     const isPrincipal = document.getElementById('not-principal').checked;
-    const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: isPrincipal, contenido: editorContent }; 
+    const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: isPrincipal, contenido: editorContent, vistas: 0 }; 
     
     if (isPrincipal) {
         noticiasData.forEach(n => {
@@ -338,7 +348,8 @@ function renderNoticias() {
         const date = d.fecha ? d.fecha.toDate().toLocaleDateString() : 'Reciente'; 
         const avgStr = getPromedioStars(d.comentarios); 
         const textoLimpioPreview = (d.contenido || '').replace(/<[^>]*>?/gm, ''); 
-        
+        const vistasBadge = d.vistas ? `<span class="badge bg-light text-secondary border ms-2 fw-semibold font-inter"><i class="bi bi-eye"></i> ${d.vistas}</span>` : '';
+
         if (principalDefinitiva && d.id === principalDefinitiva.id) { 
             const tHTMLPrincipal = (d.etiquetas||[]).map(t => `<span class="badge border text-secondary bg-transparent rounded-1 me-2 px-2 py-1 font-inter" style="border-color: #cbd5e1 !important; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">${escapeHTML(t)}</span>`).join('');
             const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-3 shadow-sm cursor-pointer" style="height:350px; object-fit: cover; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-3 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:350px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; 
@@ -349,7 +360,7 @@ function renderNoticias() {
                         ${imgP}
                     </div>
                     <div class="col-lg-5 ps-lg-2 pe-lg-3 d-flex flex-column h-100">
-                        <div class="mb-3">${tHTMLPrincipal}</div>
+                        <div class="mb-3">${tHTMLPrincipal} ${vistasBadge}</div>
                         <h2 class="fw-bold mb-3 font-serif cursor-pointer text-dark" style="font-size: 2.2rem; line-height: 1.25;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h2>
                         <div class="text-secondary mb-4 text-truncate-3 font-inter" style="font-size: 1.05rem; line-height: 1.6;">${textoLimpioPreview}</div>
                         <div class="d-flex justify-content-between align-items-center mt-auto pt-2">
@@ -365,7 +376,7 @@ function renderNoticias() {
         
         const tHTMLLista = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join('');
         const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; 
-        hLista += `<div class="card border-0 border-bottom rounded-0 mb-4 pb-4 bg-transparent"><div class="row g-4 align-items-center"><div class="col-md-5">${imgH}</div><div class="col-md-7 d-flex flex-column"><div class="d-flex justify-content-between mb-2"><div>${tHTMLLista}</div><div><i class="bi bi-share text-muted me-2 cursor-pointer" onclick="compartir('${d.id}', 'noticias')"></i><i class="bi bi-pencil-fill text-warning me-2 admin-only-inline cursor-pointer" onclick="editarNoticia('${d.id}')"></i><i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i></div></div><h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif text-dark" style="font-size: 1.5rem;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h3><small class="text-muted fw-semibold mt-1"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2">${avgStr}</span></small></div></div></div>`;
+        hLista += `<div class="card border-0 border-bottom rounded-0 mb-4 pb-4 bg-transparent"><div class="row g-4 align-items-center"><div class="col-md-5">${imgH}</div><div class="col-md-7 d-flex flex-column"><div class="d-flex justify-content-between mb-2"><div>${tHTMLLista}</div><div><i class="bi bi-share text-muted me-2 cursor-pointer" onclick="compartir('${d.id}', 'noticias')"></i><i class="bi bi-pencil-fill text-warning me-2 admin-only-inline cursor-pointer" onclick="editarNoticia('${d.id}')"></i><i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i></div></div><h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif text-dark" style="font-size: 1.5rem;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h3><small class="text-muted fw-semibold mt-1 d-flex align-items-center"><i class="bi bi-calendar3 me-1"></i> ${date} ${vistasBadge} <span class="ms-2">${avgStr}</span></small></div></div></div>`;
     }); 
     
     cPrinc.innerHTML = principalDefinitiva ? hPrinc : ''; 
@@ -374,8 +385,8 @@ function renderNoticias() {
 
 window.editarNoticia = (id) => { const d = window.postsData[id]; document.getElementById('not-titulo').value = d.titulo; document.getElementById('not-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('not-color').value = d.colorTag || '#004b79'; document.getElementById('not-principal').checked = d.principal; if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(d.contenido || ''); window.editandoId = id; document.getElementById('not-form-title').innerText = "Editando Columna"; document.getElementById('btn-pub-noticia').innerText = "Guardar"; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colNoticia')).show(); window.scrollTo(0,0); };
 
-document.getElementById('btn-pub-articulo').onclick = async () => { const t = document.getElementById('art-titulo').value; const l = document.getElementById('art-link').value; if(!t||!l) return alert("Falta Título o Link."); const et = document.getElementById('art-tags').value ? document.getElementById('art-tags').value.split(',').map(x=>x.trim()).filter(Boolean) : ['Paper']; const data = { titulo: t, link: l, resumen: document.getElementById('art-resumen').value, etiquetas: et, colorTag: document.getElementById('art-color').value }; if(window.editandoId) await updateDoc(doc(db, "articulos", window.editandoId), data); else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "articulos"), data); } cancelarEdicion(); };
-onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) => { const cont = document.getElementById('contenedor-articulos'); if(snap.empty) return cont.innerHTML = '<div class="col-12 text-center text-muted font-inter">No hay papers.</div>'; let h = ''; snap.forEach(d => { const data = d.data(); window.postsData[d.id] = data; checkDeepLink(d.id, 'articulos'); const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios); const tHTML = (data.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${data.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join(''); h += `<article class="col-12 mb-5 pb-4 border-bottom border-light-subtle"><div class="row align-items-start"><div class="col-md-2 col-4 cursor-pointer" onclick="abrirModal('${d.id}', 'articulos')"><div class="paper-cover mx-auto rounded-1"><i class="bi bi-file-earmark-pdf-fill text-secondary fs-1"></i><div class="mt-2" style="width: 80%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-1" style="width: 60%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-auto" style="width: 40%; height: 4px; background: #cbd5e1; border-radius: 2px;"></div></div></div><div class="col-md-10 col-8 d-flex flex-column h-100 ps-md-4"><div class="d-flex justify-content-between align-items-start mb-2"><div>${tHTML} <span class="badge bg-secondary ms-1 fw-semibold font-inter" style="letter-spacing: 0.5px;">Acceso Abierto</span></div><div class="text-nowrap ms-3"><i class="bi bi-share-fill text-primary cursor-pointer me-3" onclick="compartir('${d.id}', 'articulos')"></i><i class="bi bi-pencil-fill text-warning me-3 admin-only-inline cursor-pointer" onclick="editarArt('${d.id}')"></i><i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('articulos', '${d.id}')"></i></div></div><a href="javascript:void(0)" onclick="abrirModal('${d.id}', 'articulos')" class="paper-title-link fw-bold font-serif mb-1" style="font-size: 1.45rem;">${d.data().titulo}</a><div class="text-muted small mb-3 font-inter">${data.fecha ? '(Publicado el ' + data.fecha.toDate().toLocaleDateString() + ')' : ''}</div><p class="text-muted mb-3 font-inter text-truncate-3" style="font-size: 1.05rem; line-height: 1.6;">${escapeHTML(data.resumen)}</p><div class="mt-auto d-flex align-items-center"><button class="btn btn-sm text-primary fw-bold font-inter rounded-pill me-3 shadow-sm" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${d.id}', 'articulos')">Leer documento <i class="bi bi-arrow-right ms-1"></i></button><span class="ms-2">${avgStr}</span></div></div></div></article>`; }); cont.innerHTML = h; if(window.modalActual.col === 'articulos' && window.modalActual.id) abrirModal(window.modalActual.id, 'articulos'); });
+document.getElementById('btn-pub-articulo').onclick = async () => { const t = document.getElementById('art-titulo').value; const l = document.getElementById('art-link').value; if(!t||!l) return alert("Falta Título o Link."); const et = document.getElementById('art-tags').value ? document.getElementById('art-tags').value.split(',').map(x=>x.trim()).filter(Boolean) : ['Paper']; const data = { titulo: t, link: l, resumen: document.getElementById('art-resumen').value, etiquetas: et, colorTag: document.getElementById('art-color').value, vistas: 0 }; if(window.editandoId) await updateDoc(doc(db, "articulos", window.editandoId), data); else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "articulos"), data); } cancelarEdicion(); };
+onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) => { const cont = document.getElementById('contenedor-articulos'); if(snap.empty) return cont.innerHTML = '<div class="col-12 text-center text-muted font-inter">No hay papers.</div>'; let h = ''; snap.forEach(d => { const data = d.data(); window.postsData[d.id] = data; checkDeepLink(d.id, 'articulos'); const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios); const tHTML = (data.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${data.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join(''); const vistasBadge = data.vistas ? `<span class="badge bg-light text-secondary border ms-2 fw-semibold font-inter"><i class="bi bi-eye"></i> ${data.vistas}</span>` : ''; h += `<article class="col-12 mb-5 pb-4 border-bottom border-light-subtle"><div class="row align-items-start"><div class="col-md-2 col-4 cursor-pointer" onclick="abrirModal('${d.id}', 'articulos')"><div class="paper-cover mx-auto rounded-1"><i class="bi bi-file-earmark-pdf-fill text-secondary fs-1"></i><div class="mt-2" style="width: 80%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-1" style="width: 60%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-auto" style="width: 40%; height: 4px; background: #cbd5e1; border-radius: 2px;"></div></div></div><div class="col-md-10 col-8 d-flex flex-column h-100 ps-md-4"><div class="d-flex justify-content-between align-items-start mb-2"><div>${tHTML} <span class="badge bg-secondary ms-1 fw-semibold font-inter" style="letter-spacing: 0.5px;">Acceso Abierto</span></div><div class="text-nowrap ms-3"><i class="bi bi-share-fill text-primary cursor-pointer me-3" onclick="compartir('${d.id}', 'articulos')"></i><i class="bi bi-pencil-fill text-warning me-3 admin-only-inline cursor-pointer" onclick="editarArt('${d.id}')"></i><i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('articulos', '${d.id}')"></i></div></div><a href="javascript:void(0)" onclick="abrirModal('${d.id}', 'articulos')" class="paper-title-link fw-bold font-serif mb-1" style="font-size: 1.45rem;">${d.data().titulo}</a><div class="text-muted small mb-3 font-inter">${data.fecha ? '(Publicado el ' + data.fecha.toDate().toLocaleDateString() + ')' : ''} ${vistasBadge}</div><p class="text-muted mb-3 font-inter text-truncate-3" style="font-size: 1.05rem; line-height: 1.6;">${escapeHTML(data.resumen)}</p><div class="mt-auto d-flex align-items-center"><button class="btn btn-sm text-primary fw-bold font-inter rounded-pill me-3 shadow-sm" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${d.id}', 'articulos')">Leer documento <i class="bi bi-arrow-right ms-1"></i></button><span class="ms-2">${avgStr}</span></div></div></div></article>`; }); cont.innerHTML = h; if(window.modalActual.col === 'articulos' && window.modalActual.id) abrirModal(window.modalActual.id, 'articulos'); });
 window.editarArt = (id) => { const d = window.postsData[id]; document.getElementById('art-titulo').value = d.titulo; document.getElementById('art-link').value = d.link; document.getElementById('art-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('art-color').value = d.colorTag || '#004b79'; document.getElementById('art-resumen').value = d.resumen; window.editandoId = id; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colArticulo')).show(); window.scrollTo(0,0); };
 
 /* =========================================================================
@@ -393,7 +404,7 @@ onSnapshot(doc(db, "config", "reputacion"), (s) => {
 document.getElementById('btn-iniciar-crear-form').onclick = () => {
     const isOwner = document.body.classList.contains('is-owner');
     if (!isOwner && userReputacion < reqReputacion) {
-        alert(`☕ Necesitas al menos ${reqReputacion} puntos de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion} puntos de reputacion.\n\n¡Gana +5 de reputación aportando tus respuestas a la comunidad!`);
+        alert(`☕ Necesitas al menos ${reqReputacion} puntos de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion} cafecitos.\n\n¡Gana +5 de reputación aportando tus respuestas a la comunidad!`);
         return;
     }
     window.editandoFormId = null;
@@ -633,7 +644,7 @@ document.getElementById('btn-pub-formulario').onclick = async () => {
             }
             
             await addDoc(collection(db, "formularios"), { 
-                titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas, respuestas: [], fecha: serverTimestamp(), autorId: auth.currentUser.uid 
+                titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, preguntas, respuestas: [], fecha: serverTimestamp(), autorId: auth.currentUser.uid, vistas: 0 
             });
             alert("¡Encuesta publicada y activada con éxito!");
         }
@@ -665,6 +676,7 @@ function renderFormularios() {
     formulariosDataCache.forEach(data => {
         const cerrada = data.fechaLimite && data.fechaLimite < now;
         const statusBadge = cerrada ? `<span class="badge bg-danger rounded-pill fw-semibold" style="font-size: 0.7rem;">Finalizada</span>` : `<span class="badge bg-success rounded-pill fw-semibold" style="font-size: 0.7rem;">Activa</span>`;
+        const vistasBadge = data.vistas ? `<span class="badge bg-light text-secondary border ms-2 fw-semibold font-inter"><i class="bi bi-eye"></i> ${data.vistas}</span>` : '';
         const numRes = data.respuestas ? data.respuestas.length : 0;
         const placeholderImg = `<div class="d-flex align-items-center justify-content-center bg-light text-secondary h-100 w-100" style="min-height: 140px; border-right: 1px solid #e2e8f0;"><i class="bi bi-card-checklist fs-1 opacity-50"></i></div>`;
         const imgHTML = data.imagen ? `<img src="${data.imagen}" class="w-100 h-100 object-fit-cover" style="min-height: 140px; border-right: 1px solid #e2e8f0;">` : placeholderImg;
@@ -685,7 +697,7 @@ function renderFormularios() {
                 <div class="col-8 col-md-9 d-flex flex-column justify-content-center">
                     <div class="card-body p-3 p-md-4 position-relative">
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div><span class="tag-badge me-2" style="color: #009668; border-color: #d1d5db;">ENCUESTA</span> ${statusBadge}</div>
+                            <div><span class="tag-badge me-2" style="color: #009668; border-color: #d1d5db;">ENCUESTA</span> ${statusBadge} ${vistasBadge}</div>
                             <div class="text-nowrap ms-2">${authButtons}</div>
                         </div>
                         <h4 class="fw-bold font-inter text-dark mb-1 text-truncate" style="font-size: 1.25rem;">${data.titulo}</h4>
