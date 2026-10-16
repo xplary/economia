@@ -12,14 +12,27 @@
     
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
-        .sidebar { width: 260px; background: #003657; color: #fff; position: fixed; height: 100vh; left: 0; top: 0; padding-top: 1.5rem; z-index: 10; }
+        
+        /* SIDEBAR DESKTOP */
+        .sidebar { width: 260px; background: #003657; color: #fff; position: fixed; height: 100vh; left: 0; top: 0; padding-top: 1.5rem; z-index: 1050; transition: transform 0.3s ease; }
         .sidebar .nav-link { color: rgba(255, 255, 255, 0.75); font-weight: 500; padding: 0.8rem 1.5rem; transition: all 0.2s; cursor: pointer; }
         .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255, 255, 255, 0.1); border-left: 4px solid #009668; }
-        .main-content { margin-left: 260px; padding: 2rem; min-height: 100vh; }
+        
+        .main-content { margin-left: 260px; padding: 2rem; min-height: 100vh; transition: margin 0.3s ease; }
         .kpi-card { background: #fff; border-radius: 12px; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
         .kpi-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
         #loading-screen, #access-denied { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f1f5f9; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .main-content { margin-left: 0; padding: 1rem; } }
+        
+        /* OVERLAY MÓVIL (Fondo oscuro) */
+        #sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1040; backdrop-filter: blur(2px); }
+        
+        /* ADAPTACIÓN CELULAR */
+        @media (max-width: 768px) { 
+            .sidebar { transform: translateX(-100%); } /* Oculto por defecto */
+            .sidebar.show { transform: translateX(0); } /* Visible cuando tocamos el botón */
+            .main-content { margin-left: 0; padding: 1.25rem 1rem; } 
+            #sidebar-overlay.show { display: block; }
+        }
     </style>
 </head>
 <body>
@@ -40,10 +53,17 @@
     <!-- Contenido Principal -->
     <div id="dashboard-wrapper" style="display: none;">
         
-        <div class="sidebar shadow">
-            <div class="px-4 mb-5 d-flex align-items-center">
-                <i class="bi bi-gear-fill me-2 fs-3 text-white"></i>
-                <h4 class="m-0 fw-bold">Admin Panel</h4>
+        <!-- Overlay oscuro para celular -->
+        <div id="sidebar-overlay"></div>
+
+        <div class="sidebar shadow" id="sidebar">
+            <div class="px-4 mb-5 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-gear-fill me-2 fs-3 text-white"></i>
+                    <h4 class="m-0 fw-bold">Admin Panel</h4>
+                </div>
+                <!-- Botón de cerrar (solo celular) -->
+                <i class="bi bi-x-lg text-white d-md-none fs-4 cursor-pointer" id="btn-close-sidebar"></i>
             </div>
             <ul class="nav flex-column mb-auto" id="sidebar-nav">
                 <li class="nav-item"><a class="nav-link active" data-target="dashboard-tab"><i class="bi bi-grid-1x2-fill me-2"></i> Dashboard</a></li>
@@ -54,11 +74,17 @@
 
         <div class="main-content">
             
+            <!-- HEADER (Añadido botón hamburguesa) -->
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-bold m-0" id="page-title">Dashboard</h2>
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-white d-md-none border shadow-sm bg-white" id="sidebar-toggle" style="border-radius: 8px;">
+                        <i class="bi bi-list fs-4 text-dark"></i>
+                    </button>
+                    <h2 class="fw-bold m-0" id="page-title" style="font-size: 1.5rem;">Dashboard</h2>
+                </div>
                 <div class="d-flex align-items-center bg-white px-3 py-2 rounded-pill shadow-sm">
-                    <img src="" id="admin-avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
-                    <span class="fw-semibold text-dark" id="admin-name" style="font-size: 0.9rem;">Admin</span>
+                    <img src="" id="admin-avatar" class="rounded-circle me-md-2" style="width: 32px; height: 32px; object-fit: cover;">
+                    <span class="fw-semibold text-dark d-none d-md-inline" id="admin-name" style="font-size: 0.9rem;">Admin</span>
                 </div>
             </div>
 
@@ -93,23 +119,25 @@
 
                 <div class="row g-4 mb-4">
                     <div class="col-lg-8">
-                        <div class="card kpi-card p-4 h-100">
+                        <div class="card kpi-card p-3 p-md-4 h-100">
                             <h5 class="fw-bold mb-4">Top 5 Publicaciones Más Vistas</h5>
-                            <canvas id="barChart" style="max-height: 300px;"></canvas>
+                            <div style="position: relative; height: 250px; width: 100%;">
+                                <canvas id="barChart"></canvas>
+                            </div>
                         </div>
                     </div>
                     <div class="col-lg-4">
-                        <div class="card kpi-card p-4 h-100">
+                        <div class="card kpi-card p-3 p-md-4 h-100">
                             <h5 class="fw-bold mb-4">Distribución de Vistas</h5>
-                            <div class="d-flex justify-content-center align-items-center h-100 pb-3">
-                                <canvas id="doughnutChart" style="max-height: 250px;"></canvas>
+                            <div class="d-flex justify-content-center align-items-center h-100 pb-3" style="position: relative; height: 200px; width: 100%;">
+                                <canvas id="doughnutChart"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- NUEVA SECCIÓN: TABLA DE RENDIMIENTO DE PUBLICACIONES -->
-                <div class="card kpi-card p-4 mt-2 mb-4">
+                <!-- SECCIÓN: TABLA DE RENDIMIENTO -->
+                <div class="card kpi-card p-3 p-md-4 mt-2 mb-4">
                     <h5 class="fw-bold mb-4">Rendimiento Detallado por Publicación</h5>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
@@ -130,16 +158,16 @@
 
             <!-- SECCIÓN 2: GESTIÓN DE USUARIOS -->
             <div id="usuarios-tab" class="admin-section" style="display: none;">
-                <div class="card kpi-card p-4">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+                <div class="card kpi-card p-3 p-md-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
                         <h5 class="fw-bold m-0">Lista de Usuarios Registrados</h5>
-                        <div class="input-group" style="max-width: 300px;">
+                        <div class="input-group" style="max-width: 100%; width: 300px;">
                             <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
                             <input type="text" id="buscar-usuario" class="form-control border-start-0 shadow-none" placeholder="Buscar nombre o correo...">
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle">
+                        <table class="table table-hover align-middle" style="min-width: 600px;">
                             <thead class="table-light">
                                 <tr>
                                     <th>Usuario</th>
@@ -160,7 +188,38 @@
         </div>
     </div>
 
-    <!-- SCRIPT ADMIN -->
+    <!-- Scripts de interactividad móvil nativa -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const closeBtn = document.getElementById('btn-close-sidebar');
+
+        // Función para cerrar el menú en celular
+        const cerrarMenuMobile = () => {
+            if(window.innerWidth <= 768) {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            }
+        };
+
+        // Abrir Menú
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.add('show');
+            overlay.classList.add('show');
+        });
+
+        // Cerrar Menú (al tocar fondo oscuro o cruz)
+        overlay.addEventListener('click', cerrarMenuMobile);
+        closeBtn.addEventListener('click', cerrarMenuMobile);
+
+        // Cerrar menú automáticamente cuando seleccionas "Dashboard" o "Usuarios" en el cel
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', cerrarMenuMobile);
+        });
+    </script>
+
+    <!-- SCRIPT ADMIN FIREBASE -->
     <script type="module" src="admin.js"></script>
 </body>
 </html>
