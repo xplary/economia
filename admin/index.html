@@ -60,7 +60,7 @@
     <div id="access-denied" style="display: none;">
         <i class="bi bi-shield-lock-fill text-danger mb-3" style="font-size: 5.5rem;"></i>
         <h2 class="fw-bold text-dark mb-2">Acceso Restringido</h2>
-        <p class="text-secondary mb-4">Tu cuenta no tiene privilegios de administrador de sistema.</p>
+        <p class="text-secondary mb-4">No tienes los permisos necesarios para acceder a esta área.</p>
         <a href="../index.html" class="btn btn-dark rounded-pill px-4 py-2 fw-semibold shadow-sm">Regresar al Portal</a>
     </div>
 
@@ -81,8 +81,10 @@
             </div>
             <ul class="nav flex-column mb-auto" id="sidebar-nav">
                 <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-2" style="letter-spacing: 1px; font-size: 0.7rem;">Principal</li>
-                <li class="nav-item"><a class="nav-link active" data-target="dashboard-tab"><i class="bi bi-grid-fill me-3 fs-5 align-middle"></i> Overview</a></li>
-                <li class="nav-item mt-2"><a class="nav-link" data-target="usuarios-tab"><i class="bi bi-people-fill me-3 fs-5 align-middle"></i> Directorio</a></li>
+                
+                <li class="nav-item" id="nav-overview" style="display:none;"><a class="nav-link active" data-target="dashboard-tab"><i class="bi bi-grid-fill me-3 fs-5 align-middle"></i> Overview</a></li>
+                <li class="nav-item mt-2" id="nav-users" style="display:none;"><a class="nav-link" data-target="usuarios-tab"><i class="bi bi-people-fill me-3 fs-5 align-middle"></i> Directorio</a></li>
+                <li class="nav-item mt-2" id="nav-roles" style="display:none;"><a class="nav-link" data-target="roles-tab"><i class="bi bi-shield-shaded me-3 fs-5 align-middle"></i> Roles y Permisos</a></li>
                 
                 <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-5" style="letter-spacing: 1px; font-size: 0.7rem;">Sistema</li>
                 <li class="nav-item"><a href="../index.html" class="nav-link text-warning"><i class="bi bi-box-arrow-up-right me-3 fs-5 align-middle"></i> Salir al Portal</a></li>
@@ -98,8 +100,8 @@
                         <i class="bi bi-list fs-4 text-dark"></i>
                     </button>
                     <div>
-                        <h2 class="fw-bold m-0 text-dark" id="page-title" style="letter-spacing: -0.5px;">Overview</h2>
-                        <p class="text-secondary small m-0 mt-1">Métricas y analíticas en tiempo real</p>
+                        <h2 class="fw-bold m-0 text-dark" id="page-title" style="letter-spacing: -0.5px;">Panel de Control</h2>
+                        <p class="text-secondary small m-0 mt-1">Gestión administrativa del sistema</p>
                     </div>
                 </div>
                 <div class="d-flex align-items-center bg-white px-2 py-1 rounded-pill shadow-sm border" style="border-color: #e2e8f0;">
@@ -111,8 +113,8 @@
                 </div>
             </div>
 
-            <!-- SECCIÓN 1: DASHBOARD -->
-            <div id="dashboard-tab" class="admin-section">
+            <!-- SECCIÓN 1: DASHBOARD / OVERVIEW -->
+            <div id="dashboard-tab" class="admin-section" style="display: none;">
                 <!-- ROW 1: KPIs -->
                 <div class="row g-4 mb-4">
                     <div class="col-sm-6 col-xl-3">
@@ -151,7 +153,6 @@
 
                 <!-- ROW 2: GRÁFICOS AVANZADOS -->
                 <div class="row g-4 mb-4">
-                    <!-- Line Chart (Nuevo) -->
                     <div class="col-lg-8">
                         <div class="card kpi-card p-4 h-100">
                             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -163,7 +164,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Doughnut Chart (Mejorado) -->
                     <div class="col-lg-4">
                         <div class="card kpi-card p-4 h-100">
                             <h5 class="fw-bold mb-4 text-dark">Distribución por Tipo</h5>
@@ -174,7 +174,7 @@
                     </div>
                 </div>
 
-                <!-- ROW 3: GRÁFICO BARRAS Y TABLA DE RENDIMIENTO -->
+                <!-- ROW 3: RENDIMIENTO -->
                 <div class="row g-4 mb-4">
                     <div class="col-xl-5">
                         <div class="card kpi-card p-4 h-100">
@@ -232,8 +232,8 @@
                                     <th class="text-secondary font-inter" style="font-size: 0.8rem;">USUARIO</th>
                                     <th class="text-secondary font-inter" style="font-size: 0.8rem;">CORREO</th>
                                     <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">REPUTACIÓN</th>
-                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ROL</th>
-                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ACCIÓN</th>
+                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ESTADO/ROL</th>
+                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ASIGNAR RANGO</th>
                                 </tr>
                             </thead>
                             <tbody id="usuarios-table-body">
@@ -243,9 +243,82 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- SECCIÓN 3: ROLES Y PERMISOS -->
+            <div id="roles-tab" class="admin-section" style="display: none;">
+                <div class="card kpi-card p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 border-bottom pb-4 border-light-subtle">
+                        <div>
+                            <h5 class="fw-bold m-0 text-dark">Gestión de Rangos</h5>
+                            <p class="text-secondary small m-0 mt-1">Crea roles personalizados y asigna permisos jerárquicos.</p>
+                        </div>
+                        <button class="btn shadow-sm text-white px-4 py-2 fw-semibold" style="background-color: #3b82f6;" onclick="window.abrirModalRol()">
+                            <i class="bi bi-shield-plus me-2"></i> Crear Rango
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" style="min-width: 600px;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-secondary font-inter" style="font-size: 0.8rem;">NOMBRE DEL RANGO</th>
+                                    <th class="text-secondary font-inter" style="font-size: 0.8rem;">PERMISOS ACTIVOS</th>
+                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roles-table-body">
+                                <!-- Inyectado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
         </div>
     </div>
+
+    <!-- MODAL PARA CREAR/EDITAR ROL -->
+    <div class="modal fade" id="modalRol" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-bottom-0 pb-0 mt-2 mx-2">
+                    <h5 class="fw-bold text-dark" id="modalRolTitle">Nuevo Rango</h5>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4">
+                    <input type="hidden" id="rol-id">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-secondary">Nombre del Rango (Ej. Moderador, Editor)</label>
+                        <input type="text" id="rol-nombre" class="form-control font-inter border-secondary shadow-none bg-light" placeholder="Escribe el nombre...">
+                    </div>
+                    <div class="mb-3 fw-bold small text-dark">Permisos Específicos:</div>
+                    
+                    <div class="form-check form-switch mb-3 custom-switch">
+                        <input class="form-check-input fs-5 cursor-pointer border-secondary" type="checkbox" id="perm-panel">
+                        <label class="form-check-label font-inter text-dark ms-2 mt-1 cursor-pointer" for="perm-panel"><strong>Ingresar al Panel Admin</strong> (Obligatorio para los demás)</label>
+                    </div>
+                    <div class="form-check form-switch mb-3 custom-switch">
+                        <input class="form-check-input fs-5 cursor-pointer border-secondary" type="checkbox" id="perm-stats">
+                        <label class="form-check-label font-inter text-dark ms-2 mt-1 cursor-pointer" for="perm-stats">Ver Estadísticas y Overview</label>
+                    </div>
+                    <div class="form-check form-switch mb-3 custom-switch">
+                        <input class="form-check-input fs-5 cursor-pointer border-secondary" type="checkbox" id="perm-users">
+                        <label class="form-check-label font-inter text-dark ms-2 mt-1 cursor-pointer" for="perm-users">Gestionar Usuarios (Dar/Quitar rangos)</label>
+                    </div>
+                    <div class="form-check form-switch mb-3 custom-switch">
+                        <input class="form-check-input fs-5 cursor-pointer border-secondary" type="checkbox" id="perm-roles">
+                        <label class="form-check-label font-inter text-dark ms-2 mt-1 cursor-pointer" for="perm-roles">Crear y Editar otros Rangos</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 pb-3 mx-2 d-flex justify-content-between">
+                    <button type="button" class="btn btn-light rounded-pill fw-semibold px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn text-white rounded-pill fw-semibold px-4" style="background-color: #009668;" onclick="window.guardarRol()" id="btn-save-rol">Guardar Rango</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE BOOTSTRAP (Requerido para el Modal) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Scripts de interactividad móvil nativa -->
     <script>
