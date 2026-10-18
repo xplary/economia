@@ -13,17 +13,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* SCROLLBAR SUTIL Y PEGADO AL LADO DERECHO PARA MODALES */
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar { width: 8px; background-color: transparent; }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track { background-color: transparent; }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb { background-color: #c1c1c1; border-radius: 10px; border: 2px solid rgba(255,255,255,0.1); }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb:hover { background-color: #a0a0a0; }
         
-        /* ESTILOS GOOGLE FORMS PARA BUILDER */
         .gform-block-active { border-left: 6px solid #4285f4 !important; transition: all 0.2s ease; }
         #modalFormulario .modal-content { border-radius: 12px; }
         
-        /* ESTILOS PARA NAVBAR Y BOTON INGRESAR */
         .bg-gradient-navbar { background: linear-gradient(90deg, #009668 0%, #004b79 100%); }
         .nav-underline .nav-link { color: rgba(255, 255, 255, 0.7) !important; border-bottom-color: transparent !important; padding-bottom: 0.5rem; }
         .nav-underline .nav-link:hover { color: rgba(255, 255, 255, 0.9) !important; }
@@ -32,14 +29,13 @@
         .btn-ingresar-navbar { background: rgba(255, 255, 255, 0.15); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(5px); transition: all 0.3s ease; }
         .btn-ingresar-navbar:hover { background: rgba(255, 255, 255, 0.25); color: #ffffff; }
 
-        /* ANIMACIÓN DE INTERACCIÓN PARA EL BOTÓN DE REPUTACIÓN */
         .reputacion-hover { cursor: pointer; transition: all 0.2s ease !important; }
         .reputacion-hover:hover { background-color: rgba(255, 255, 255, 0.4) !important; transform: scale(1.05); }
     </style>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100 overflow-x-hidden">
 
-    <!-- NAVBAR ESCRITORIO CON DEGRADADO -->
+    <!-- NAVBAR ESCRITORIO -->
     <nav class="navbar navbar-expand-lg bg-gradient-navbar shadow-sm py-3 mb-4 sticky-top" style="z-index: 1060;">
         <div class="container d-flex justify-content-between align-items-center">
             <a class="navbar-brand m-0 d-flex align-items-center" href="/">
@@ -55,12 +51,10 @@
                 <li class="nav-item"><button class="nav-link text-white px-3 font-inter" data-bs-toggle="pill" data-bs-target="#ensayos">Debates y Encuestas</button></li>
             </ul>
             <div class="d-flex align-items-center">
-                <!-- CAFECITO DE REPUTACIÓN AHORA ES UN BOTÓN INTERACTIVO -->
                 <div id="reputacion-container" class="d-none me-3 align-items-center px-3 py-1 rounded-pill border border-light shadow-sm bg-white bg-opacity-25 reputacion-hover" data-bs-toggle="modal" data-bs-target="#modalReputacion" style="opacity: 0;" title="Ver Información de Reputación">
                     <i class="bi bi-cup-hot-fill me-2" style="color: #ffcc00; font-size: 1.2rem;"></i>
                     <span class="fw-bold font-inter text-white" style="font-size: 0.95rem;" id="user-reputacion">0</span>
                 </div>
-                
                 <button id="btn-login" class="btn btn-ingresar-navbar rounded-pill px-4 font-inter shadow-sm">Ingresar <i class="bi bi-arrow-right ms-1"></i></button>
             </div>
         </div>
@@ -93,7 +87,6 @@
                                 <div class="col-md-5"><label class="small fw-bold text-muted mb-1">Etiquetas (comas):</label><input type="text" id="not-tags" class="form-control bg-light border-0" placeholder="Ej: UNP, Política"></div>
                                 <div class="col-md-2"><label class="small fw-bold text-muted mb-1">Color Tag:</label><input type="color" id="not-color" class="form-control form-control-color border-0 p-1 bg-light w-100" value="#004b79"></div>
                                 
-                                <!-- CONTENEDOR CROPPER -->
                                 <div class="col-md-12 mt-3" id="cropper-container" style="display:none;">
                                     <label class="small fw-bold text-dark mb-2"><i class="bi bi-crop me-1 text-primary"></i> Ajusta tu imagen para la portada (arrastra para encuadrar al formato 16:9):</label>
                                     <div class="border rounded-3 overflow-hidden shadow-sm" style="max-height: 500px; width: 100%; background: #f8f9fa;">
@@ -133,7 +126,6 @@
                     </div>
                     <div class="col-lg-4 ps-lg-4 mt-4 mt-lg-0">
                         <div class="p-4 bg-white shadow-sm position-relative rounded-4" style="border: 1px solid #e2e8f0;">
-                            <button class="btn btn-sm btn-warning position-absolute top-0 end-0 m-2 admin-only-inline shadow-sm" onclick="editarSidebar()"><i class="bi bi-pencil-fill"></i></button>
                             <h4 id="sb-titulo" class="fw-bold mb-3 font-serif" style="color: #1a202c; font-size: 1.4rem; line-height: 1.4;">Te damos la bienvenida a nuestro nuevo INTEGRATE</h4>
                             <p id="sb-desc" class="mb-3 fw-bold font-inter" style="font-size: 0.95rem; color: #2d3748; line-height: 1.6;">Conferencia Internacional: Empleabilidad, IA y competencias...</p>
                             <a href="#" class="text-dark text-decoration-none fw-bold d-inline-block font-inter" style="font-size: 0.95rem; color: #009668 !important;">Ver mas... <i class="bi bi-arrow-right-circle ms-1 text-muted"></i></a>
@@ -175,9 +167,6 @@
                 <div class="auth-only d-none mb-4 text-center">
                     <button class="btn-crear-sutil" type="button" id="btn-iniciar-crear-form">
                         <i class="bi bi-ui-checks-grid"></i> Crear Debate o Encuesta
-                    </button>
-                    <button class="btn btn-sm btn-light border admin-only-inline ms-2 rounded-pill shadow-sm d-inline-flex align-items-center" onclick="editarReqReputacion()" title="Configurar Reputación Requerida" style="padding: 0.4rem 0.6rem;">
-                        <i class="bi bi-gear-fill text-muted"></i>
                     </button>
                     
                     <div class="collapse mt-4 text-start" id="colFormulario">
@@ -221,9 +210,8 @@
         </div>
     </div>
     
-    <!-- FOOTER MEJORADO -->
+    <!-- FOOTER MEJORADO (SIN LÁPIZ DE EDICIÓN) -->
     <footer class="mt-auto position-relative z-1" style="background-color: #004b79; color: #ffffff;">
-        <button class="btn btn-warning position-absolute top-0 end-0 m-3 admin-only-inline shadow-sm z-3" style="border-radius: 4px; padding: 0.3rem 0.6rem;" onclick="abrirModalFooter()"><i class="bi bi-pencil-fill"></i></button>
         <div class="container pt-5 pb-5">
             <div class="row g-4 font-inter">
                 <!-- Col 1 -->
@@ -357,79 +345,6 @@
                         </div>
                         
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL CONFIGURACIÓN FOOTER (ADMIN PANEL EN PANTALLA) -->
-    <div class="modal fade" id="modalEditarFooter" tabindex="-1" aria-hidden="true" style="z-index: 1090;">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content border-0 rounded-4 shadow-lg">
-                <div class="modal-header border-bottom py-3 px-4">
-                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Editar Pie de Página</h5>
-                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4 bg-light">
-                    <!-- Textos principales -->
-                    <h6 class="fw-bold text-primary mb-3 font-inter">Textos Principales</h6>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Texto Ubicación (Columna 1)</label>
-                        <textarea id="edit-f-ubicacion" class="form-control font-inter" rows="3" placeholder="Ej: Campus Principal..."></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Texto Contacto (Columna 2)</label>
-                        <textarea id="edit-f-contacto" class="form-control font-inter" rows="3"></textarea>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted">Texto Sobre la UNP (Columna 3)</label>
-                        <textarea id="edit-f-sobre" class="form-control font-inter" rows="3"></textarea>
-                    </div>
-
-                    <!-- Enlaces -->
-                    <h6 class="fw-bold text-primary mb-3 border-top pt-4 font-inter">Configuración de Enlaces y Botones</h6>
-                    
-                    <label class="form-label small fw-bold text-secondary mb-1">Columna 1: Links (Ruta y Mapa)</label>
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-6"><input type="text" id="edit-f-link1-text" class="form-control form-control-sm font-inter" placeholder="Texto Link 1 (Ej: Cómo llegar)"></div>
-                        <div class="col-md-6"><input type="text" id="edit-f-link1-url" class="form-control form-control-sm font-inter" placeholder="Enlace / URL"></div>
-                    </div>
-                    <div class="row g-2 mb-4">
-                        <div class="col-md-6"><input type="text" id="edit-f-link2-text" class="form-control form-control-sm font-inter" placeholder="Texto Link 2"></div>
-                        <div class="col-md-6"><input type="text" id="edit-f-link2-url" class="form-control form-control-sm font-inter" placeholder="Enlace / URL"></div>
-                    </div>
-
-                    <label class="form-label small fw-bold text-secondary mb-1">Columna 2: Botones Centrales</label>
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-6"><input type="text" id="edit-f-btn1-text" class="form-control form-control-sm font-inter" placeholder="Texto Botón Transparente (Ej: Enviar Mensaje)"></div>
-                        <div class="col-md-6"><input type="text" id="edit-f-btn1-url" class="form-control form-control-sm font-inter" placeholder="Enlace / URL"></div>
-                    </div>
-                    <div class="row g-2 mb-4">
-                        <div class="col-md-6"><input type="text" id="edit-f-btn2-text" class="form-control form-control-sm font-inter" placeholder="Texto Botón Blanco (Ej: Libro de Reclamaciones)"></div>
-                        <div class="col-md-6"><input type="text" id="edit-f-btn2-url" class="form-control form-control-sm font-inter" placeholder="Enlace / URL"></div>
-                    </div>
-
-                    <label class="form-label small fw-bold text-secondary mb-1">Columna 3: Links Institucionales</label>
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-6"><input type="text" id="edit-f-link3-text" class="form-control form-control-sm font-inter" placeholder="Texto Link 1"></div>
-                        <div class="col-md-6"><input type="text" id="edit-f-link3-url" class="form-control form-control-sm font-inter" placeholder="Enlace / URL"></div>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-6"><input type="text" id="edit-f-link4-text" class="form-control form-control-sm font-inter" placeholder="Texto Link 2"></div>
-                        <div class="col-md-6"><input type="text" id="edit-f-link4-url" class="form-control form-control-sm font-inter" placeholder="Enlace / URL"></div>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-6"><input type="text" id="edit-f-link5-text" class="form-control form-control-sm font-inter" placeholder="Texto Link 3"></div>
-                        <div class="col-md-6"><input type="text" id="edit-f-link5-url" class="form-control form-control-sm font-inter" placeholder="Enlace / URL"></div>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-6"><input type="text" id="edit-f-link6-text" class="form-control form-control-sm font-inter" placeholder="Texto Link 4"></div>
-                        <div class="col-md-6"><input type="text" id="edit-f-link6-url" class="form-control form-control-sm font-inter" placeholder="Enlace / URL"></div>
-                    </div>
-                </div>
-                <div class="modal-footer border-top pb-3 pt-3 px-4 d-flex justify-content-between">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold font-inter" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn text-white rounded-pill px-5 fw-bold font-inter" style="background-color: #009668;" onclick="window.guardarFooter()">Guardar Cambios</button>
                 </div>
             </div>
         </div>
