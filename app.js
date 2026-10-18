@@ -5,7 +5,6 @@ import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, quer
 const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1" });
 const auth = getAuth(app); const db = getFirestore(app);
 
-// REGISTRO DE VISITAS GLOBALES A LA PÁGINA (Se ejecuta 1 vez por recarga)
 const statsRef = doc(db, "config", "estadisticas");
 updateDoc(statsRef, { visitasGlobales: increment(1) }).catch(async (e) => {
     if (e.code === 'not-found') await setDoc(statsRef, { visitasGlobales: 1 });
@@ -140,12 +139,10 @@ window.aprobarComentario = async (cid) => { const ref = doc(db, window.modalActu
 const renderComentarios = (comentarios, containerId) => { const box = document.getElementById(containerId); if(!box) return; const isOwner = document.body.classList.contains('is-owner'); let comsToShow = comentarios || []; if(!isOwner) comsToShow = comsToShow.filter(c => c.aprobado !== false); if(comsToShow.length===0) return box.innerHTML = '<div class="text-center mt-4 text-muted"><i class="bi bi-chat-dots fs-3"></i><p class="mt-2 small">Sé el primero en aportar.</p></div>'; box.innerHTML = comsToShow.map(c => { const starsHTML = `<span class="star-gradient" style="font-size:0.9rem;">${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)}</span>`; const pendingBadge = c.aprobado === false ? `<span class="badge bg-warning text-dark ms-2 fw-semibold" style="font-size:0.65rem;">Pendiente</span>` : ''; const approveBtn = (c.aprobado === false && isOwner) ? `<button class="btn btn-sm btn-success py-0 px-2 ms-2 fw-bold" style="font-size:0.7rem;" onclick="aprobarComentario(${c.id})"><i class="bi bi-check-lg"></i> Aprobar</button>` : ''; return `<div class="mb-4 pb-3 border-bottom"><div class="d-flex justify-content-between align-items-center mb-1"><strong class="font-inter text-dark small">${c.autor} ${pendingBadge}</strong><div>${starsHTML}${approveBtn}<i class="bi bi-trash text-danger ms-2 cursor-pointer admin-only-inline" onclick="borrarComentario(${c.id})"></i></div></div><p class="text-secondary font-inter mb-1" style="font-size: 0.95rem;">${c.texto}</p><div class="text-muted small font-inter text-end" style="font-size: 0.75rem;">${c.date}</div></div>`; }).join(''); };
 const formatEmbedUrl = (url) => { if(!url) return ''; const match = url.match(/\/(?:d|file\/d)\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/); if (match && match[1]) return `https://drive.google.com/file/d/${match[1]}/preview`; return url; };
 
-// EFECTO SKELETON INTELIGENTE (SIN PARPADEO)
 window.abrirModal = (id, col, isUpdate = false) => {
     const d = window.postsData[id]; if(!d) return; window.modalActual = { id, col };
     
     if (!isUpdate) {
-        // SUMAR VISTA REAL 1 SOLA VEZ AL ABRIR
         try { updateDoc(doc(db, col, id), { vistas: increment(1) }).catch(()=>{}); } catch(e) {}
         
         if (col === 'formularios') {
@@ -223,17 +220,7 @@ document.getElementById('not-imagen').addEventListener('change', function(e) {
             document.getElementById('cropper-container').style.display = 'block';
             if(window.noticiaCropper) { window.noticiaCropper.destroy(); }
             window.noticiaCropper = new Cropper(imgEl, {
-                aspectRatio: 16 / 9,
-                viewMode: 2,
-                dragMode: 'move',
-                autoCropArea: 1,
-                restore: false,
-                guides: true,
-                center: true,
-                highlight: false,
-                cropBoxMovable: true,
-                cropBoxResizable: true,
-                toggleDragModeOnDblclick: false,
+                aspectRatio: 16 / 9, viewMode: 2, dragMode: 'move', autoCropArea: 1, restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false,
             });
         };
         reader.readAsDataURL(file);
@@ -245,10 +232,8 @@ window.cancelarEdicion = () => {
     if(window.noticiaCropper) { window.noticiaCropper.destroy(); window.noticiaCropper = null; } const cropCont = document.getElementById('cropper-container'); if(cropCont) { cropCont.style.display = 'none'; document.getElementById('cropper-image').src = ''; } bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide(); 
 };
 
-onSnapshot(doc(db, "config", "sidebar"), (s) => { if(s.exists()){ const d = s.data(); if(d.t) document.getElementById('sb-titulo').innerText = d.t; if(d.desc) document.getElementById('sb-desc').innerText = d.desc; } }); window.editarSidebar = async () => { const t = prompt("Título:", document.getElementById('sb-titulo').innerText) || document.getElementById('sb-titulo').innerText; const desc = prompt("Descripción:", document.getElementById('sb-desc').innerText) || document.getElementById('sb-desc').innerText; await setDoc(doc(db, "config", "sidebar"), {t, desc}, {merge:true}); };
-
 // ==========================================
-// NUEVO SISTEMA DE PANEL DE CONTROL FOOTER
+// FOOTER EN VIVO (Escucha la Base de Datos)
 // ==========================================
 onSnapshot(doc(db, "config", "footer"), (s) => { 
     if(s.exists()){ 
@@ -284,61 +269,6 @@ onSnapshot(doc(db, "config", "footer"), (s) => {
     } 
 });
 
-window.abrirModalFooter = async () => {
-    const s = await getDoc(doc(db, "config", "footer"));
-    const d = s.exists() ? s.data() : {};
-    
-    document.getElementById('edit-f-ubicacion').value = d.ubicacion || document.getElementById('f-ubicacion').innerText.replace(/<br>/g, "\n");
-    document.getElementById('edit-f-contacto').value = d.contacto || document.getElementById('f-contacto').innerText.replace(/<br>/g, "\n");
-    document.getElementById('edit-f-sobre').value = d.sobre || document.getElementById('f-sobre').innerText.replace(/<br>/g, "\n");
-
-    const setVal = (idStr, valObj, defText, defUrl) => {
-        document.getElementById(`edit-${idStr}-text`).value = (valObj && valObj.text) ? valObj.text : defText;
-        document.getElementById(`edit-${idStr}-url`).value = (valObj && valObj.url) ? valObj.url : defUrl;
-    };
-
-    setVal('f-link1', d.link1, 'Cómo llegar', '#');
-    setVal('f-link2', d.link2, 'Ver mapa del campus', '#');
-    setVal('f-link3', d.link3, 'Mapa del sitio', '#');
-    setVal('f-link4', d.link4, 'Términos y condiciones de uso', '#');
-    setVal('f-link5', d.link5, 'Política de privacidad', '#');
-    setVal('f-link6', d.link6, 'Procedimiento de devoluciones', '#');
-    setVal('f-btn1', d.btn1, 'Enviar mensaje', '#');
-    setVal('f-btn2', d.btn2, 'Libro de Reclamaciones', '#');
-
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditarFooter')).show();
-};
-
-window.guardarFooter = async () => {
-    const getVal = (idStr) => {
-        return {
-            text: document.getElementById(`edit-${idStr}-text`).value,
-            url: document.getElementById(`edit-${idStr}-url`).value
-        };
-    };
-
-    const newData = {
-        ubicacion: document.getElementById('edit-f-ubicacion').value,
-        contacto: document.getElementById('edit-f-contacto').value,
-        sobre: document.getElementById('edit-f-sobre').value,
-        link1: getVal('f-link1'),
-        link2: getVal('f-link2'),
-        link3: getVal('f-link3'),
-        link4: getVal('f-link4'),
-        link5: getVal('f-link5'),
-        link6: getVal('f-link6'),
-        btn1: getVal('f-btn1'),
-        btn2: getVal('f-btn2')
-    };
-
-    try {
-        await setDoc(doc(db, "config", "footer"), newData, {merge:true});
-        bootstrap.Modal.getInstance(document.getElementById('modalEditarFooter')).hide();
-    } catch(e) {
-        alert("Error al guardar: " + e.message);
-    }
-};
-
 document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => { 
     btn.addEventListener('shown.bs.tab', (e) => { 
         const target = e.target.getAttribute('data-bs-target'); currentTab = target.replace('#', '');
@@ -346,7 +276,6 @@ document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => {
     }); 
 });
 
-/* NOTICIAS & ARTÍCULOS */
 let noticiasData = []; let qBuscar = ''; let ordDesc = true; document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); }); document.getElementById('btn-ordenar').addEventListener('click', () => { ordDesc = !ordDesc; document.getElementById('btn-ordenar').innerText = ordDesc ? 'Ordenar: Recientes ↓' : 'Ordenar: Antiguos ↑'; renderNoticias(); }); 
 
 document.getElementById('btn-pub-noticia').onclick = async () => { 
