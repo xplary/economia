@@ -3,34 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cafe UNP | Admin</title>
+    <title>Dashboard Pro | CAFE UNP</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
         
-        /* SIDEBAR DESKTOP */
-        .sidebar { width: 260px; background: #003657; color: #fff; position: fixed; height: 100vh; left: 0; top: 0; padding-top: 1.5rem; z-index: 1050; transition: transform 0.3s ease; }
-        .sidebar .nav-link { color: rgba(255, 255, 255, 0.75); font-weight: 500; padding: 0.8rem 1.5rem; transition: all 0.2s; cursor: pointer; }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255, 255, 255, 0.1); border-left: 4px solid #009668; }
+        /* SIDEBAR PREMIUM */
+        .sidebar { width: 260px; background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #fff; position: fixed; height: 100vh; left: 0; top: 0; padding-top: 1.5rem; z-index: 1050; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 4px 0 15px rgba(0,0,0,0.05); }
+        .sidebar .nav-link { color: #94a3b8; font-weight: 500; padding: 0.85rem 1.5rem; transition: all 0.2s ease; cursor: pointer; border-radius: 0 25px 25px 0; margin-right: 1rem; margin-bottom: 0.2rem; }
+        .sidebar .nav-link:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+        .sidebar .nav-link.active { color: #fff; background: linear-gradient(90deg, rgba(0,150,104,0.2) 0%, rgba(0,150,104,0) 100%); border-left: 4px solid #009668; }
         
-        .main-content { margin-left: 260px; padding: 2rem; min-height: 100vh; transition: margin 0.3s ease; }
-        .kpi-card { background: #fff; border-radius: 12px; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-        .kpi-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-        #loading-screen, #access-denied { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f1f5f9; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .main-content { margin-left: 260px; padding: 2rem 2.5rem; min-height: 100vh; transition: margin 0.3s ease; }
         
-        /* OVERLAY MÓVIL (Fondo oscuro) */
-        #sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1040; backdrop-filter: blur(2px); }
+        /* TARJETAS KPI MODERNAS */
+        .kpi-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03); transition: transform 0.2s ease; }
+        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06); }
+        .kpi-icon { width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        /* Gradientes para iconos */
+        .bg-grad-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .bg-grad-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .bg-grad-purple { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+        .bg-grad-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+        /* TABLAS Y OTROS */
+        .table > :not(caption) > * > * { padding: 1rem 0.75rem; color: #334155; border-bottom-color: #f1f5f9; }
+        .table-light { background-color: #f8fafc; }
+        .badge-soft { padding: 0.4rem 0.75rem; border-radius: 8px; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.3px; }
+        
+        #loading-screen, #access-denied { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        #sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); z-index: 1040; backdrop-filter: blur(3px); }
         
         /* ADAPTACIÓN CELULAR */
-        @media (max-width: 768px) { 
-            .sidebar { transform: translateX(-100%); } /* Oculto por defecto */
-            .sidebar.show { transform: translateX(0); } /* Visible cuando tocamos el botón */
-            .main-content { margin-left: 0; padding: 1.25rem 1rem; } 
+        @media (max-width: 992px) { 
+            .sidebar { transform: translateX(-100%); } 
+            .sidebar.show { transform: translateX(0); } 
+            .main-content { margin-left: 0; padding: 1.5rem 1rem; } 
             #sidebar-overlay.show { display: block; }
         }
     </style>
@@ -39,142 +53,187 @@
 
     <!-- Pantallas de Estado -->
     <div id="loading-screen">
-        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
-        <h4 class="fw-bold">Verificando Permisos...</h4>
+        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem; border-width: 0.25rem;"></div>
+        <h4 class="fw-bold text-slate-800">Cargando Workspace...</h4>
     </div>
 
     <div id="access-denied" style="display: none;">
-        <i class="bi bi-shield-lock-fill text-danger mb-3" style="font-size: 5rem;"></i>
-        <h2 class="fw-bold">Acceso Denegado</h2>
-        <p class="text-muted mb-4">No tienes permisos de Administrador.</p>
-        <a href="../index.html" class="btn btn-primary rounded-pill px-4">Volver al Sitio</a>
+        <i class="bi bi-shield-lock-fill text-danger mb-3" style="font-size: 5.5rem;"></i>
+        <h2 class="fw-bold text-dark mb-2">Acceso Restringido</h2>
+        <p class="text-secondary mb-4">Tu cuenta no tiene privilegios de administrador de sistema.</p>
+        <a href="../index.html" class="btn btn-dark rounded-pill px-4 py-2 fw-semibold shadow-sm">Regresar al Portal</a>
     </div>
 
     <!-- Contenido Principal -->
     <div id="dashboard-wrapper" style="display: none;">
         
-        <!-- Overlay oscuro para celular -->
         <div id="sidebar-overlay"></div>
 
-        <div class="sidebar shadow" id="sidebar">
-            <div class="px-4 mb-5 d-flex align-items-center justify-content-between">
+        <div class="sidebar" id="sidebar">
+            <div class="px-4 mb-5 mt-2 d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
-                    <i class="bi bi-gear-fill me-2 fs-3 text-white"></i>
-                    <h4 class="m-0 fw-bold">Admin Panel</h4>
+                    <div class="bg-white rounded p-1 me-3 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                        <i class="bi bi-bar-chart-fill fs-5" style="color: #003657;"></i>
+                    </div>
+                    <h5 class="m-0 fw-bold tracking-wide">CAFE<span style="color: #009668;">UNP</span></h5>
                 </div>
-                <!-- Botón de cerrar (solo celular) -->
-                <i class="bi bi-x-lg text-white d-md-none fs-4 cursor-pointer" id="btn-close-sidebar"></i>
+                <i class="bi bi-x-lg text-white d-lg-none fs-4 cursor-pointer opacity-75 hover-opacity-100" id="btn-close-sidebar"></i>
             </div>
             <ul class="nav flex-column mb-auto" id="sidebar-nav">
-                <li class="nav-item"><a class="nav-link active" data-target="dashboard-tab"><i class="bi bi-grid-1x2-fill me-2"></i> Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" data-target="usuarios-tab"><i class="bi bi-people-fill me-2"></i> Gestión de Usuarios</a></li>
-                <li class="nav-item mt-4"><a href="../" class="nav-link text-warning"><i class="bi bi-box-arrow-up-right me-2"></i> Volver a la Web</a></li>
+                <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-2" style="letter-spacing: 1px; font-size: 0.7rem;">Principal</li>
+                <li class="nav-item"><a class="nav-link active" data-target="dashboard-tab"><i class="bi bi-grid-fill me-3 fs-5 align-middle"></i> Overview</a></li>
+                <li class="nav-item mt-2"><a class="nav-link" data-target="usuarios-tab"><i class="bi bi-people-fill me-3 fs-5 align-middle"></i> Directorio</a></li>
+                
+                <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-5" style="letter-spacing: 1px; font-size: 0.7rem;">Sistema</li>
+                <li class="nav-item"><a href="../index.html" class="nav-link text-warning"><i class="bi bi-box-arrow-up-right me-3 fs-5 align-middle"></i> Salir al Portal</a></li>
             </ul>
         </div>
 
         <div class="main-content">
             
-            <!-- HEADER (Añadido botón hamburguesa) -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-5 pb-2 border-bottom border-light-subtle">
                 <div class="d-flex align-items-center gap-3">
-                    <button class="btn btn-white d-md-none border shadow-sm bg-white" id="sidebar-toggle" style="border-radius: 8px;">
+                    <button class="btn btn-white d-lg-none border shadow-sm bg-white" id="sidebar-toggle" style="border-radius: 10px;">
                         <i class="bi bi-list fs-4 text-dark"></i>
                     </button>
-                    <h2 class="fw-bold m-0" id="page-title" style="font-size: 1.5rem;">Dashboard</h2>
+                    <div>
+                        <h2 class="fw-bold m-0 text-dark" id="page-title" style="letter-spacing: -0.5px;">Overview</h2>
+                        <p class="text-secondary small m-0 mt-1">Métricas y analíticas en tiempo real</p>
+                    </div>
                 </div>
-                <div class="d-flex align-items-center bg-white px-3 py-2 rounded-pill shadow-sm">
-                    <img src="" id="admin-avatar" class="rounded-circle me-md-2" style="width: 32px; height: 32px; object-fit: cover;">
-                    <span class="fw-semibold text-dark d-none d-md-inline" id="admin-name" style="font-size: 0.9rem;">Admin</span>
+                <div class="d-flex align-items-center bg-white px-2 py-1 rounded-pill shadow-sm border" style="border-color: #e2e8f0;">
+                    <img src="" id="admin-avatar" class="rounded-circle ms-1 my-1" style="width: 36px; height: 36px; object-fit: cover;">
+                    <div class="d-none d-md-flex flex-column ms-2 me-3 lh-1">
+                        <span class="fw-bold text-dark" id="admin-name" style="font-size: 0.85rem;">Admin</span>
+                        <span class="text-success fw-semibold" style="font-size: 0.7rem;">● Online</span>
+                    </div>
                 </div>
             </div>
 
             <!-- SECCIÓN 1: DASHBOARD -->
             <div id="dashboard-tab" class="admin-section">
+                <!-- ROW 1: KPIs -->
                 <div class="row g-4 mb-4">
-                    <div class="col-md-4">
+                    <div class="col-sm-6 col-xl-3">
                         <div class="card kpi-card p-4">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div><p class="text-muted fw-semibold mb-1 small">VISITAS GLOBALES PÁGINA</p><h3 class="fw-bold m-0" id="kpi-vistas">0</h3></div>
-                                <div class="kpi-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-globe"></i></div>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div><p class="text-secondary fw-semibold mb-1" style="font-size: 0.8rem; letter-spacing: 0.5px;">VISITAS AL PORTAL</p><h2 class="fw-bold m-0 text-dark" id="kpi-vistas">0</h2></div>
+                                <div class="kpi-icon bg-grad-blue"><i class="bi bi-globe"></i></div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-sm-6 col-xl-3">
                         <div class="card kpi-card p-4">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div><p class="text-muted fw-semibold mb-1 small">PUBLICACIONES TOTALES</p><h3 class="fw-bold m-0" id="kpi-posts">0</h3></div>
-                                <div class="kpi-icon bg-success bg-opacity-10 text-success"><i class="bi bi-file-earmark-text-fill"></i></div>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div><p class="text-secondary fw-semibold mb-1" style="font-size: 0.8rem; letter-spacing: 0.5px;">USUARIOS TOTALES</p><h2 class="fw-bold m-0 text-dark" id="kpi-usuarios">0</h2></div>
+                                <div class="kpi-icon bg-grad-purple"><i class="bi bi-person-hearts"></i></div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-sm-6 col-xl-3">
                         <div class="card kpi-card p-4">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div><p class="text-muted fw-semibold mb-1 small">VISTAS REALES EN POSTS</p><h3 class="fw-bold m-0" id="kpi-avg">0</h3></div>
-                                <div class="kpi-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-eye-fill"></i></div>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div><p class="text-secondary fw-semibold mb-1" style="font-size: 0.8rem; letter-spacing: 0.5px;">PUBLICACIONES</p><h2 class="fw-bold m-0 text-dark" id="kpi-posts">0</h2></div>
+                                <div class="kpi-icon bg-grad-green"><i class="bi bi-stack"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card kpi-card p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div><p class="text-secondary fw-semibold mb-1" style="font-size: 0.8rem; letter-spacing: 0.5px;">INTERACCIONES</p><h2 class="fw-bold m-0 text-dark" id="kpi-interacciones">0</h2></div>
+                                <div class="kpi-icon bg-grad-orange"><i class="bi bi-lightning-charge-fill"></i></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- ROW 2: GRÁFICOS AVANZADOS -->
                 <div class="row g-4 mb-4">
+                    <!-- Line Chart (Nuevo) -->
                     <div class="col-lg-8">
-                        <div class="card kpi-card p-3 p-md-4 h-100">
-                            <h5 class="fw-bold mb-4">Top 5 Publicaciones Más Vistas</h5>
-                            <div style="position: relative; height: 250px; width: 100%;">
-                                <canvas id="barChart"></canvas>
+                        <div class="card kpi-card p-4 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="fw-bold m-0 text-dark">Evolución de Publicaciones</h5>
+                                <span class="badge bg-light text-secondary border">Últimos meses</span>
+                            </div>
+                            <div style="position: relative; height: 280px; width: 100%;">
+                                <canvas id="lineChart"></canvas>
                             </div>
                         </div>
                     </div>
+                    <!-- Doughnut Chart (Mejorado) -->
                     <div class="col-lg-4">
-                        <div class="card kpi-card p-3 p-md-4 h-100">
-                            <h5 class="fw-bold mb-4">Distribución de Vistas</h5>
-                            <div class="d-flex justify-content-center align-items-center h-100 pb-3" style="position: relative; height: 200px; width: 100%;">
+                        <div class="card kpi-card p-4 h-100">
+                            <h5 class="fw-bold mb-4 text-dark">Distribución por Tipo</h5>
+                            <div class="d-flex justify-content-center align-items-center h-100 pb-2" style="position: relative; height: 250px; width: 100%;">
                                 <canvas id="doughnutChart"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- SECCIÓN: TABLA DE RENDIMIENTO -->
-                <div class="card kpi-card p-3 p-md-4 mt-2 mb-4">
-                    <h5 class="fw-bold mb-4">Rendimiento Detallado por Publicación</h5>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Título de la Publicación</th>
-                                    <th>Categoría</th>
-                                    <th class="text-center">Vistas Reales</th>
-                                </tr>
-                            </thead>
-                            <tbody id="posts-table-body">
-                                <!-- Inyectado por JS -->
-                            </tbody>
-                        </table>
+                <!-- ROW 3: GRÁFICO BARRAS Y TABLA DE RENDIMIENTO -->
+                <div class="row g-4 mb-4">
+                    <div class="col-xl-5">
+                        <div class="card kpi-card p-4 h-100">
+                            <h5 class="fw-bold mb-4 text-dark"><i class="bi bi-trophy-fill text-warning me-2"></i> Top 5 Más Vistos</h5>
+                            <div style="position: relative; height: 350px; width: 100%;">
+                                <canvas id="barChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-7">
+                        <div class="card kpi-card p-4 h-100">
+                            <h5 class="fw-bold mb-4 text-dark">Rendimiento Detallado (SEO & Engagement)</h5>
+                            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                                <table class="table table-hover align-middle m-0">
+                                    <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                                        <tr>
+                                            <th class="text-secondary font-inter" style="font-size: 0.8rem;">TÍTULO</th>
+                                            <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">TIPO</th>
+                                            <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">VISTAS</th>
+                                            <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ENGAGEMENT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="posts-table-body">
+                                        <!-- Inyectado por JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- SECCIÓN 2: GESTIÓN DE USUARIOS -->
             <div id="usuarios-tab" class="admin-section" style="display: none;">
-                <div class="card kpi-card p-3 p-md-4">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-                        <h5 class="fw-bold m-0">Lista de Usuarios Registrados</h5>
-                        <div class="input-group" style="max-width: 100%; width: 300px;">
-                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                            <input type="text" id="buscar-usuario" class="form-control border-start-0 shadow-none" placeholder="Buscar nombre o correo...">
+                <div class="card kpi-card p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 border-bottom pb-4 border-light-subtle">
+                        <div>
+                            <h5 class="fw-bold m-0 text-dark">Directorio de Usuarios</h5>
+                            <p class="text-secondary small m-0 mt-1">Administra permisos y visualiza reputación de la comunidad.</p>
+                        </div>
+                        <div class="d-flex gap-2 w-100" style="max-width: 400px;">
+                            <div class="input-group shadow-sm" style="flex: 1;">
+                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                <input type="text" id="buscar-usuario" class="form-control border-start-0 shadow-none font-inter" placeholder="Buscar usuario...">
+                            </div>
+                            <button class="btn shadow-sm text-white px-3 d-flex align-items-center fw-semibold" style="background-color: #009668;" onclick="window.exportarUsuariosCSV()" title="Descargar Excel/CSV">
+                                <i class="bi bi-cloud-download me-md-2"></i> <span class="d-none d-md-inline">Exportar</span>
+                            </button>
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle" style="min-width: 600px;">
+                        <table class="table table-hover align-middle" style="min-width: 650px;">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Usuario</th>
-                                    <th>Correo Electrónico</th>
-                                    <th>Reputación</th>
-                                    <th>Rol Actual</th>
-                                    <th class="text-center">Acción</th>
+                                    <th class="text-secondary font-inter" style="font-size: 0.8rem;">USUARIO</th>
+                                    <th class="text-secondary font-inter" style="font-size: 0.8rem;">CORREO</th>
+                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">REPUTACIÓN</th>
+                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ROL</th>
+                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ACCIÓN</th>
                                 </tr>
                             </thead>
                             <tbody id="usuarios-table-body">
@@ -195,28 +254,15 @@
         const toggleBtn = document.getElementById('sidebar-toggle');
         const closeBtn = document.getElementById('btn-close-sidebar');
 
-        // Función para cerrar el menú en celular
         const cerrarMenuMobile = () => {
-            if(window.innerWidth <= 768) {
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-            }
+            if(window.innerWidth <= 992) { sidebar.classList.remove('show'); overlay.classList.remove('show'); }
         };
 
-        // Abrir Menú
-        toggleBtn.addEventListener('click', () => {
-            sidebar.classList.add('show');
-            overlay.classList.add('show');
-        });
-
-        // Cerrar Menú (al tocar fondo oscuro o cruz)
+        toggleBtn.addEventListener('click', () => { sidebar.classList.add('show'); overlay.classList.add('show'); });
         overlay.addEventListener('click', cerrarMenuMobile);
         closeBtn.addEventListener('click', cerrarMenuMobile);
 
-        // Cerrar menú automáticamente cuando seleccionas "Dashboard" o "Usuarios" en el cel
-        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-            link.addEventListener('click', cerrarMenuMobile);
-        });
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => { link.addEventListener('click', cerrarMenuMobile); });
     </script>
 
     <!-- SCRIPT ADMIN FIREBASE -->
