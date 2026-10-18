@@ -84,3 +84,15 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
     box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.08);
     color: #004b79;
 }
+
+/* FOOTER MEJORADO */
+.footer-links-container { border-top: 1px solid rgba(255,255,255,0.2); }
+.footer-link-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; color: #ffffff !important; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.2); font-size: 0.95rem; font-weight: 600; transition: all 0.2s ease; }
+.footer-link-item:hover { color: #f8f9fa !important; padding-left: 6px; }
+.footer-link-item i.bi-chevron-right { font-size: 0.9rem; font-weight: bold; }
+
+.footer-btn-outline { border: 1px solid rgba(255,255,255,0.6); color: #ffffff; background: transparent; transition: 0.2s ease; padding: 0.9rem; border-radius: 4px; }
+.footer-btn-outline:hover { background: rgba(255,255,255,0.1); color: #ffffff; }
+
+.footer-btn-solid { background: #ffffff; color: #004b79 !important; border: 1px solid #ffffff; transition: 0.2s ease; padding: 0.9rem; border-radius: 4px; }
+.footer-btn-solid:hover { background: #f8f9fa; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
