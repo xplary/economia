@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1" });
 const auth = getAuth(app); 
@@ -10,9 +10,8 @@ let allUsers = [];
 let allRoles = [];
 let chartInstances = {}; 
 
-// Variables de Permisos de Sesión
 let misPermisos = { panel: false, stats: false, users: false, roles: false };
-let isSuperAdminLogueado = false; // El dueño supremo
+let isSuperAdminLogueado = false;
 let miRolId = null;
 
 // ==========================================
@@ -27,12 +26,10 @@ onAuthStateChanged(auth, async (user) => {
                 let tieneAcceso = false;
 
                 if (uData.owner === true) {
-                    // Es SuperAdmin, todo permitido
                     tieneAcceso = true;
                     isSuperAdminLogueado = true;
                     misPermisos = { panel: true, stats: true, users: true, roles: true };
                 } else if (uData.rolId) {
-                    // Es un Rango Personalizado, verificamos sus permisos
                     const roleDoc = await getDoc(doc(db, "roles", uData.rolId));
                     if (roleDoc.exists() && roleDoc.data().permisos.panel) {
                         tieneAcceso = true;
@@ -47,20 +44,25 @@ onAuthStateChanged(auth, async (user) => {
                     document.getElementById('admin-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
                     document.getElementById('admin-name').innerText = user.displayName || 'Equipo';
 
-                    // Ocultar tabs prohibidas según el rol
+                    // Ocultar tabs prohibidas
                     if(!misPermisos.stats) document.getElementById('nav-overview').style.display = 'none'; else document.getElementById('nav-overview').style.display = 'block';
                     if(!misPermisos.users) document.getElementById('nav-users').style.display = 'none'; else document.getElementById('nav-users').style.display = 'block';
                     if(!misPermisos.roles) document.getElementById('nav-roles').style.display = 'none'; else document.getElementById('nav-roles').style.display = 'block';
+                    
+                    // Mostrar pestaña Edicion Web a todos los que puedan entrar al panel
+                    document.getElementById('nav-edicion').style.display = 'block';
 
                     // Navegar a la primera tab que tenga permitida
                     if(misPermisos.stats) { document.getElementById('nav-overview').querySelector('.nav-link').click(); }
                     else if(misPermisos.users) { document.getElementById('nav-users').querySelector('.nav-link').click(); }
                     else if(misPermisos.roles) { document.getElementById('nav-roles').querySelector('.nav-link').click(); }
+                    else { document.getElementById('nav-edicion').querySelector('.nav-link').click(); }
 
                     // Cargar datos
                     await cargarRolesBD(); 
                     if (misPermisos.stats) cargarDatosDashboard();
                     if (misPermisos.users) cargarUsuarios();
+                    cargarDatosFooterAdmin(); // Cargar la nueva tab
                 } else {
                     document.getElementById('loading-screen').style.display = 'none';
                     document.getElementById('access-denied').style.display = 'flex';
@@ -172,7 +174,6 @@ function renderListaRoles() {
     const tbody = document.getElementById('roles-table-body');
     tbody.innerHTML = '';
     
-    // Fila fija para el SuperAdmin que no se puede borrar
     tbody.innerHTML += `
         <tr>
             <td class="fw-bold text-dark font-inter"><i class="bi bi-star-fill text-warning me-2"></i> Super Administrador (Dueño)</td>
@@ -206,7 +207,7 @@ function renderListaRoles() {
 window.abrirModalRol = () => {
     document.getElementById('rol-id').value = '';
     document.getElementById('rol-nombre').value = '';
-    document.getElementById('perm-panel').checked = true; // Por defecto
+    document.getElementById('perm-panel').checked = true;
     document.getElementById('perm-stats').checked = false;
     document.getElementById('perm-users').checked = false;
     document.getElementById('perm-roles').checked = false;
@@ -250,7 +251,7 @@ window.guardarRol = async () => {
             await addDoc(collection(db, "roles"), dataObj);
         }
         await cargarRolesBD(); 
-        if(misPermisos.users) await cargarUsuarios(); // Refrescar los selectores en el directorio
+        if(misPermisos.users) await cargarUsuarios(); 
         bootstrap.Modal.getInstance(document.getElementById('modalRol')).hide();
     } catch(e) {
         alert("Error al guardar: " + e.message);
@@ -270,7 +271,7 @@ window.eliminarRol = async (id) => {
 };
 
 // ==========================================
-// 5. GESTIÓN DE USUARIOS Y ASIGNACIÓN DE RANGOS
+// 5. GESTIÓN DE USUARIOS
 // ==========================================
 async function cargarUsuarios() {
     try {
@@ -306,12 +307,9 @@ function renderUsuarios(usersList) {
             }
         }
 
-        // CONTROL DE ASIGNACIÓN (Select Dropdown)
         let htmlAsignar = '';
         if (misPermisos.users) {
             let currVal = isSuperAdmin ? "SUPERADMIN" : (u.rolId || "NONE");
-            
-            // Regla estricta: Solo un SuperAdmin puede dar o quitar el rango de SuperAdmin.
             let selectDisabled = (!isSuperAdminLogueado && isSuperAdmin) ? 'disabled title="Solo otro Super Admin puede editar esto"' : '';
             
             htmlAsignar = `<select class="form-select form-select-sm font-inter shadow-sm bg-light" style="max-width: 170px; margin: 0 auto; cursor:pointer;" onchange="window.cambiarRangoUsuario('${u.id}', this.value)" ${selectDisabled}>
@@ -354,7 +352,6 @@ document.getElementById('buscar-usuario').addEventListener('input', (e) => {
     renderUsuarios(filtrados);
 });
 
-// Función de Cambio Dinámico de Roles
 window.cambiarRangoUsuario = async (uid, nuevoRangoVal) => {
     if(confirm("¿Estás seguro de modificar los permisos de este usuario?")) {
         try {
@@ -369,7 +366,6 @@ window.cambiarRangoUsuario = async (uid, nuevoRangoVal) => {
             
             await updateDoc(doc(db, "usuarios", uid), updates);
             
-            // Actualizar tabla en vivo
             const index = allUsers.findIndex(u => u.id === uid);
             if(index !== -1) {
                 allUsers[index].owner = updates.owner;
@@ -378,14 +374,13 @@ window.cambiarRangoUsuario = async (uid, nuevoRangoVal) => {
             renderUsuarios(allUsers);
         } catch(e) {
             alert("Error al actualizar el rango: " + e.message);
-            renderUsuarios(allUsers); // Revertir select si falla
+            renderUsuarios(allUsers);
         }
     } else {
-        renderUsuarios(allUsers); // Revertir visualmente si cancela
+        renderUsuarios(allUsers); 
     }
 };
 
-// BOTÓN: EXPORTAR A CSV
 window.exportarUsuariosCSV = () => {
     if(allUsers.length === 0) return alert("No hay usuarios para exportar.");
     let csvContent = "data:text/csv;charset=utf-8,Nombre,Correo,Reputacion,Rol\n";
@@ -405,4 +400,72 @@ window.exportarUsuariosCSV = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+};
+
+// ==========================================
+// 6. GESTIÓN DEL PIE DE PÁGINA (NUEVO)
+// ==========================================
+async function cargarDatosFooterAdmin() {
+    try {
+        const s = await getDoc(doc(db, "config", "footer"));
+        const d = s.exists() ? s.data() : {};
+        
+        document.getElementById('admin-f-ubicacion').value = d.ubicacion || '';
+        document.getElementById('admin-f-contacto').value = d.contacto || '';
+        document.getElementById('admin-f-sobre').value = d.sobre || '';
+
+        const setVal = (idStr, valObj, defText, defUrl) => {
+            document.getElementById(`admin-${idStr}-text`).value = (valObj && valObj.text) ? valObj.text : defText;
+            document.getElementById(`admin-${idStr}-url`).value = (valObj && valObj.url) ? valObj.url : defUrl;
+        };
+
+        setVal('f-link1', d.link1, 'Cómo llegar', '#');
+        setVal('f-link2', d.link2, 'Ver mapa del campus', '#');
+        setVal('f-link3', d.link3, 'Mapa del sitio', '#');
+        setVal('f-link4', d.link4, 'Términos y condiciones de uso', '#');
+        setVal('f-link5', d.link5, 'Política de privacidad', '#');
+        setVal('f-link6', d.link6, 'Procedimiento de devoluciones', '#');
+        setVal('f-btn1', d.btn1, 'Enviar mensaje', '#');
+        setVal('f-btn2', d.btn2, 'Libro de Reclamaciones', '#');
+    } catch(e) {
+        console.error("Error cargando Footer: ", e);
+    }
+}
+
+window.guardarFooterAdmin = async () => {
+    const btn = document.getElementById('btn-save-footer');
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Guardando...';
+    btn.disabled = true;
+
+    const getVal = (idStr) => {
+        return {
+            text: document.getElementById(`admin-${idStr}-text`).value,
+            url: document.getElementById(`admin-${idStr}-url`).value
+        };
+    };
+
+    const newData = {
+        ubicacion: document.getElementById('admin-f-ubicacion').value,
+        contacto: document.getElementById('admin-f-contacto').value,
+        sobre: document.getElementById('admin-f-sobre').value,
+        link1: getVal('f-link1'),
+        link2: getVal('f-link2'),
+        link3: getVal('f-link3'),
+        link4: getVal('f-link4'),
+        link5: getVal('f-link5'),
+        link6: getVal('f-link6'),
+        btn1: getVal('f-btn1'),
+        btn2: getVal('f-btn2')
+    };
+
+    try {
+        await setDoc(doc(db, "config", "footer"), newData, { merge: true });
+        alert("¡Pie de página actualizado correctamente en la web pública!");
+    } catch(e) {
+        alert("Error al guardar: " + e.message);
+    } finally {
+        btn.innerHTML = oldHtml;
+        btn.disabled = false;
+    }
 };
