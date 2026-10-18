@@ -246,7 +246,98 @@ window.cancelarEdicion = () => {
 };
 
 onSnapshot(doc(db, "config", "sidebar"), (s) => { if(s.exists()){ const d = s.data(); if(d.t) document.getElementById('sb-titulo').innerText = d.t; if(d.desc) document.getElementById('sb-desc').innerText = d.desc; } }); window.editarSidebar = async () => { const t = prompt("Título:", document.getElementById('sb-titulo').innerText) || document.getElementById('sb-titulo').innerText; const desc = prompt("Descripción:", document.getElementById('sb-desc').innerText) || document.getElementById('sb-desc').innerText; await setDoc(doc(db, "config", "sidebar"), {t, desc}, {merge:true}); };
-onSnapshot(doc(db, "config", "footer"), (s) => { if(s.exists()){ const d = s.data(); if(d.ubicacion) document.getElementById('f-ubicacion').innerHTML = d.ubicacion.replace(/\n/g, "<br>"); if(d.contacto) document.getElementById('f-contacto').innerHTML = d.contacto.replace(/\n/g, "<br>"); if(d.sobre) document.getElementById('f-sobre').innerHTML = d.sobre.replace(/\n/g, "<br>"); } }); window.editarFooter = async () => { const u = prompt("Ubicación (Usa Enter para saltos de línea):", document.getElementById('f-ubicacion').innerText); const c = prompt("Contacto:", document.getElementById('f-contacto').innerText); const s = prompt("Sobre la Universidad:", document.getElementById('f-sobre').innerText); if(u && c && s) await setDoc(doc(db, "config", "footer"), {ubicacion: u, contacto: c, sobre: s}, {merge:true}); };
+
+// ==========================================
+// NUEVO SISTEMA DE PANEL DE CONTROL FOOTER
+// ==========================================
+onSnapshot(doc(db, "config", "footer"), (s) => { 
+    if(s.exists()){ 
+        const d = s.data(); 
+        if(d.ubicacion) document.getElementById('f-ubicacion').innerHTML = escapeHTML(d.ubicacion).replace(/\n/g, "<br>"); 
+        if(d.contacto) document.getElementById('f-contacto').innerHTML = escapeHTML(d.contacto).replace(/\n/g, "<br>"); 
+        if(d.sobre) document.getElementById('f-sobre').innerHTML = escapeHTML(d.sobre).replace(/\n/g, "<br>"); 
+
+        const updateLink = (idStr, valObj) => {
+            if(valObj) {
+                const elText = document.getElementById(idStr+'-text');
+                const elUrl = document.getElementById(idStr+'-url');
+                if(elText && valObj.text) elText.innerText = valObj.text;
+                if(elUrl && valObj.url) elUrl.href = valObj.url;
+            }
+        };
+        
+        updateLink('f-link1', d.link1);
+        updateLink('f-link2', d.link2);
+        updateLink('f-link3', d.link3);
+        updateLink('f-link4', d.link4);
+        updateLink('f-link5', d.link5);
+        updateLink('f-link6', d.link6);
+        updateLink('f-btn1', d.btn1);
+        updateLink('f-btn2', d.btn2);
+        
+        const fLink1Txt = (d.link1 && d.link1.text) ? d.link1.text.toLowerCase() : '';
+        if(fLink1Txt.includes('cómo llegar') || fLink1Txt.includes('como llegar')) {
+            document.getElementById('f-link1-icon').style.display = 'inline-block';
+        } else {
+            document.getElementById('f-link1-icon').style.display = 'none';
+        }
+    } 
+});
+
+window.abrirModalFooter = async () => {
+    const s = await getDoc(doc(db, "config", "footer"));
+    const d = s.exists() ? s.data() : {};
+    
+    document.getElementById('edit-f-ubicacion').value = d.ubicacion || document.getElementById('f-ubicacion').innerText.replace(/<br>/g, "\n");
+    document.getElementById('edit-f-contacto').value = d.contacto || document.getElementById('f-contacto').innerText.replace(/<br>/g, "\n");
+    document.getElementById('edit-f-sobre').value = d.sobre || document.getElementById('f-sobre').innerText.replace(/<br>/g, "\n");
+
+    const setVal = (idStr, valObj, defText, defUrl) => {
+        document.getElementById(`edit-${idStr}-text`).value = (valObj && valObj.text) ? valObj.text : defText;
+        document.getElementById(`edit-${idStr}-url`).value = (valObj && valObj.url) ? valObj.url : defUrl;
+    };
+
+    setVal('f-link1', d.link1, 'Cómo llegar', '#');
+    setVal('f-link2', d.link2, 'Ver mapa del campus', '#');
+    setVal('f-link3', d.link3, 'Mapa del sitio', '#');
+    setVal('f-link4', d.link4, 'Términos y condiciones de uso', '#');
+    setVal('f-link5', d.link5, 'Política de privacidad', '#');
+    setVal('f-link6', d.link6, 'Procedimiento de devoluciones', '#');
+    setVal('f-btn1', d.btn1, 'Enviar mensaje', '#');
+    setVal('f-btn2', d.btn2, 'Libro de Reclamaciones', '#');
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditarFooter')).show();
+};
+
+window.guardarFooter = async () => {
+    const getVal = (idStr) => {
+        return {
+            text: document.getElementById(`edit-${idStr}-text`).value,
+            url: document.getElementById(`edit-${idStr}-url`).value
+        };
+    };
+
+    const newData = {
+        ubicacion: document.getElementById('edit-f-ubicacion').value,
+        contacto: document.getElementById('edit-f-contacto').value,
+        sobre: document.getElementById('edit-f-sobre').value,
+        link1: getVal('f-link1'),
+        link2: getVal('f-link2'),
+        link3: getVal('f-link3'),
+        link4: getVal('f-link4'),
+        link5: getVal('f-link5'),
+        link6: getVal('f-link6'),
+        btn1: getVal('f-btn1'),
+        btn2: getVal('f-btn2')
+    };
+
+    try {
+        await setDoc(doc(db, "config", "footer"), newData, {merge:true});
+        bootstrap.Modal.getInstance(document.getElementById('modalEditarFooter')).hide();
+    } catch(e) {
+        alert("Error al guardar: " + e.message);
+    }
+};
 
 document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => { 
     btn.addEventListener('shown.bs.tab', (e) => { 
