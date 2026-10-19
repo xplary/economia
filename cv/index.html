@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAFE UNP - CV Builder & ATS Optimizer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Librería para exportar a PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light d-flex flex-column min-vh-100 overflow-x-hidden">
+
+    <!-- NAVBAR ESCRITORIO -->
+    <nav class="navbar navbar-expand-lg bg-gradient-navbar shadow-sm py-3 sticky-top" style="z-index: 1060;">
+        <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+            <a class="navbar-brand m-0 d-flex align-items-center" href="/">
+                <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
+                    <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#ffffff"/>
+                    <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#ffffff"/>
+                </svg>
+                <span class="fs-4 fw-bold font-inter text-white d-flex align-items-center" style="letter-spacing: -0.5px;">
+                    CAFE UNP 
+                    <span class="badge bg-white text-primary ms-2 rounded-pill shadow-sm" style="font-size: 0.75rem; padding: 0.35rem 0.6rem; transform: translateY(-2px);">CV Builder</span>
+                </span>
+            </a>
+            
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-outline-light rounded-pill px-3 font-inter fw-semibold shadow-sm text-white border-white" onclick="document.getElementById('btn-login').click()">
+                    <i class="bi bi-person-circle me-1"></i> Mi Cuenta
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- TOOLBAR SECUNDARIO -->
+    <div class="bg-white border-bottom shadow-sm py-2 sticky-top" style="top: 70px; z-index: 1050;">
+        <div class="container-fluid px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+                <select id="cv-theme-selector" class="form-select form-select-sm fw-bold border-secondary shadow-none font-inter" style="width: 200px;">
+                    <option value="harvard">Formato Harvard (100% ATS)</option>
+                    <option value="modern">Formato Moderno (Creativo)</option>
+                </select>
+                <div class="vr mx-1"></div>
+                <button class="btn btn-sm btn-light border fw-bold text-dark font-inter" onclick="document.execCommand('bold',false,null)"><i class="bi bi-type-bold"></i></button>
+                <button class="btn btn-sm btn-light border fw-bold text-dark font-inter" onclick="document.execCommand('italic',false,null)"><i class="bi bi-type-italic"></i></button>
+                <button class="btn btn-sm btn-light border fw-bold text-dark font-inter" onclick="document.execCommand('insertUnorderedList',false,null)"><i class="bi bi-list-ul"></i></button>
+            </div>
+            
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-primary fw-bold font-inter rounded-pill px-3 ai-glow" data-bs-toggle="modal" data-bs-target="#modalAI">
+                    <i class="bi bi-magic me-1"></i> Mejorar con IA
+                </button>
+                <button id="btn-export-pdf" class="btn btn-sm btn-success fw-bold font-inter rounded-pill px-3" style="background-color: #009668; border-color:#009668;">
+                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Descargar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <main class="container-fluid px-4 py-4 flex-grow-1 d-flex flex-column flex-lg-row gap-4">
+        
+        <!-- COLUMNA IZQUIERDA: EDITOR CV -->
+        <div class="col-lg-8 d-flex justify-content-center overflow-auto pb-5">
+            <div id="cv-document" class="cv-page theme-harvard shadow-lg position-relative" contenteditable="true">
+                <!-- El contenido se inyectará vía JS para reiniciar siempre al estándar ATS -->
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: ATS TRACKER & TOOLS -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 140px;">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                    <h5 class="fw-bold font-inter text-dark mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i> Puntuación ATS</h5>
+                    <p class="text-muted small mt-1">Simulación de escaneo de reclutadores</p>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    
+                    <!-- Circular Progress -->
+                    <div class="d-flex justify-content-center mb-4">
+                        <div class="ats-circle" id="ats-circle">
+                            <span id="ats-score">0</span>%
+                        </div>
+                    </div>
+
+                    <!-- Checklist ATS -->
+                    <h6 class="fw-bold font-inter text-dark mb-3">Requisitos de Optimización</h6>
+                    <ul class="list-group list-group-flush font-inter small" id="ats-checklist">
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center text-success border-0 py-1">
+                            <span><i class="bi bi-check-circle-fill me-2"></i> Formato compatible (Sin columnas)</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center text-success border-0 py-1">
+                            <span><i class="bi bi-check-circle-fill me-2"></i> Ausencia de fotos/gráficos</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center text-danger border-0 py-1">
+                            <span><i class="bi bi-x-circle-fill me-2"></i> Palabras clave de la industria</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center text-danger border-0 py-1">
+                            <span><i class="bi bi-x-circle-fill me-2"></i> Verbos de acción detectados</span>
+                        </li>
+                    </ul>
+
+                    <div class="alert bg-light border mt-4 mb-0 font-inter text-secondary" style="font-size: 0.85rem; border-left: 4px solid #004b79 !important;">
+                        <strong>Consejo:</strong> Usa el formato <em>Harvard</em> para aplicar a corporaciones grandes. Si aplicas a diseño o startups, puedes usar el formato <em>Moderno</em> bajo tu propio riesgo.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL INTELIGENCIA ARTIFICIAL -->
+    <div class="modal fade" id="modalAI" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header border-0 pb-0 bg-white">
+                    <h5 class="fw-bold font-inter text-dark mb-0"><i class="bi bi-robot text-primary me-2"></i> Asistente de Redacción IA</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-white font-inter">
+                    <p class="text-secondary small mb-3">Selecciona un párrafo de tu CV (por ejemplo, tu perfil o experiencia) y la IA lo reescribirá utilizando verbos de acción fuertes y un tono profesional orientado a resultados.</p>
+                    
+                    <div class="mb-3">
+                        <label class="fw-bold small text-muted">Texto Original Seleccionado:</label>
+                        <textarea id="ai-input-text" class="form-control bg-light border-0 shadow-sm font-inter text-secondary" rows="3" placeholder="Selecciona texto en tu CV o escríbelo aquí..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="fw-bold small text-muted">Sugerencia Optimizada para ATS:</label>
+                        <textarea id="ai-output-text" class="form-control bg-white border border-success shadow-sm font-inter text-dark" rows="4" readonly placeholder="La IA generará la respuesta aquí..."></textarea>
+                    </div>
+                    
+                    <!-- Simulación de API / Opcional para poner KEY real -->
+                    <div class="input-group input-group-sm mb-3">
+                        <span class="input-group-text bg-light border-0"><i class="bi bi-key"></i></span>
+                        <input type="password" id="gemini-api-key" class="form-control border-0 bg-light shadow-none" placeholder="Opcional: Tu Gemini API Key para generar textos reales">
+                    </div>
+
+                    <div class="text-end">
+                        <button id="btn-generar-ia" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Generar Mejora</button>
+                        <button id="btn-aplicar-ia" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm d-none" style="background-color: #009668; border-color:#009668;">Reemplazar en el CV</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón Login Oculto para compatibilidad -->
+    <button id="btn-login" class="d-none"></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="cv.js"></script>
+</body>
+</html>
