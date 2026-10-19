@@ -1,0 +1,152 @@
+:root {
+    --primary-blue: #004b79;
+    --accent-blue: #007bb5;
+    --accent-green: #009668;
+    --ats-color: #ef4444; /* Rojo por defecto, cambia según score */
+}
+
+body { font-family: 'Inter', sans-serif; background-color: #e2e8f0; }
+.font-serif { font-family: 'Lora', serif; }
+.font-inter { font-family: 'Inter', sans-serif; }
+
+/* Navbar */
+.bg-gradient-navbar { background: linear-gradient(90deg, #009668 0%, #004b79 100%); }
+
+/* Hoja A4 del Editor CV */
+.cv-page {
+    width: 210mm;
+    min-height: 297mm;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    margin: 0 auto;
+    padding: 20mm;
+    outline: none;
+    transition: all 0.4s ease;
+    overflow: hidden;
+}
+
+/* =========================================
+   TEMA 1: HARVARD (100% ATS COMPATIBLE)
+   ========================================= */
+.theme-harvard {
+    font-family: 'Merriweather', 'Times New Roman', serif;
+    color: #000000;
+    line-height: 1.5;
+}
+.theme-harvard h1 {
+    font-size: 22pt;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+.theme-harvard .contact-info {
+    text-align: center;
+    font-size: 10pt;
+    margin-bottom: 15px;
+}
+.theme-harvard .section-title {
+    font-size: 12pt;
+    text-transform: uppercase;
+    font-weight: 700;
+    border-bottom: 1px solid #000;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    padding-bottom: 2px;
+}
+.theme-harvard .job-title { font-weight: 700; font-size: 11pt; }
+.theme-harvard .job-company { font-style: italic; font-size: 11pt; }
+.theme-harvard .job-date { float: right; font-size: 11pt; }
+.theme-harvard ul { padding-left: 20px; margin-bottom: 10px; font-size: 10.5pt; }
+.theme-harvard li { margin-bottom: 4px; }
+.theme-harvard .cv-image-container { display: none !important; } /* ATS no lee imágenes */
+
+/* =========================================
+   TEMA 2: MODERNO (Creativo / 2 Columnas)
+   ========================================= */
+.theme-modern {
+    font-family: 'Inter', sans-serif;
+    color: #333;
+    display: flex;
+    flex-direction: row;
+    padding: 0;
+}
+.theme-modern .modern-left {
+    background-color: var(--primary-blue);
+    color: white;
+    width: 35%;
+    padding: 40px 20px;
+}
+.theme-modern .modern-right {
+    width: 65%;
+    padding: 40px 30px;
+    background-color: #fff;
+}
+.theme-modern .cv-image-container {
+    display: flex !important;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+.theme-modern .cv-image-container img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    cursor: pointer;
+}
+.theme-modern h1 { font-size: 24pt; font-weight: 800; text-transform: uppercase; color: var(--primary-blue); margin-bottom: 0; }
+.theme-modern .section-title {
+    font-size: 14pt;
+    font-weight: 700;
+    color: var(--primary-blue);
+    border-bottom: 2px solid var(--accent-green);
+    margin-top: 25px;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+}
+.theme-modern .modern-left .section-title {
+    color: white;
+    border-bottom-color: rgba(255,255,255,0.3);
+}
+
+/* Indicador ATS Circular */
+.ats-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--ats-color);
+    background: conic-gradient(var(--ats-color) 0%, #f1f5f9 0%);
+    position: relative;
+    transition: background 1s ease;
+    font-family: 'Inter', sans-serif;
+}
+.ats-circle::before {
+    content: "";
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    background-color: white;
+    border-radius: 50%;
+}
+.ats-circle span { position: relative; z-index: 1; }
+
+/* Utilidades */
+.ai-glow { animation: glow 2s infinite alternate; }
+@keyframes glow {
+    from { box-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6; }
+    to { box-shadow: 0 0 15px #60a5fa, 0 0 20px #60a5fa; }
+}
+
+@media print {
+    body { background: white; }
+    .cv-page { box-shadow: none; margin: 0; padding: 0; }
+    .navbar, .sticky-top, .col-lg-4 { display: none !important; }
+    .col-lg-8 { width: 100%; max-width: 100%; }
+}
