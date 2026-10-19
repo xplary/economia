@@ -9,19 +9,20 @@ body { font-family: 'Inter', sans-serif; height: 100vh; }
 .font-inter { font-family: 'Inter', sans-serif; }
 .bg-gradient-navbar { background: linear-gradient(90deg, #009668 0%, #004b79 100%); }
 
-/* Diseño Toolbar y Botones */
+/* Botón Login Auth */
+.btn-ingresar-navbar { background: rgba(255, 255, 255, 0.15); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(5px); transition: all 0.3s ease; }
+.btn-ingresar-navbar:hover { background: rgba(255, 255, 255, 0.25); color: #ffffff; }
+
+/* Toolbar */
 .toolbar .btn { padding: 4px 10px; color: #475569; }
 .toolbar .btn:hover { background-color: #f1f5f9; color: var(--primary-blue); }
-.toolbar select { cursor: pointer; color: #475569; }
 
 /* =========================================
-   HOJA A4 (EDITOR) - VARIABLES DINÁMICAS
+   HOJA A4 (EDITOR)
    ========================================= */
 .cv-page {
-    /* Variables que JS modificará */
     --doc-padding: 2.54cm; 
     --doc-lineheight: 1.5;
-
     width: 21cm;
     min-height: 29.7cm;
     background: #ffffff;
@@ -32,24 +33,26 @@ body { font-family: 'Inter', sans-serif; height: 100vh; }
     transition: padding 0.3s ease;
 }
 
-/* Modificadores de márgenes (via data-attributes) */
 .cv-page[data-margin="normal"] { --doc-padding: 2.54cm; }
 .cv-page[data-margin="narrow"] { --doc-padding: 1.27cm; }
 .cv-page[data-margin="wide"] { --doc-padding: 3.5cm 2.54cm; }
-
-/* Modificadores de interlineado (via data-attributes) */
 .cv-page[data-lineheight="1.2"] { --doc-lineheight: 1.2; }
 .cv-page[data-lineheight="1.5"] { --doc-lineheight: 1.5; }
 .cv-page[data-lineheight="1.8"] { --doc-lineheight: 1.8; }
 
-/* =========================================
-   TEMAS DEL CV
-   ========================================= */
+/* Separadores HR universales del Editor */
+.cv-page hr {
+    border: none;
+    border-top: 2px solid #333;
+    margin: 15px 0;
+    opacity: 1;
+}
+
 /* TEMA 1: HARVARD (Clásico ATS) */
 .theme-harvard { font-family: 'Merriweather', 'Times New Roman', serif; color: #000; }
 .theme-harvard h1 { font-size: 22pt; text-align: center; font-weight: 700; margin-bottom: 5px; text-transform: uppercase; }
-.theme-harvard .contact-info { text-align: center; font-size: 10pt; margin-bottom: 15px; border-bottom: 1px solid #fff; /* spacer */ }
-.theme-harvard .section-title { font-size: 12pt; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #000; margin-top: 15px; margin-bottom: 8px; }
+.theme-harvard .contact-info { text-align: center; font-size: 10pt; margin-bottom: 15px; }
+.theme-harvard .section-title { font-size: 12pt; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #000; margin-top: 15px; margin-bottom: 8px; padding-bottom:2px;}
 .theme-harvard .item-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 11pt; }
 .theme-harvard .item-sub { font-style: italic; font-size: 11pt; margin-bottom: 4px; }
 .theme-harvard ul { padding-left: 20px; margin-bottom: 10px; font-size: 10.5pt; }
@@ -63,19 +66,18 @@ body { font-family: 'Inter', sans-serif; height: 100vh; }
 .theme-executive .item-sub { font-size: 10.5pt; color: var(--accent-green); font-weight: 500; margin-bottom: 5px; }
 .theme-executive ul { padding-left: 18px; margin-bottom: 12px; font-size: 10pt; color: #4a5568; }
 
-/* =========================================
-   SIDEBAR Y ATS GAUGE
-   ========================================= */
+/* TEMA 3: BLANK (Limpieza Total) */
+.theme-blank { font-family: 'Inter', sans-serif; color: #000; }
+
+/* Sidebar ATS Gauge */
 .ats-sidebar { z-index: 1000; }
 .ats-gauge { width: 140px; position: relative; }
 .circular-chart { display: block; margin: 0 auto; max-width: 100%; max-height: 250px; }
 .circle-bg { fill: none; stroke: #f1f5f9; stroke-width: 3; }
 .circle { fill: none; stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray 1s ease-out, stroke 1s; }
 .ats-score-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem; color: #1e293b; }
-
 .verb-badge { background-color: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
 
-/* Scrollbars personalizados */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: #f1f5f9; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
