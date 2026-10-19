@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAFE UNP - Editor de CV Profesional</title>
+    <title>CAFE UNP - Editor de CV Profesional IA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700&family=Merriweather:wght@300;400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -12,32 +12,32 @@
 </head>
 <body class="bg-light d-flex flex-column min-vh-100 overflow-hidden">
 
-    <!-- NAVBAR SECUNDARIO (TIPO GOOGLE DOCS) -->
-    <nav class="navbar bg-white border-bottom shadow-sm py-1 px-3" style="z-index: 1060;">
-        <div class="d-flex align-items-center w-100">
-            <a class="navbar-brand m-0 d-flex align-items-center text-decoration-none" href="/">
-                <div class="bg-primary rounded p-1 me-2" style="background: linear-gradient(135deg, #009668 0%, #004b79 100%);">
-                    <i class="bi bi-file-earmark-person-fill text-white fs-4"></i>
-                </div>
-                <div class="d-flex flex-column">
-                    <span class="fs-5 fw-bold font-inter text-dark" style="line-height: 1;">CAFE UNP CV</span>
-                    <span class="text-muted" style="font-size: 0.7rem;">Documento sin título</span>
-                </div>
+    <!-- NAVBAR ORIGINAL (CON AUTH DE FIREBASE) -->
+    <nav class="navbar navbar-expand-lg bg-gradient-navbar shadow-sm py-2 sticky-top" style="z-index: 1060;">
+        <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+            <a class="navbar-brand m-0 d-flex align-items-center" href="/">
+                <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
+                    <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#ffffff"/>
+                    <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#ffffff"/>
+                </svg>
+                <span class="fs-4 fw-bold font-inter text-white d-flex align-items-center" style="letter-spacing: -0.5px;">
+                    CAFE UNP 
+                    <span class="badge bg-white text-primary ms-2 rounded-pill shadow-sm" style="font-size: 0.75rem; padding: 0.35rem 0.6rem; transform: translateY(-2px);">CV AI Builder</span>
+                </span>
             </a>
             
-            <div class="ms-auto d-flex gap-2">
-                <button class="btn btn-sm btn-outline-primary fw-bold font-inter" data-bs-toggle="modal" data-bs-target="#modalAI">
-                    <i class="bi bi-magic me-1"></i> Asistente IA
-                </button>
-                <button id="btn-export-pdf" class="btn btn-sm btn-success fw-bold font-inter shadow-sm" style="background-color: #009668; border-color:#009668;">
-                    <i class="bi bi-download me-1"></i> Exportar PDF
-                </button>
+            <div class="d-flex align-items-center">
+                <!-- Dropdown contenedor dinámico de usuario -->
+                <div id="user-dropdown-container" class="dropdown d-inline-block ms-1 d-none">
+                    <!-- Se llena con JS -->
+                </div>
+                <button id="btn-login" class="btn btn-ingresar-navbar rounded-pill px-4 py-2 font-inter shadow-sm fw-bold">Ingresar <i class="bi bi-arrow-right ms-1"></i></button>
             </div>
         </div>
     </nav>
 
-    <!-- BARRA DE HERRAMIENTAS (WORD-LIKE) -->
-    <div class="toolbar bg-white border-bottom py-2 px-3 d-flex flex-wrap align-items-center gap-2 sticky-top" style="z-index: 1050; overflow-x: auto;">
+    <!-- BARRA DE HERRAMIENTAS (WORD-LIKE AVANZADO) -->
+    <div class="toolbar bg-white border-bottom py-2 px-3 d-flex flex-wrap align-items-center gap-2 sticky-top" style="z-index: 1050;">
         
         <!-- Deshacer / Rehacer -->
         <div class="btn-group shadow-sm">
@@ -51,6 +51,7 @@
         <select id="cv-template" class="form-select form-select-sm shadow-sm font-inter fw-bold text-primary" style="width: auto;" title="Plantilla ATS">
             <option value="harvard">Harvard (100% ATS)</option>
             <option value="executive">Ejecutivo (Moderno)</option>
+            <option value="blank">En Blanco (Limpiar)</option>
         </select>
         
         <select id="doc-margin" class="form-select form-select-sm shadow-sm font-inter" style="width: auto;" title="Márgenes">
@@ -60,23 +61,22 @@
         </select>
 
         <select id="doc-lineheight" class="form-select form-select-sm shadow-sm font-inter" style="width: auto;" title="Interlineado">
-            <option value="1.2">Líneas: 1.2 (Compacto)</option>
-            <option value="1.5" selected>Líneas: 1.5 (Normal)</option>
-            <option value="1.8">Líneas: 1.8 (Holgado)</option>
+            <option value="1.2">Líneas: 1.2</option>
+            <option value="1.5" selected>Líneas: 1.5</option>
+            <option value="1.8">Líneas: 1.8</option>
         </select>
 
         <div class="vr mx-1"></div>
 
         <!-- Fuentes y Tamaños -->
-        <select class="form-select form-select-sm shadow-sm" style="width: 140px;" onchange="document.execCommand('fontName', false, this.value)" title="Fuente">
+        <select class="form-select form-select-sm shadow-sm" style="width: 130px;" onchange="document.execCommand('fontName', false, this.value)" title="Fuente">
             <option value="Arial">Arial</option>
             <option value="Merriweather">Merriweather</option>
             <option value="Inter">Inter</option>
             <option value="Times New Roman">Times New Roman</option>
-            <option value="Georgia">Georgia</option>
         </select>
         
-        <select class="form-select form-select-sm shadow-sm" style="width: 70px;" onchange="document.execCommand('fontSize', false, this.value)" title="Tamaño (1-7)">
+        <select class="form-select form-select-sm shadow-sm" style="width: 65px;" onchange="document.execCommand('fontSize', false, this.value)" title="Tamaño (1-7)">
             <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
             <option value="4">4</option><option value="5">5</option><option value="6">6</option>
         </select>
@@ -88,10 +88,8 @@
             <button class="btn btn-sm btn-light border fw-bold" onclick="document.execCommand('bold')" title="Negrita"><i class="bi bi-type-bold"></i></button>
             <button class="btn btn-sm btn-light border fst-italic" onclick="document.execCommand('italic')" title="Cursiva"><i class="bi bi-type-italic"></i></button>
             <button class="btn btn-sm btn-light border text-decoration-underline" onclick="document.execCommand('underline')" title="Subrayado"><i class="bi bi-type-underline"></i></button>
-            <button class="btn btn-sm btn-light border text-decoration-line-through" onclick="document.execCommand('strikeThrough')" title="Tachado"><i class="bi bi-type-strikethrough"></i></button>
         </div>
 
-        <!-- Colores -->
         <div class="btn-group shadow-sm d-flex align-items-center bg-light border rounded px-1">
             <label class="d-flex align-items-center cursor-pointer p-1" title="Color de texto">
                 <i class="bi bi-palette-fill text-secondary me-1"></i>
@@ -101,22 +99,31 @@
 
         <div class="vr mx-1"></div>
 
-        <!-- Alineación -->
+        <!-- Alineación y Listas -->
         <div class="btn-group shadow-sm">
             <button class="btn btn-sm btn-light border" onclick="document.execCommand('justifyLeft')" title="Alinear Izquierda"><i class="bi bi-text-left"></i></button>
             <button class="btn btn-sm btn-light border" onclick="document.execCommand('justifyCenter')" title="Centrar"><i class="bi bi-text-center"></i></button>
-            <button class="btn btn-sm btn-light border" onclick="document.execCommand('justifyRight')" title="Alinear Derecha"><i class="bi bi-text-right"></i></button>
-            <button class="btn btn-sm btn-light border" onclick="document.execCommand('justifyFull')" title="Justificar"><i class="bi bi-justify"></i></button>
-        </div>
-
-        <!-- Listas y Extras -->
-        <div class="btn-group shadow-sm">
             <button class="btn btn-sm btn-light border" onclick="document.execCommand('insertUnorderedList')" title="Viñetas"><i class="bi bi-list-ul"></i></button>
-            <button class="btn btn-sm btn-light border" onclick="document.execCommand('insertOrderedList')" title="Lista Numerada"><i class="bi bi-list-ol"></i></button>
         </div>
         
-        <button class="btn btn-sm btn-light border shadow-sm" onclick="document.execCommand('insertHorizontalRule')" title="Línea Separadora"><i class="bi bi-dash-lg"></i></button>
-        <button class="btn btn-sm btn-light border shadow-sm text-danger" onclick="document.execCommand('removeFormat')" title="Borrar Formato"><i class="bi bi-eraser-fill"></i></button>
+        <!-- CONTROL DE LÍNEAS DE SEPARACIÓN -->
+        <div class="btn-group shadow-sm">
+            <button class="btn btn-sm btn-light border fw-bold text-primary" onclick="document.execCommand('insertHorizontalRule')" title="Insertar Línea Separadora">
+                <i class="bi bi-dash-lg"></i> Línea
+            </button>
+            <button class="btn btn-sm btn-light border fw-bold text-danger" onclick="borrarLineas()" title="Borrar TODAS las líneas del CV">
+                <i class="bi bi-x-lg"></i> Borrar
+            </button>
+        </div>
+
+        <div class="ms-auto d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary fw-bold font-inter shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAI">
+                <i class="bi bi-magic me-1"></i> IA Creator
+            </button>
+            <button id="btn-export-pdf" class="btn btn-sm btn-success fw-bold font-inter shadow-sm" style="background-color: #009668; border-color:#009668;">
+                <i class="bi bi-download me-1"></i> PDF
+            </button>
+        </div>
     </div>
 
     <!-- ÁREA DE TRABAJO -->
@@ -132,7 +139,6 @@
         <!-- PANEL LATERAL ATS (Derecha) -->
         <div class="ats-sidebar bg-white border-start shadow-sm d-flex flex-column" style="width: 380px; min-width: 380px; overflow-y: auto;">
             
-            <!-- Score Header -->
             <div class="p-4 border-bottom text-center bg-light">
                 <h5 class="fw-bold font-inter text-dark mb-3">Puntuación ATS</h5>
                 <div class="d-flex justify-content-center mb-2">
@@ -147,75 +153,57 @@
                 <p class="small text-muted mb-0" id="ats-feedback-msg">Escribe para analizar tu CV...</p>
             </div>
 
-            <!-- Panel de Análisis Detallado -->
             <div class="p-4 flex-grow-1">
-                <h6 class="fw-bold font-inter text-dark border-bottom pb-2 mb-3"><i class="bi bi-search text-primary me-2"></i> Lo que debes mejorar</h6>
-                <ul class="list-unstyled font-inter small mb-4" id="ats-improvements">
-                    <!-- Se llena vía JS -->
-                </ul>
+                <h6 class="fw-bold font-inter text-dark border-bottom pb-2 mb-3"><i class="bi bi-search text-primary me-2"></i> Sugerencias de Mejora</h6>
+                <ul class="list-unstyled font-inter small mb-4" id="ats-improvements"></ul>
 
-                <h6 class="fw-bold font-inter text-dark border-bottom pb-2 mb-3"><i class="bi bi-check2-all text-success me-2"></i> Análisis de Contenido</h6>
                 <div class="row g-2 font-inter small mb-4 text-center">
-                    <div class="col-6">
-                        <div class="p-2 bg-light border rounded">
-                            <div class="text-muted">Palabras</div>
-                            <div class="fw-bold fs-5" id="stat-words">0</div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-2 bg-light border rounded">
-                            <div class="text-muted">Números/Métricas</div>
-                            <div class="fw-bold fs-5 text-primary" id="stat-metrics">0</div>
-                        </div>
-                    </div>
+                    <div class="col-6"><div class="p-2 bg-light border rounded"><div class="text-muted">Palabras</div><div class="fw-bold fs-5" id="stat-words">0</div></div></div>
+                    <div class="col-6"><div class="p-2 bg-light border rounded"><div class="text-muted">Métricas</div><div class="fw-bold fs-5 text-primary" id="stat-metrics">0</div></div></div>
                 </div>
 
-                <h6 class="fw-bold font-inter text-dark border-bottom pb-2 mb-3"><i class="bi bi-lightning-charge-fill text-warning me-2"></i> Verbos de Acción Detectados</h6>
-                <div class="d-flex flex-wrap gap-1" id="ats-verbs">
-                    <!-- Se llena vía JS -->
-                </div>
+                <h6 class="fw-bold font-inter text-dark border-bottom pb-2 mb-3"><i class="bi bi-lightning-charge-fill text-warning me-2"></i> Verbos Fuertes</h6>
+                <div class="d-flex flex-wrap gap-1" id="ats-verbs"></div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL IA GEMINI -->
+    <!-- MODAL IA GEMINI (CON GENERADOR COMPLETO) -->
     <div class="modal fade" id="modalAI" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
                 <div class="modal-header bg-gradient-navbar border-0 pb-3">
-                    <h5 class="fw-bold text-white mb-0 font-inter"><i class="bi bi-robot me-2"></i> Asistente de Redacción (Gemini IA)</h5>
+                    <h5 class="fw-bold text-white mb-0 font-inter"><i class="bi bi-robot me-2"></i> CAFE UNP - Inteligencia Artificial</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 bg-light font-inter">
                     <div class="row g-4">
-                        <div class="col-md-6">
-                            <label class="fw-bold small text-muted mb-2">1. Pega el texto a mejorar:</label>
-                            <textarea id="ai-input-text" class="form-control bg-white border shadow-sm font-inter" rows="5" placeholder="Pega aquí la descripción de un puesto o tu perfil..."></textarea>
-                            
-                            <label class="fw-bold small text-muted mt-3 mb-2">2. ¿Qué deseas hacer?</label>
-                            <select id="ai-tone" class="form-select bg-white border shadow-sm">
-                                <option value="profesional">Hacerlo más profesional y formal</option>
-                                <option value="logros">Enfocarlo en logros y métricas</option>
-                                <option value="ingles">Traducir y adaptar al Inglés</option>
-                                <option value="gramatica">Corregir ortografía y gramática</option>
+                        <div class="col-md-5">
+                            <label class="fw-bold small text-dark mb-2">1. ¿Qué deseas que haga la IA?</label>
+                            <select id="ai-mode" class="form-select bg-white border-2 border-primary shadow-sm mb-3 fw-bold">
+                                <option value="full">🚀 Crear un CV Completo desde Cero</option>
+                                <option value="improve">✍️ Mejorar una sección específica</option>
                             </select>
 
+                            <label class="fw-bold small text-muted mb-2" id="ai-prompt-label">2. Cuéntale a la IA sobre ti:</label>
+                            <textarea id="ai-input-text" class="form-control bg-white border shadow-sm font-inter" rows="8" placeholder="Ej: Me llamo Cristhian Daniel, estudio Economía en la UNP, trabajé en un proyecto llamado VEST usando HTML y Firebase, y programé IA en Godot. Quiero que me crees un currículum completo."></textarea>
+                            
                             <div class="mt-3">
-                                <input type="password" id="gemini-api-key" class="form-control form-control-sm border shadow-sm" placeholder="Opcional: Tu API Key de Gemini">
-                                <small class="text-muted" style="font-size: 0.7rem;">Si no usas Key, se aplicarán mejoras predefinidas locales.</small>
+                                <input type="password" id="gemini-api-key" class="form-control form-control-sm border shadow-sm" placeholder="Obligatorio para CV completo: Tu API Key de Gemini">
+                                <small class="text-muted" style="font-size: 0.75rem;">Para redactar un documento completo se requiere conexión directa con Gemini 1.5.</small>
                             </div>
                         </div>
                         
-                        <div class="col-md-6 d-flex flex-column">
-                            <label class="fw-bold small text-muted mb-2">Resultado Optimizado:</label>
-                            <textarea id="ai-output-text" class="form-control bg-white border border-success shadow-sm font-inter flex-grow-1 mb-3" readonly placeholder="La IA generará la respuesta aquí..."></textarea>
+                        <div class="col-md-7 d-flex flex-column">
+                            <label class="fw-bold small text-muted mb-2">Resultado HTML Optimizado:</label>
+                            <textarea id="ai-output-text" class="form-control bg-white border border-success shadow-sm font-inter flex-grow-1 mb-3 text-secondary" placeholder="La estructura de tu CV aparecerá aquí..." style="font-family: monospace, sans-serif; font-size: 0.85rem;"></textarea>
                             
                             <div class="d-flex gap-2">
-                                <button id="btn-generar-ia" class="btn btn-primary flex-grow-1 fw-bold shadow-sm">
+                                <button id="btn-generar-ia" class="btn btn-primary fw-bold shadow-sm px-4">
                                     <i class="bi bi-stars"></i> Generar
                                 </button>
-                                <button id="btn-copiar-ia" class="btn btn-success fw-bold shadow-sm" title="Copiar al portapapeles">
-                                    <i class="bi bi-clipboard"></i>
+                                <button id="btn-aplicar-ia" class="btn btn-success fw-bold shadow-sm flex-grow-1" style="background-color: #009668; border-color:#009668;">
+                                    <i class="bi bi-file-earmark-check"></i> Aplicar al Editor A4
                                 </button>
                             </div>
                         </div>
@@ -226,6 +214,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="cv.js"></script>
+    <script type="module" src="cv.js"></script>
 </body>
 </html>
