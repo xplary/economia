@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebas
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 import { getFirestore, doc, collection, addDoc, onSnapshot, updateDoc, deleteDoc, serverTimestamp, orderBy, query } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// Tu misma configuración de Firebase
+// Tu configuración de Firebase
 const app = initializeApp({ 
     apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", 
     authDomain: "economia-41d20.firebaseapp.com", 
@@ -17,18 +17,15 @@ const app = initializeApp({
 const auth = getAuth(app); 
 const db = getFirestore(app);
 
-// Variables de estado
 let toolsData = [];
 let editingToolId = null;
 
-// Escapar texto para seguridad
 const escapeHTML = (str) => (str ? str.toString() : '').replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t));
 
-// Año del footer
 document.getElementById('current-year').innerText = new Date().getFullYear();
 
 // ==========================================
-// MANEJO DE SESIÓN Y ROL (OWNER)
+// SESIÓN Y ROL (OWNER)
 // ==========================================
 document.getElementById('btn-login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
 
@@ -40,7 +37,6 @@ onAuthStateChanged(auth, (u) => {
         btnLogin.classList.add('d-none');
         ddCont.classList.remove('d-none');
         
-        // Cargar dropdown del usuario
         ddCont.innerHTML = `
             <div class="position-relative cursor-pointer" data-bs-toggle="dropdown" aria-expanded="false" title="Mi Cuenta">
                 <img src="${u.photoURL || 'https://via.placeholder.com/42'}" id="user-avatar-img" class="rounded-circle shadow-sm" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid rgba(255,255,255,0.4);">
@@ -56,30 +52,30 @@ onAuthStateChanged(auth, (u) => {
         `;
         document.getElementById('btn-logout-dropdown').onclick = () => signOut(auth);
 
-        // Comprobar rol de owner
         onSnapshot(doc(db, "usuarios", u.uid), (d) => {
             const badge = document.getElementById('user-plan-badge');
             if(d.exists() && d.data().owner) {
                 document.body.classList.add('is-owner');
                 if(badge) { badge.innerText = 'Administrador'; badge.style.backgroundColor = '#004b79'; }
+                renderTools(); // Re-renderiza para mostrar botones de admin
             } else {
                 document.body.classList.remove('is-owner');
                 if(badge) { badge.innerText = 'Usuario'; badge.style.backgroundColor = '#6c757d'; }
+                renderTools();
             }
         });
     } else {
         btnLogin.classList.remove('d-none');
         ddCont.classList.add('d-none');
         document.body.classList.remove('is-owner');
+        renderTools();
     }
 });
 
 // ==========================================
-// CRUD Y RENDERIZADO DE TOOLS (HERRAMIENTAS)
+// RENDERIZADO Y CRUD
 // ==========================================
-
-// Escuchar cambios en la base de datos
-onSnapshot(query(collection(db, "tools"), orderBy("fecha", "desc")), (snap) => {
+onSnapshot(query(collection(db, "tools"), orderBy("fecha", "asc")), (snap) => {
     toolsData = [];
     snap.forEach(d => {
         toolsData.push({ id: d.id, ...d.data() });
@@ -89,16 +85,32 @@ onSnapshot(query(collection(db, "tools"), orderBy("fecha", "desc")), (snap) => {
 
 function renderTools() {
     const container = document.getElementById('tools-container');
+    const isOwner = document.body.classList.contains('is-owner');
     
     if(toolsData.length === 0) {
-        container.innerHTML = `<div class="col-12 text-center text-muted font-inter py-5"><i class="bi bi-tools display-1 opacity-25"></i><h4 class="mt-3 text-dark">No hay herramientas disponibles</h4></div>`;
+        if(isOwner) {
+            // Botón para inicializar las 8 herramientas
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-tools display-1 text-primary opacity-50 mb-3"></i>
+                    <h4 class="text-dark fw-bold font-inter">Base de datos vacía</h4>
+                    <p class="text-muted mb-4">Como administrador, puedes generar las 8 herramientas por defecto.</p>
+                    <button class="btn btn-success px-4 py-2 rounded-pill fw-bold" onclick="sembrarHerramientasPorDefecto()" style="background-color: #009668; border-color:#009668;">
+                        <i class="bi bi-magic me-2"></i>Generar 8 Herramientas Base
+                    </button>
+                </div>`;
+        } else {
+            container.innerHTML = `<div class="col-12 text-center text-muted font-inter py-5"><i class="bi bi-tools display-1 opacity-25"></i><h4 class="mt-3 text-dark">No hay herramientas disponibles</h4></div>`;
+        }
         return;
     }
 
     let html = '';
+    // SVG por defecto con un diseño tipo "interfaz wireframe" con amarillo (inspirado en tu imagen)
+    const defaultImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70"><rect x="10" y="10" width="80" height="50" rx="3" fill="none" stroke="%23cbd5e1" stroke-width="2"/><line x1="10" y1="20" x2="90" y2="20" stroke="%23cbd5e1" stroke-width="2"/><circle cx="70" cy="50" r="10" fill="none" stroke="%23facc15" stroke-width="3"/><line x1="77" y1="57" x2="85" y2="65" stroke="%23facc15" stroke-width="3" stroke-linecap="round"/></svg>';
+    
     toolsData.forEach(tool => {
-        const defaultImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="%23d1d5db" viewBox="0 0 16 16"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/></svg>';
-        const imagenUrl = tool.imagen ? tool.imagen : defaultImg;
+        const imagenUrl = (tool.imagen && tool.imagen.length > 20) ? tool.imagen : defaultImg;
         
         html += `
         <div class="col-sm-6 col-md-4 col-lg-3">
@@ -106,14 +118,12 @@ function renderTools() {
                 <div class="tool-card-title font-inter">${escapeHTML(tool.titulo)}</div>
                 <div class="tool-card-desc font-inter">${escapeHTML(tool.descripcion)}</div>
                 <div class="tool-card-img-wrapper">
-                    <img src="${imagenUrl}" alt="Herramienta Icono" class="tool-card-img">
+                    <img src="${imagenUrl}" alt="${escapeHTML(tool.titulo)}" class="tool-card-img">
                 </div>
                 <div class="tool-card-footer">
-                    <!-- Icono izquierdo (Abrir Link) -->
                     <a href="${escapeHTML(tool.url)}" target="_blank" class="tool-icon-btn" title="Abrir Herramienta">
                         <i class="bi bi-box-arrow-up-right"></i>
                     </a>
-                    <!-- Iconos derechos (Solo Admin) -->
                     <div class="admin-only-inline">
                         <button onclick="editarTool('${tool.id}')" class="tool-icon-btn text-warning" style="color:#d97706!important;" title="Editar">
                             <i class="bi bi-pencil"></i>
@@ -130,7 +140,37 @@ function renderTools() {
     container.innerHTML = html;
 }
 
-// Convertidor de Imagen a Base64 rápido y seguro
+// ==========================================
+// FUNCIÓN PARA AUTO-GENERAR LAS 8 HERRAMIENTAS
+// ==========================================
+window.sembrarHerramientasPorDefecto = async () => {
+    if(!confirm("¿Deseas crear las 8 herramientas por defecto?")) return;
+    
+    const herramientasBase = [
+        { titulo: "Keywords", descripcion: "Details and analysis of the most important terms.", url: "#" },
+        { titulo: "Monitoring", descripcion: "Daily Keyword-Monitoring of your own key terms.", url: "#" },
+        { titulo: "On-Page", descripcion: "Analyze and optimize all the most important On-Page factors.", url: "#" },
+        { titulo: "Backlinks", descripcion: "Analyze and track all the backlinks of a domain.", url: "#" },
+        { titulo: "Disavow", descripcion: "Detects Google's penalties so you can prevent or remove them.", url: "#" },
+        { titulo: "Search Analytics", descripcion: "Identifies traffic sources and visitor flow.", url: "#" },
+        { titulo: "SEA", descripcion: "Analyze and optimize your Google Ads ads.", url: "#" },
+        { titulo: "Reporting", descripcion: "White label and personalized reports for you and your clients.", url: "#" }
+    ];
+
+    try {
+        for (let i = 0; i < herramientasBase.length; i++) {
+            const tool = herramientasBase[i];
+            tool.fecha = serverTimestamp();
+            tool.imagen = ''; // Usará el SVG por defecto generado arriba
+            await addDoc(collection(db, "tools"), tool);
+        }
+        alert("¡Las 8 herramientas fueron creadas exitosamente!");
+    } catch(err) {
+        alert("Error al crear herramientas: " + err.message);
+    }
+};
+
+// Compresor de imagen
 const compressImg = (file) => new Promise((res) => { 
     const reader = new FileReader(); 
     reader.readAsDataURL(file); 
@@ -139,7 +179,7 @@ const compressImg = (file) => new Promise((res) => {
         img.src = e.target.result; 
         img.onload = () => { 
             const canvas = document.createElement('canvas'); 
-            const MAX = 600; // Resolución pequeña para íconos
+            const MAX = 600; 
             const scale = img.width > MAX ? MAX / img.width : 1; 
             canvas.width = img.width * scale; 
             canvas.height = img.height * scale; 
@@ -149,7 +189,6 @@ const compressImg = (file) => new Promise((res) => {
     }; 
 });
 
-// Mostrar previsualización al seleccionar archivo en modal
 document.getElementById('tool-imagen').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -162,15 +201,14 @@ document.getElementById('tool-imagen').addEventListener('change', function(e) {
     }
 });
 
-// Botón de reset al abrir el modal "Nuevo"
 document.getElementById('btn-nueva-herramienta').addEventListener('click', () => {
     editingToolId = null;
     document.getElementById('form-tool').reset();
     document.getElementById('tool-form-title').innerText = "Añadir Nueva Herramienta";
     document.getElementById('tool-img-preview-container').classList.add('d-none');
+    document.getElementById('tool-img-preview').src = "";
 });
 
-// Enviar formulario (Agregar / Editar)
 document.getElementById('form-tool').addEventListener('submit', async (e) => {
     e.preventDefault();
     const titulo = document.getElementById('tool-titulo').value;
@@ -181,11 +219,9 @@ document.getElementById('form-tool').addEventListener('submit', async (e) => {
     let imgFinal = '';
     const imgFile = document.getElementById('tool-imagen').files[0];
     
-    // Si hay archivo nuevo, comprimirlo
     if (imgFile) {
         imgFinal = await compressImg(imgFile);
     } else if (editingToolId) {
-        // Recuperar imagen antigua si estamos editando y no subió una nueva
         const existingTool = toolsData.find(t => t.id === editingToolId);
         if(existingTool) imgFinal = existingTool.imagen || '';
     }
@@ -193,7 +229,7 @@ document.getElementById('form-tool').addEventListener('submit', async (e) => {
     const toolData = { titulo, descripcion, url, imagen: imgFinal };
 
     btnSubmit.disabled = true;
-    btnSubmit.innerText = "Guardando...";
+    btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
     try {
         if (editingToolId) {
@@ -211,7 +247,6 @@ document.getElementById('form-tool').addEventListener('submit', async (e) => {
     }
 });
 
-// Función Global en Windows para editar desde el HTML
 window.editarTool = (id) => {
     const tool = toolsData.find(t => t.id === id);
     if(!tool) return;
@@ -222,18 +257,17 @@ window.editarTool = (id) => {
     document.getElementById('tool-desc').value = tool.descripcion;
     document.getElementById('tool-url').value = tool.url;
     
-    // Preview de imagen existente
-    if (tool.imagen) {
+    if (tool.imagen && tool.imagen.length > 20) {
         document.getElementById('tool-img-preview').src = tool.imagen;
         document.getElementById('tool-img-preview-container').classList.remove('d-none');
     } else {
         document.getElementById('tool-img-preview-container').classList.add('d-none');
+        document.getElementById('tool-img-preview').src = "";
     }
     
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTool')).show();
 };
 
-// Función Global en Windows para borrar desde el HTML
 window.borrarTool = async (id) => {
     if(confirm("¿Estás seguro de que deseas eliminar esta herramienta permanentemente?")) {
         try {
@@ -245,7 +279,7 @@ window.borrarTool = async (id) => {
 };
 
 // ==========================================
-// FOOTER EN VIVO (Misma lógica de la pág original)
+// FOOTER EN VIVO
 // ==========================================
 onSnapshot(doc(db, "config", "footer"), (s) => { 
     if(s.exists()){ 
