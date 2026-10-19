@@ -3,152 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAFE UNP - CV Builder & ATS Optimizer</title>
+    <title>CAFE UNP - Editor de CV Profesional</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
-    <!-- Librería para exportar a PDF -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700&family=Merriweather:wght@300;400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light d-flex flex-column min-vh-100 overflow-x-hidden">
+<body class="bg-light d-flex flex-column min-vh-100 overflow-hidden">
 
-    <!-- NAVBAR ESCRITORIO -->
-    <nav class="navbar navbar-expand-lg bg-gradient-navbar shadow-sm py-3 sticky-top" style="z-index: 1060;">
-        <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
-            <a class="navbar-brand m-0 d-flex align-items-center" href="/">
-                <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2">
-                    <path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#ffffff"/>
-                    <path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#ffffff"/>
-                </svg>
-                <span class="fs-4 fw-bold font-inter text-white d-flex align-items-center" style="letter-spacing: -0.5px;">
-                    CAFE UNP 
-                    <span class="badge bg-white text-primary ms-2 rounded-pill shadow-sm" style="font-size: 0.75rem; padding: 0.35rem 0.6rem; transform: translateY(-2px);">CV Builder</span>
-                </span>
+    <!-- NAVBAR SECUNDARIO (TIPO GOOGLE DOCS) -->
+    <nav class="navbar bg-white border-bottom shadow-sm py-1 px-3" style="z-index: 1060;">
+        <div class="d-flex align-items-center w-100">
+            <a class="navbar-brand m-0 d-flex align-items-center text-decoration-none" href="/">
+                <div class="bg-primary rounded p-1 me-2" style="background: linear-gradient(135deg, #009668 0%, #004b79 100%);">
+                    <i class="bi bi-file-earmark-person-fill text-white fs-4"></i>
+                </div>
+                <div class="d-flex flex-column">
+                    <span class="fs-5 fw-bold font-inter text-dark" style="line-height: 1;">CAFE UNP CV</span>
+                    <span class="text-muted" style="font-size: 0.7rem;">Documento sin título</span>
+                </div>
             </a>
             
-            <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-outline-light rounded-pill px-3 font-inter fw-semibold shadow-sm text-white border-white" onclick="document.getElementById('btn-login').click()">
-                    <i class="bi bi-person-circle me-1"></i> Mi Cuenta
+            <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary fw-bold font-inter" data-bs-toggle="modal" data-bs-target="#modalAI">
+                    <i class="bi bi-magic me-1"></i> Asistente IA
+                </button>
+                <button id="btn-export-pdf" class="btn btn-sm btn-success fw-bold font-inter shadow-sm" style="background-color: #009668; border-color:#009668;">
+                    <i class="bi bi-download me-1"></i> Exportar PDF
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- TOOLBAR SECUNDARIO -->
-    <div class="bg-white border-bottom shadow-sm py-2 sticky-top" style="top: 70px; z-index: 1050;">
-        <div class="container-fluid px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div class="d-flex align-items-center gap-3">
-                <select id="cv-theme-selector" class="form-select form-select-sm fw-bold border-secondary shadow-none font-inter" style="width: 200px;">
-                    <option value="harvard">Formato Harvard (100% ATS)</option>
-                    <option value="modern">Formato Moderno (Creativo)</option>
-                </select>
-                <div class="vr mx-1"></div>
-                <button class="btn btn-sm btn-light border fw-bold text-dark font-inter" onclick="document.execCommand('bold',false,null)"><i class="bi bi-type-bold"></i></button>
-                <button class="btn btn-sm btn-light border fw-bold text-dark font-inter" onclick="document.execCommand('italic',false,null)"><i class="bi bi-type-italic"></i></button>
-                <button class="btn btn-sm btn-light border fw-bold text-dark font-inter" onclick="document.execCommand('insertUnorderedList',false,null)"><i class="bi bi-list-ul"></i></button>
-            </div>
-            
-            <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-sm btn-primary fw-bold font-inter rounded-pill px-3 ai-glow" data-bs-toggle="modal" data-bs-target="#modalAI">
-                    <i class="bi bi-magic me-1"></i> Mejorar con IA
-                </button>
-                <button id="btn-export-pdf" class="btn btn-sm btn-success fw-bold font-inter rounded-pill px-3" style="background-color: #009668; border-color:#009668;">
-                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Descargar PDF
-                </button>
-            </div>
+    <!-- BARRA DE HERRAMIENTAS (WORD-LIKE) -->
+    <div class="toolbar bg-white border-bottom py-2 px-3 d-flex flex-wrap align-items-center gap-2 sticky-top" style="z-index: 1050; overflow-x: auto;">
+        
+        <!-- Deshacer / Rehacer -->
+        <div class="btn-group shadow-sm">
+            <button class="btn btn-sm btn-light border" onclick="document.execCommand('undo')" title="Deshacer"><i class="bi bi-arrow-counterclockwise"></i></button>
+            <button class="btn btn-sm btn-light border" onclick="document.execCommand('redo')" title="Rehacer"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
+
+        <div class="vr mx-1"></div>
+
+        <!-- Plantillas y Configuración Global -->
+        <select id="cv-template" class="form-select form-select-sm shadow-sm font-inter fw-bold text-primary" style="width: auto;" title="Plantilla ATS">
+            <option value="harvard">Harvard (100% ATS)</option>
+            <option value="executive">Ejecutivo (Moderno)</option>
+        </select>
+        
+        <select id="doc-margin" class="form-select form-select-sm shadow-sm font-inter" style="width: auto;" title="Márgenes">
+            <option value="normal">Margen: Normal</option>
+            <option value="narrow">Margen: Estrecho</option>
+            <option value="wide">Margen: Ancho</option>
+        </select>
+
+        <select id="doc-lineheight" class="form-select form-select-sm shadow-sm font-inter" style="width: auto;" title="Interlineado">
+            <option value="1.2">Líneas: 1.2 (Compacto)</option>
+            <option value="1.5" selected>Líneas: 1.5 (Normal)</option>
+            <option value="1.8">Líneas: 1.8 (Holgado)</option>
+        </select>
+
+        <div class="vr mx-1"></div>
+
+        <!-- Fuentes y Tamaños -->
+        <select class="form-select form-select-sm shadow-sm" style="width: 140px;" onchange="document.execCommand('fontName', false, this.value)" title="Fuente">
+            <option value="Arial">Arial</option>
+            <option value="Merriweather">Merriweather</option>
+            <option value="Inter">Inter</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Georgia">Georgia</option>
+        </select>
+        
+        <select class="form-select form-select-sm shadow-sm" style="width: 70px;" onchange="document.execCommand('fontSize', false, this.value)" title="Tamaño (1-7)">
+            <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+        </select>
+
+        <div class="vr mx-1"></div>
+
+        <!-- Formato de Texto -->
+        <div class="btn-group shadow-sm">
+            <button class="btn btn-sm btn-light border fw-bold" onclick="document.execCommand('bold')" title="Negrita"><i class="bi bi-type-bold"></i></button>
+            <button class="btn btn-sm btn-light border fst-italic" onclick="document.execCommand('italic')" title="Cursiva"><i class="bi bi-type-italic"></i></button>
+            <button class="btn btn-sm btn-light border text-decoration-underline" onclick="document.execCommand('underline')" title="Subrayado"><i class="bi bi-type-underline"></i></button>
+            <button class="btn btn-sm btn-light border text-decoration-line-through" onclick="document.execCommand('strikeThrough')" title="Tachado"><i class="bi bi-type-strikethrough"></i></button>
+        </div>
+
+        <!-- Colores -->
+        <div class="btn-group shadow-sm d-flex align-items-center bg-light border rounded px-1">
+            <label class="d-flex align-items-center cursor-pointer p-1" title="Color de texto">
+                <i class="bi bi-palette-fill text-secondary me-1"></i>
+                <input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="form-control form-control-color border-0 p-0" style="width:20px; height:20px;" value="#000000">
+            </label>
+        </div>
+
+        <div class="vr mx-1"></div>
+
+        <!-- Alineación -->
+        <div class="btn-group shadow-sm">
+            <button class="btn btn-sm btn-light border" onclick="document.execCommand('justifyLeft')" title="Alinear Izquierda"><i class="bi bi-text-left"></i></button>
+            <button class="btn btn-sm btn-light border" onclick="document.execCommand('justifyCenter')" title="Centrar"><i class="bi bi-text-center"></i></button>
+            <button class="btn btn-sm btn-light border" onclick="document.execCommand('justifyRight')" title="Alinear Derecha"><i class="bi bi-text-right"></i></button>
+            <button class="btn btn-sm btn-light border" onclick="document.execCommand('justifyFull')" title="Justificar"><i class="bi bi-justify"></i></button>
+        </div>
+
+        <!-- Listas y Extras -->
+        <div class="btn-group shadow-sm">
+            <button class="btn btn-sm btn-light border" onclick="document.execCommand('insertUnorderedList')" title="Viñetas"><i class="bi bi-list-ul"></i></button>
+            <button class="btn btn-sm btn-light border" onclick="document.execCommand('insertOrderedList')" title="Lista Numerada"><i class="bi bi-list-ol"></i></button>
+        </div>
+        
+        <button class="btn btn-sm btn-light border shadow-sm" onclick="document.execCommand('insertHorizontalRule')" title="Línea Separadora"><i class="bi bi-dash-lg"></i></button>
+        <button class="btn btn-sm btn-light border shadow-sm text-danger" onclick="document.execCommand('removeFormat')" title="Borrar Formato"><i class="bi bi-eraser-fill"></i></button>
     </div>
 
-    <!-- WORKSPACE -->
-    <main class="container-fluid px-4 py-4 flex-grow-1 d-flex flex-column flex-lg-row gap-4">
+    <!-- ÁREA DE TRABAJO -->
+    <div class="d-flex flex-grow-1 overflow-hidden">
         
-        <!-- COLUMNA IZQUIERDA: EDITOR CV -->
-        <div class="col-lg-8 d-flex justify-content-center overflow-auto pb-5">
-            <div id="cv-document" class="cv-page theme-harvard shadow-lg position-relative" contenteditable="true">
-                <!-- El contenido se inyectará vía JS para reiniciar siempre al estándar ATS -->
+        <!-- HOJA A4 (Izquierda) -->
+        <div class="workspace-area flex-grow-1 bg-secondary bg-opacity-10 overflow-auto p-4 d-flex justify-content-center">
+            <div id="cv-document" class="cv-page theme-harvard shadow" contenteditable="true" spellcheck="false" data-margin="normal" data-lineheight="1.5">
+                <!-- Se llena con JS -->
             </div>
         </div>
 
-        <!-- COLUMNA DERECHA: ATS TRACKER & TOOLS -->
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 140px;">
-                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
-                    <h5 class="fw-bold font-inter text-dark mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i> Puntuación ATS</h5>
-                    <p class="text-muted small mt-1">Simulación de escaneo de reclutadores</p>
+        <!-- PANEL LATERAL ATS (Derecha) -->
+        <div class="ats-sidebar bg-white border-start shadow-sm d-flex flex-column" style="width: 380px; min-width: 380px; overflow-y: auto;">
+            
+            <!-- Score Header -->
+            <div class="p-4 border-bottom text-center bg-light">
+                <h5 class="fw-bold font-inter text-dark mb-3">Puntuación ATS</h5>
+                <div class="d-flex justify-content-center mb-2">
+                    <div class="ats-gauge" id="ats-gauge">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="circle" id="ats-circle-path" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="ats-score-text font-inter fw-bold"><span id="ats-score">0</span>%</div>
+                    </div>
                 </div>
-                <div class="card-body px-4 pb-4">
-                    
-                    <!-- Circular Progress -->
-                    <div class="d-flex justify-content-center mb-4">
-                        <div class="ats-circle" id="ats-circle">
-                            <span id="ats-score">0</span>%
+                <p class="small text-muted mb-0" id="ats-feedback-msg">Escribe para analizar tu CV...</p>
+            </div>
+
+            <!-- Panel de Análisis Detallado -->
+            <div class="p-4 flex-grow-1">
+                <h6 class="fw-bold font-inter text-dark border-bottom pb-2 mb-3"><i class="bi bi-search text-primary me-2"></i> Lo que debes mejorar</h6>
+                <ul class="list-unstyled font-inter small mb-4" id="ats-improvements">
+                    <!-- Se llena vía JS -->
+                </ul>
+
+                <h6 class="fw-bold font-inter text-dark border-bottom pb-2 mb-3"><i class="bi bi-check2-all text-success me-2"></i> Análisis de Contenido</h6>
+                <div class="row g-2 font-inter small mb-4 text-center">
+                    <div class="col-6">
+                        <div class="p-2 bg-light border rounded">
+                            <div class="text-muted">Palabras</div>
+                            <div class="fw-bold fs-5" id="stat-words">0</div>
                         </div>
                     </div>
-
-                    <!-- Checklist ATS -->
-                    <h6 class="fw-bold font-inter text-dark mb-3">Requisitos de Optimización</h6>
-                    <ul class="list-group list-group-flush font-inter small" id="ats-checklist">
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center text-success border-0 py-1">
-                            <span><i class="bi bi-check-circle-fill me-2"></i> Formato compatible (Sin columnas)</span>
-                        </li>
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center text-success border-0 py-1">
-                            <span><i class="bi bi-check-circle-fill me-2"></i> Ausencia de fotos/gráficos</span>
-                        </li>
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center text-danger border-0 py-1">
-                            <span><i class="bi bi-x-circle-fill me-2"></i> Palabras clave de la industria</span>
-                        </li>
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center text-danger border-0 py-1">
-                            <span><i class="bi bi-x-circle-fill me-2"></i> Verbos de acción detectados</span>
-                        </li>
-                    </ul>
-
-                    <div class="alert bg-light border mt-4 mb-0 font-inter text-secondary" style="font-size: 0.85rem; border-left: 4px solid #004b79 !important;">
-                        <strong>Consejo:</strong> Usa el formato <em>Harvard</em> para aplicar a corporaciones grandes. Si aplicas a diseño o startups, puedes usar el formato <em>Moderno</em> bajo tu propio riesgo.
+                    <div class="col-6">
+                        <div class="p-2 bg-light border rounded">
+                            <div class="text-muted">Números/Métricas</div>
+                            <div class="fw-bold fs-5 text-primary" id="stat-metrics">0</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </main>
 
-    <!-- MODAL INTELIGENCIA ARTIFICIAL -->
-    <div class="modal fade" id="modalAI" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 pb-0 bg-white">
-                    <h5 class="fw-bold font-inter text-dark mb-0"><i class="bi bi-robot text-primary me-2"></i> Asistente de Redacción IA</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4 bg-white font-inter">
-                    <p class="text-secondary small mb-3">Selecciona un párrafo de tu CV (por ejemplo, tu perfil o experiencia) y la IA lo reescribirá utilizando verbos de acción fuertes y un tono profesional orientado a resultados.</p>
-                    
-                    <div class="mb-3">
-                        <label class="fw-bold small text-muted">Texto Original Seleccionado:</label>
-                        <textarea id="ai-input-text" class="form-control bg-light border-0 shadow-sm font-inter text-secondary" rows="3" placeholder="Selecciona texto en tu CV o escríbelo aquí..."></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="fw-bold small text-muted">Sugerencia Optimizada para ATS:</label>
-                        <textarea id="ai-output-text" class="form-control bg-white border border-success shadow-sm font-inter text-dark" rows="4" readonly placeholder="La IA generará la respuesta aquí..."></textarea>
-                    </div>
-                    
-                    <!-- Simulación de API / Opcional para poner KEY real -->
-                    <div class="input-group input-group-sm mb-3">
-                        <span class="input-group-text bg-light border-0"><i class="bi bi-key"></i></span>
-                        <input type="password" id="gemini-api-key" class="form-control border-0 bg-light shadow-none" placeholder="Opcional: Tu Gemini API Key para generar textos reales">
-                    </div>
-
-                    <div class="text-end">
-                        <button id="btn-generar-ia" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Generar Mejora</button>
-                        <button id="btn-aplicar-ia" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm d-none" style="background-color: #009668; border-color:#009668;">Reemplazar en el CV</button>
-                    </div>
+                <h6 class="fw-bold font-inter text-dark border-bottom pb-2 mb-3"><i class="bi bi-lightning-charge-fill text-warning me-2"></i> Verbos de Acción Detectados</h6>
+                <div class="d-flex flex-wrap gap-1" id="ats-verbs">
+                    <!-- Se llena vía JS -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Botón Login Oculto para compatibilidad -->
-    <button id="btn-login" class="d-none"></button>
+    <!-- MODAL IA GEMINI -->
+    <div class="modal fade" id="modalAI" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header bg-gradient-navbar border-0 pb-3">
+                    <h5 class="fw-bold text-white mb-0 font-inter"><i class="bi bi-robot me-2"></i> Asistente de Redacción (Gemini IA)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light font-inter">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="fw-bold small text-muted mb-2">1. Pega el texto a mejorar:</label>
+                            <textarea id="ai-input-text" class="form-control bg-white border shadow-sm font-inter" rows="5" placeholder="Pega aquí la descripción de un puesto o tu perfil..."></textarea>
+                            
+                            <label class="fw-bold small text-muted mt-3 mb-2">2. ¿Qué deseas hacer?</label>
+                            <select id="ai-tone" class="form-select bg-white border shadow-sm">
+                                <option value="profesional">Hacerlo más profesional y formal</option>
+                                <option value="logros">Enfocarlo en logros y métricas</option>
+                                <option value="ingles">Traducir y adaptar al Inglés</option>
+                                <option value="gramatica">Corregir ortografía y gramática</option>
+                            </select>
+
+                            <div class="mt-3">
+                                <input type="password" id="gemini-api-key" class="form-control form-control-sm border shadow-sm" placeholder="Opcional: Tu API Key de Gemini">
+                                <small class="text-muted" style="font-size: 0.7rem;">Si no usas Key, se aplicarán mejoras predefinidas locales.</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 d-flex flex-column">
+                            <label class="fw-bold small text-muted mb-2">Resultado Optimizado:</label>
+                            <textarea id="ai-output-text" class="form-control bg-white border border-success shadow-sm font-inter flex-grow-1 mb-3" readonly placeholder="La IA generará la respuesta aquí..."></textarea>
+                            
+                            <div class="d-flex gap-2">
+                                <button id="btn-generar-ia" class="btn btn-primary flex-grow-1 fw-bold shadow-sm">
+                                    <i class="bi bi-stars"></i> Generar
+                                </button>
+                                <button id="btn-copiar-ia" class="btn btn-success fw-bold shadow-sm" title="Copiar al portapapeles">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="cv.js"></script>
