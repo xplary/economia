@@ -470,47 +470,101 @@ window.guardarFooterAdmin = async () => {
     }
 };
 
+// --- NUEVO SISTEMA DE DESTACADO (CROPPER + FIREBASE) ---
+let cropperDestacado = null;
+let imagenGuardada = ''; 
 
-// --- NUEVA LÓGICA: GUARDAR DESTACADO CUADRADO ---
-document.getElementById('form-destacado')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const imgUrl = document.getElementById('admin-img-url').value;
-    const linkUrl = document.getElementById('admin-link-url').value;
+// 1. Mostrar Cropper al seleccionar archivo local
+document.getElementById('admin-sb-imagen-file')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = document.getElementById('cropper-image-destacado');
+            img.src = event.target.result;
+            document.getElementById('cropper-container-destacado').style.display = 'block';
+            
+            if (cropperDestacado) cropperDestacado.destroy();
+            
+            cropperDestacado = new Cropper(img, {
+                aspectRatio: 1,
+                viewMode: 2,
+                autoCropArea: 1,
+                guides: true,
+                center: true
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+});
 
-    const btn = e.target.querySelector('button');
-    const oldText = btn.innerHTML;
+// 2. Procesar y guardar en Firebase
+document.getElementById('btn-guardar-destacado')?.addEventListener('click', async (e) => {
+    const btn = e.target;
+    const link = document.getElementById('admin-sb-enlace').value;
+    const textoOriginal = btn.innerHTML;
+    
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
     btn.disabled = true;
 
+    // Si cortó una imagen nueva, la convertimos a Base64. Si no, mantenemos la anterior.
+    let imgFinal = imagenGuardada;
+    if (cropperDestacado) {
+        imgFinal = cropperDestacado.getCroppedCanvas({ width: 800, height: 800 }).toDataURL('image/jpeg', 0.85);
+    }
+
     try {
-        await setDoc(doc(db, "configuracion", "destacado"), {
-            bannerImageUrl: imgUrl,
-            bannerLinkUrl: linkUrl
-        }, { merge: true });
+        // Guardamos usando la nomenclatura exacta que lee tu index.html principal
+        // Lo guardamos tanto en "general" como en "destacado" para asegurar compatibilidad total con tu app.js
+        const dataPayload = { 
+            sb_imagen: imgFinal, 
+            sb_enlace: link,
+            bannerImageUrl: imgFinal, 
+            bannerLinkUrl: link 
+        };
+
+        await setDoc(doc(db, "configuracion", "general"), dataPayload, { merge: true });
+        await setDoc(doc(db, "configuracion", "destacado"), dataPayload, { merge: true });
+
+        imagenGuardada = imgFinal;
         
-        alert("Configuración de la imagen destacada guardada exitosamente");
+        // Limpiar la interfaz
+        if (cropperDestacado) {
+            cropperDestacado.destroy();
+            cropperDestacado = null;
+        }
+        document.getElementById('cropper-container-destacado').style.display = 'none';
+        document.getElementById('admin-sb-imagen-file').value = '';
+
+        alert("¡Imagen destacada subida y vinculada con éxito!");
     } catch (error) {
-        console.error("Error guardando destacado: ", error);
-        alert("Hubo un error al guardar la configuración.");
+        console.error("Error al guardar destacado:", error);
+        alert("Hubo un problema al guardar. Revisa la consola.");
     } finally {
-        btn.innerHTML = oldText;
+        btn.innerHTML = textoOriginal;
         btn.disabled = false;
     }
 });
 
-// Cargar datos actuales del destacado en el admin
-async function cargarDatosDestacadoAdmin() {
+// 3. Cargar el enlace actual al abrir el admin
+setTimeout(async () => {
     try {
-        const s = await getDoc(doc(db, "configuracion", "destacado"));
-        if(s.exists()) {
-            const d = s.data();
-            const imgInput = document.getElementById('admin-img-url');
-            const linkInput = document.getElementById('admin-link-url');
-            if (imgInput) imgInput.value = d.bannerImageUrl || '';
-            if (linkInput) linkInput.value = d.bannerLinkUrl || '';
+        // Revisamos primero la configuración general (estilo footer)
+        let docSnap = await getDoc(doc(db, "configuracion", "general"));
+        if (!docSnap.exists() || !docSnap.data().sb_imagen) {
+            docSnap = await getDoc(doc(db, "configuracion", "destacado"));
         }
-    } catch(e) {
-        console.error("Error cargando Destacado: ", e);
+        
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Soporte para ambas nomenclaturas
+            imagenGuardada = data.sb_imagen || data.bannerImageUrl || '';
+            const linkInput = document.getElementById('admin-sb-enlace');
+            if (linkInput) {
+                linkInput.value = data.sb_enlace || data.bannerLinkUrl || '';
+            }
+        }
+    } catch (e) { 
+        console.error("Error cargando datos previos:", e); 
     }
-}
-setTimeout(cargarDatosDestacadoAdmin, 1000);
+}, 1500);
