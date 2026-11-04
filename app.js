@@ -346,3 +346,41 @@ window.renderModalFormulario = (id, data) => { const modal = bootstrap.Modal.get
 document.getElementById('modalNoticia').addEventListener('hidden.bs.modal', () => { if(window.modalActual.col === 'noticias') window.modalActual = { id: null, col: null }; });
 document.getElementById('modalLectura').addEventListener('hidden.bs.modal', () => { if(window.modalActual.col === 'articulos') window.modalActual = { id: null, col: null }; });
 document.getElementById('modalFormulario').addEventListener('hidden.bs.modal', () => { if(window.modalActual.col === 'formularios') window.modalActual = { id: null, col: null }; });
+
+
+// --- NUEVA LÓGICA: DESTACADO CUADRADO ---
+async function cargarDestacadoCuadrado() {
+    try {
+        const docRef = doc(db, "configuracion", "destacado"); 
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            const imgElement = document.getElementById('sb-imagen');
+            const placeholder = document.getElementById('sb-placeholder');
+            const enlace = document.getElementById('sb-enlace');
+            
+            if (imgElement && placeholder && enlace) {
+                if (data.bannerImageUrl && data.bannerImageUrl.trim() !== '') {
+                    imgElement.src = data.bannerImageUrl;
+                    imgElement.classList.remove('d-none');
+                    placeholder.classList.add('d-none');
+                } else {
+                    imgElement.classList.add('d-none');
+                    placeholder.classList.remove('d-none');
+                }
+
+                if (data.bannerLinkUrl && data.bannerLinkUrl.trim() !== '') {
+                    enlace.href = data.bannerLinkUrl;
+                    enlace.style.pointerEvents = "auto";
+                } else {
+                    enlace.removeAttribute("href");
+                    enlace.style.pointerEvents = "none";
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error cargando el panel destacado: ", error);
+    }
+}
+document.addEventListener("DOMContentLoaded", cargarDestacadoCuadrado);
