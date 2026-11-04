@@ -483,7 +483,7 @@ document.getElementById('form-destacado')?.addEventListener('submit', async (e) 
     btn.disabled = true;
 
     try {
-        await setDoc(doc(db, "config", "destacado"), {
+        await setDoc(doc(db, "configuracion", "destacado"), {
             bannerImageUrl: imgUrl,
             bannerLinkUrl: linkUrl
         }, { merge: true });
@@ -501,7 +501,7 @@ document.getElementById('form-destacado')?.addEventListener('submit', async (e) 
 // Cargar datos actuales del destacado en el admin
 async function cargarDatosDestacadoAdmin() {
     try {
-        const s = await getDoc(doc(db, "config", "destacado"));
+        const s = await getDoc(doc(db, "configuracion", "destacado"));
         if(s.exists()) {
             const d = s.data();
             const imgInput = document.getElementById('admin-img-url');
