@@ -469,3 +469,48 @@ window.guardarFooterAdmin = async () => {
         btn.disabled = false;
     }
 };
+
+
+// --- NUEVA LÓGICA: GUARDAR DESTACADO CUADRADO ---
+document.getElementById('form-destacado')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const imgUrl = document.getElementById('admin-img-url').value;
+    const linkUrl = document.getElementById('admin-link-url').value;
+
+    const btn = e.target.querySelector('button');
+    const oldText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+    btn.disabled = true;
+
+    try {
+        await setDoc(doc(db, "configuracion", "destacado"), {
+            bannerImageUrl: imgUrl,
+            bannerLinkUrl: linkUrl
+        }, { merge: true });
+        
+        alert("Configuración de la imagen destacada guardada exitosamente");
+    } catch (error) {
+        console.error("Error guardando destacado: ", error);
+        alert("Hubo un error al guardar la configuración.");
+    } finally {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+    }
+});
+
+// Cargar datos actuales del destacado en el admin
+async function cargarDatosDestacadoAdmin() {
+    try {
+        const s = await getDoc(doc(db, "configuracion", "destacado"));
+        if(s.exists()) {
+            const d = s.data();
+            const imgInput = document.getElementById('admin-img-url');
+            const linkInput = document.getElementById('admin-link-url');
+            if (imgInput) imgInput.value = d.bannerImageUrl || '';
+            if (linkInput) linkInput.value = d.bannerLinkUrl || '';
+        }
+    } catch(e) {
+        console.error("Error cargando Destacado: ", e);
+    }
+}
+setTimeout(cargarDatosDestacadoAdmin, 1000);
