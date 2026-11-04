@@ -356,9 +356,9 @@ async function cargarDestacadoCuadrado() {
         
         if (docSnap.exists()) {
             const data = docSnap.data();
-            const imgElement = document.getElementById('admin-img-url');
+            const imgElement = document.getElementById('sb-imagen');
             const placeholder = document.getElementById('sb-placeholder');
-            const enlace = document.getElementById('admin-link-url');
+            const enlace = document.getElementById('sb-enlace');
             
             if (imgElement && placeholder && enlace) {
                 if (data.bannerImageUrl && data.bannerImageUrl.trim() !== '') {
