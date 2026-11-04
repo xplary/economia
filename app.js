@@ -351,7 +351,7 @@ document.getElementById('modalFormulario').addEventListener('hidden.bs.modal', (
 // --- NUEVA LÓGICA: DESTACADO CUADRADO ---
 async function cargarDestacadoCuadrado() {
     try {
-        const docRef = doc(db, "configuracion", "destacado"); 
+        const docRef = doc(db, "config", "destacado"); 
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
