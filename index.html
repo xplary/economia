@@ -125,11 +125,19 @@
                         <div class="skeleton-box w-100 mb-4" style="height: 180px;"></div>
                     </div>
                     <div class="col-lg-4 ps-lg-4 mt-4 mt-lg-0">
-                        <div class="p-4 bg-white shadow-sm position-relative rounded-4" style="border: 1px solid #e2e8f0;">
-                            <h4 id="sb-titulo" class="fw-bold mb-3 font-serif" style="color: #1a202c; font-size: 1.4rem; line-height: 1.4;">Te damos la bienvenida a nuestro nuevo INTEGRATE</h4>
-                            <p id="sb-desc" class="mb-3 fw-bold font-inter" style="font-size: 0.95rem; color: #2d3748; line-height: 1.6;">Conferencia Internacional: Empleabilidad, IA y competencias...</p>
-                            <a href="#" class="text-dark text-decoration-none fw-bold d-inline-block font-inter" style="font-size: 0.95rem; color: #009668 !important;">Ver mas... <i class="bi bi-arrow-right-circle ms-1 text-muted"></i></a>
-                        </div>
+                        <!-- El enlace envuelve la tarjeta -->
+                        <a href="#" id="sb-enlace" class="d-block text-decoration-none" target="_blank">
+                            <div class="bg-white shadow-sm position-relative rounded-4 overflow-hidden d-flex align-items-center justify-content-center" style="border: 1px solid #e2e8f0; aspect-ratio: 1/1; cursor: pointer;">
+                                <!-- Imagen -->
+                                <img id="sb-imagen" src="" alt="Destacado" class="w-100 h-100 object-fit-cover d-none">
+                                <!-- Placeholder -->
+                                <div id="sb-placeholder" class="text-center text-muted p-4 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-light">
+                                    <i class="bi bi-image mb-2 text-secondary" style="font-size: 3rem;"></i>
+                                    <span class="fw-bold font-inter" style="font-size: 1.1rem; color: #2d3748;">Espacio Destacado</span>
+                                    <small class="text-muted mt-2" style="font-size: 0.8rem;">(Sin imagen configurada)</small>
+                                </div>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>
