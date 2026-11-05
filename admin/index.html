@@ -1,13 +1,13 @@
-<!DOCTYPE html>
-<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Pro | CAFE UNP</title>
-    
+    <title>Panel Admin</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
@@ -43,6 +43,8 @@
             #sidebar-overlay.show { display: block; }
         }
     </style>
+    <!-- ¡IMPORTANTE! AQUÍ SE SOLUCIONA EL ERROR "Cropper is not defined" -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
 </head>
 <body>
 
@@ -296,25 +298,35 @@
 
                         
                         <div class="col-lg-12 border-top pt-4">
-                            <h6 class="fw-bold text-primary mb-4 font-inter"><i class="bi bi-image me-2"></i> Configuración de Destacado Cuadrado</h6>
-                            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-                                <form id="form-destacado">
-                                    <div class="row g-4">
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-bold small text-secondary">URL de la Imagen (Se recortará 1:1)</label>
-                                            <input type="url" class="form-control bg-light border-0 py-2 rounded-3" id="admin-img-url" placeholder="https://ejemplo.com/foto.jpg">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label fw-bold small text-secondary">Enlace de Redirección</label>
-                                            <input type="url" class="form-control bg-light border-0 py-2 rounded-3" id="admin-link-url" placeholder="https://ejemplo.com">
-                                        </div>
-                                        <div class="col-12 text-end">
-                                            <button type="submit" class="btn px-4 rounded-pill shadow-sm text-white fw-bold" style="background: #009668; border: none;">Guardar Configuración</button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+    <h6 class="fw-bold text-primary mb-4 font-inter"><i class="bi bi-image me-2"></i> Configuración de Destacado Cuadrado</h6>
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label class="form-label fw-bold small text-secondary">Subir Imagen (Formato 1:1 Cuadrado)</label>
+                <!-- Aquí está el input de archivo físico -->
+                <input type="file" class="form-control bg-light border-0 py-2 rounded-3" id="admin-sb-imagen-file" accept="image/*">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold small text-secondary">Enlace de Redirección</label>
+                <input type="url" class="form-control bg-light border-0 py-2 rounded-3" id="admin-sb-enlace" placeholder="https://ejemplo.com">
+            </div>
+            
+            <!-- CONTENEDOR CROPPER -->
+            <div class="col-md-12 mt-3" id="cropper-container-destacado" style="display:none;">
+                <label class="small fw-bold text-dark mb-2"><i class="bi bi-crop me-1 text-primary"></i> Ajusta tu imagen (arrastra para encuadrar al formato 1:1):</label>
+                <div class="border rounded-3 overflow-hidden shadow-sm" style="max-height: 400px; width: 100%; background: #f8f9fa;">
+                    <img id="cropper-image-destacado" src="" style="max-width: 100%; display: block;">
+                </div>
+            </div>
+
+            <div class="col-12 text-end mt-4">
+                <button type="button" id="btn-guardar-destacado" class="btn px-4 rounded-pill shadow-sm text-white fw-bold" style="background: #009668; border: none;">
+                    <i class="bi bi-floppy-fill me-2"></i> Guardar Destacado
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
                         <div class="col-lg-12 border-top pt-4">
                             <h6 class="fw-bold text-primary mb-4 font-inter"><i class="bi bi-link-45deg me-2"></i> Configuración de Botones y Enlaces</h6>
@@ -380,7 +392,14 @@
                 </div>
             </div>
 
+    <!-- Tu HTML del panel admin va aquí -->
+    <div id="admin-panel">
+        <h2>Subir Destacado</h2>
+        <input type="file" id="input-imagen-destacado" accept="image/*">
+        <div>
+            <img id="imagen-preview" style="max-width: 100%; display: none;">
         </div>
+        <button id="btn-guardar-destacado">Guardar Destacado</button>
     </div>
 
     <!-- MODAL PARA CREAR/EDITAR ROL -->
@@ -443,7 +462,10 @@
 
         document.querySelectorAll('.sidebar .nav-link').forEach(link => { link.addEventListener('click', cerrarMenuMobile); });
     </script>
-
+    <!-- ¡IMPORTANTE! AQUÍ SE CARGA EL SCRIPT DE CROPPER ANTES DE admin.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <!-- Aquí cargas tu script (asegúrate que sea type="module" si usas import de Firebase) -->
     <script type="module" src="admin.js"></script>
 </body>
 </html>
