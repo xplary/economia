@@ -1,18 +1,24 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+// Este es el fragmento de código que debes usar en tu admin.js
+// Asegúrate de tener importado setDoc y doc de Firestore
 
 const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1" });
 const auth = getAuth(app); 
 const db = getFirestore(app);
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.x.x/firebase-firestore.js";
 
 let allUsers = [];
 let allRoles = [];
 let chartInstances = {}; 
+// Suponiendo que ya inicializaste 'db'
+// const db = getFirestore(app);
 
 let misPermisos = { panel: false, stats: false, users: false, roles: false };
 let isSuperAdminLogueado = false;
 let miRolId = null;
+let cropper; // Variable global para el cropper
 
 // ==========================================
 // 1. AUTENTICACIÓN Y SEGURIDAD DINÁMICA
@@ -470,47 +476,131 @@ window.guardarFooterAdmin = async () => {
     }
 };
 
+// --- NUEVO SISTEMA DE DESTACADO (CROPPER + FIREBASE) ---
+let cropperDestacado = null;
+let imagenGuardada = ''; 
 
-// --- NUEVA LÓGICA: GUARDAR DESTACADO CUADRADO ---
-document.getElementById('form-destacado')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const imgUrl = document.getElementById('admin-img-url').value;
-    const linkUrl = document.getElementById('admin-link-url').value;
+// 1. Mostrar Cropper al seleccionar archivo local
+document.getElementById('admin-sb-imagen-file')?.addEventListener('change', function(e) {
+// 1. LÓGICA DE CROPPER (Para solucionar el error de la línea 489)
+document.getElementById('input-imagen-destacado').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = document.getElementById('cropper-image-destacado');
+            img.src = event.target.result;
+            document.getElementById('cropper-container-destacado').style.display = 'block';
+            
+            if (cropperDestacado) cropperDestacado.destroy();
+            const imageElement = document.getElementById('imagen-preview');
+            imageElement.src = event.target.result;
+            imageElement.style.display = 'block';
 
-    const btn = e.target.querySelector('button');
-    const oldText = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
-    btn.disabled = true;
+            if (cropper) { cropper.destroy(); } // Destruir instancia anterior si existe
 
-    try {
-        await setDoc(doc(db, "configuracion", "destacado"), {
-            bannerImageUrl: imgUrl,
-            bannerLinkUrl: linkUrl
-        }, { merge: true });
-        
-        alert("Configuración de la imagen destacada guardada exitosamente");
-    } catch (error) {
-        console.error("Error guardando destacado: ", error);
-        alert("Hubo un error al guardar la configuración.");
-    } finally {
-        btn.innerHTML = oldText;
-        btn.disabled = false;
+            cropperDestacado = new Cropper(img, {
+                aspectRatio: 1,
+                viewMode: 2,
+                autoCropArea: 1,
+                guides: true,
+                center: true
+            // AQUÍ ESTÁ CROPPER (Ya no dará error porque está en el HTML)
+            cropper = new Cropper(imageElement, {
+                aspectRatio: 16 / 9,
+                viewMode: 1,
+            });
+        };
+        reader.readAsDataURL(file);
     }
 });
 
-// Cargar datos actuales del destacado en el admin
-async function cargarDatosDestacadoAdmin() {
-    try {
-        const s = await getDoc(doc(db, "configuracion", "destacado"));
-        if(s.exists()) {
-            const d = s.data();
-            const imgInput = document.getElementById('admin-img-url');
-            const linkInput = document.getElementById('admin-link-url');
-            if (imgInput) imgInput.value = d.bannerImageUrl || '';
-            if (linkInput) linkInput.value = d.bannerLinkUrl || '';
-        }
-    } catch(e) {
-        console.error("Error cargando Destacado: ", e);
+// 2. Procesar y guardar en Firebase
+document.getElementById('btn-guardar-destacado')?.addEventListener('click', async (e) => {
+    const btn = e.target;
+    const link = document.getElementById('admin-sb-enlace').value;
+    const textoOriginal = btn.innerHTML;
+    
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+    btn.disabled = true;
+
+    // Si cortó una imagen nueva, la convertimos a Base64. Si no, mantenemos la anterior.
+    let imgFinal = imagenGuardada;
+    if (cropperDestacado) {
+        imgFinal = cropperDestacado.getCroppedCanvas({ width: 800, height: 800 }).toDataURL('image/jpeg', 0.85);
+// 2. LÓGICA PARA GUARDAR EN FIRESTORE (Soluciona el error de la línea 541 y crea BD automática)
+document.getElementById('btn-guardar-destacado').addEventListener('click', async function() {
+    if (!cropper) {
+        alert("Por favor, selecciona y recorta una imagen primero.");
+        return;
     }
-}
-setTimeout(cargarDatosDestacadoAdmin, 1000);
+
+    try {
+        // Guardamos usando la nomenclatura exacta que lee tu index.html principal
+        // Lo guardamos tanto en "general" como en "destacado" para asegurar compatibilidad total con tu app.js
+        const dataPayload = { 
+            sb_imagen: imgFinal, 
+            sb_enlace: link,
+            bannerImageUrl: imgFinal, 
+            bannerLinkUrl: link 
+        };
+
+        await setDoc(doc(db, "configuracion", "general"), dataPayload, { merge: true });
+        await setDoc(doc(db, "configuracion", "destacado"), dataPayload, { merge: true });
+    // Obtener la imagen en base64
+    const imagenBase64 = cropper.getCroppedCanvas().toDataURL('image/jpeg');
+
+        imagenGuardada = imgFinal;
+    try {
+        console.log("Guardando en Firebase...");
+
+        // Limpiar la interfaz
+        if (cropperDestacado) {
+            cropperDestacado.destroy();
+            cropperDestacado = null;
+        }
+        document.getElementById('cropper-container-destacado').style.display = 'none';
+        document.getElementById('admin-sb-imagen-file').value = '';
+        // ESTO CREA AUTOMÁTICAMENTE LA COLECCIÓN 'destacados' Y EL DOCUMENTO 'principal'
+        const destacadoRef = doc(db, "destacados", "principal");
+        
+        await setDoc(destacadoRef, {
+            imagen: imagenBase64,
+            fecha: new Date().toISOString(),
+            // Puedes añadir título, enlace, etc.
+        });
+
+        alert("¡Imagen destacada subida y vinculada con éxito!");
+        alert("¡Destacado guardado con éxito! Se creó en la base de datos.");
+    } catch (error) {
+        console.error("Error al guardar destacado:", error);
+        alert("Hubo un problema al guardar. Revisa la consola.");
+    } finally {
+        btn.innerHTML = textoOriginal;
+        btn.disabled = false;
+        alert("Error de permisos: Asegúrate que tu UID tenga rol 'admin' en la colección 'usuarios'.");
+    }
+});
+
+// 3. Cargar el enlace actual al abrir el admin
+setTimeout(async () => {
+    try {
+        // Revisamos primero la configuración general (estilo footer)
+        let docSnap = await getDoc(doc(db, "configuracion", "general"));
+        if (!docSnap.exists() || !docSnap.data().sb_imagen) {
+            docSnap = await getDoc(doc(db, "configuracion", "destacado"));
+        }
+        
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Soporte para ambas nomenclaturas
+            imagenGuardada = data.sb_imagen || data.bannerImageUrl || '';
+            const linkInput = document.getElementById('admin-sb-enlace');
+            if (linkInput) {
+                linkInput.value = data.sb_enlace || data.bannerLinkUrl || '';
+            }
+        }
+    } catch (e) { 
+        console.error("Error cargando datos previos:", e); 
+    }
+}, 1500);
