@@ -3,27 +3,447 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin</title>
+    <title>Dashboard Pro | CAFE UNP</title>
     
-    <!-- ¡IMPORTANTE! AQUÍ SE SOLUCIONA EL ERROR "Cropper is not defined" -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        
+        .sidebar { width: 260px; background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #fff; position: fixed; height: 100vh; left: 0; top: 0; padding-top: 1.5rem; z-index: 1050; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 4px 0 15px rgba(0,0,0,0.05); }
+        .sidebar .nav-link { color: #94a3b8; font-weight: 500; padding: 0.85rem 1.5rem; transition: all 0.2s ease; cursor: pointer; border-radius: 0 25px 25px 0; margin-right: 1rem; margin-bottom: 0.2rem; }
+        .sidebar .nav-link:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+        .sidebar .nav-link.active { color: #fff; background: linear-gradient(90deg, rgba(0,150,104,0.2) 0%, rgba(0,150,104,0) 100%); border-left: 4px solid #009668; }
+        
+        .main-content { margin-left: 260px; padding: 2rem 2.5rem; min-height: 100vh; transition: margin 0.3s ease; }
+        
+        .kpi-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03); transition: transform 0.2s ease; }
+        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06); }
+        .kpi-icon { width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .bg-grad-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .bg-grad-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .bg-grad-purple { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+        .bg-grad-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+        .table > :not(caption) > * > * { padding: 1rem 0.75rem; color: #334155; border-bottom-color: #f1f5f9; }
+        .table-light { background-color: #f8fafc; }
+        .badge-soft { padding: 0.4rem 0.75rem; border-radius: 8px; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.3px; }
+        
+        #loading-screen, #access-denied { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        #sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); z-index: 1040; backdrop-filter: blur(3px); }
+        
+        @media (max-width: 992px) { 
+            .sidebar { transform: translateX(-100%); } 
+            .sidebar.show { transform: translateX(0); } 
+            .main-content { margin-left: 0; padding: 1.5rem 1rem; } 
+            #sidebar-overlay.show { display: block; }
+        }
+    </style>
 </head>
 <body>
 
-    <!-- Tu HTML del panel admin va aquí -->
-    <div id="admin-panel">
-        <h2>Subir Destacado</h2>
-        <input type="file" id="input-imagen-destacado" accept="image/*">
-        <div>
-            <img id="imagen-preview" style="max-width: 100%; display: none;">
-        </div>
-        <button id="btn-guardar-destacado">Guardar Destacado</button>
+    <!-- Pantallas de Estado -->
+    <div id="loading-screen">
+        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem; border-width: 0.25rem;"></div>
+        <h4 class="fw-bold text-slate-800">Cargando Workspace...</h4>
     </div>
 
-    <!-- ¡IMPORTANTE! AQUÍ SE CARGA EL SCRIPT DE CROPPER ANTES DE admin.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    
-    <!-- Aquí cargas tu script (asegúrate que sea type="module" si usas import de Firebase) -->
+    <div id="access-denied" style="display: none;">
+        <i class="bi bi-shield-lock-fill text-danger mb-3" style="font-size: 5.5rem;"></i>
+        <h2 class="fw-bold text-dark mb-2">Acceso Restringido</h2>
+        <p class="text-secondary mb-4">No tienes los permisos necesarios para acceder a esta área.</p>
+        <a href="../index.html" class="btn btn-dark rounded-pill px-4 py-2 fw-semibold shadow-sm">Regresar al Portal</a>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div id="dashboard-wrapper" style="display: none;">
+        
+        <div id="sidebar-overlay"></div>
+
+        <div class="sidebar" id="sidebar">
+            <div class="px-4 mb-5 mt-2 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="bg-white rounded p-1 me-3 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                        <i class="bi bi-bar-chart-fill fs-5" style="color: #003657;"></i>
+                    </div>
+                    <h5 class="m-0 fw-bold tracking-wide">CAFE<span style="color: #009668;">UNP</span></h5>
+                </div>
+                <i class="bi bi-x-lg text-white d-lg-none fs-4 cursor-pointer opacity-75 hover-opacity-100" id="btn-close-sidebar"></i>
+            </div>
+            <ul class="nav flex-column mb-auto" id="sidebar-nav">
+                <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-2" style="letter-spacing: 1px; font-size: 0.7rem;">Principal</li>
+                
+                <li class="nav-item" id="nav-overview" style="display:none;"><a class="nav-link active" data-target="dashboard-tab"><i class="bi bi-grid-fill me-3 fs-5 align-middle"></i> Overview</a></li>
+                <li class="nav-item mt-2" id="nav-users" style="display:none;"><a class="nav-link" data-target="usuarios-tab"><i class="bi bi-people-fill me-3 fs-5 align-middle"></i> Directorio</a></li>
+                <li class="nav-item mt-2" id="nav-roles" style="display:none;"><a class="nav-link" data-target="roles-tab"><i class="bi bi-shield-shaded me-3 fs-5 align-middle"></i> Roles y Permisos</a></li>
+                
+                <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-4" style="letter-spacing: 1px; font-size: 0.7rem;">Plataforma</li>
+                <li class="nav-item mt-2" id="nav-edicion" style="display:none;"><a class="nav-link" data-target="edicion-tab"><i class="bi bi-layout-text-window-reverse me-3 fs-5 align-middle"></i> Edición de Web</a></li>
+                
+                <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-5" style="letter-spacing: 1px; font-size: 0.7rem;">Sistema</li>
+                <li class="nav-item"><a href="../index.html" class="nav-link text-warning"><i class="bi bi-box-arrow-up-right me-3 fs-5 align-middle"></i> Salir al Portal</a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-center mb-5 pb-2 border-bottom border-light-subtle">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-white d-lg-none border shadow-sm bg-white" id="sidebar-toggle" style="border-radius: 10px;">
+                        <i class="bi bi-list fs-4 text-dark"></i>
+                    </button>
+                    <div>
+                        <h2 class="fw-bold m-0 text-dark" id="page-title" style="letter-spacing: -0.5px;">Panel de Control</h2>
+                        <p class="text-secondary small m-0 mt-1">Gestión administrativa del sistema</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center bg-white px-2 py-1 rounded-pill shadow-sm border" style="border-color: #e2e8f0;">
+                    <img src="" id="admin-avatar" class="rounded-circle ms-1 my-1" style="width: 36px; height: 36px; object-fit: cover;">
+                    <div class="d-none d-md-flex flex-column ms-2 me-3 lh-1">
+                        <span class="fw-bold text-dark" id="admin-name" style="font-size: 0.85rem;">Admin</span>
+                        <span class="text-success fw-semibold" style="font-size: 0.7rem;">● Online</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 1: DASHBOARD / OVERVIEW -->
+            <div id="dashboard-tab" class="admin-section" style="display: none;">
+                <div class="row g-4 mb-4">
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card kpi-card p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div><p class="text-secondary fw-semibold mb-1" style="font-size: 0.8rem; letter-spacing: 0.5px;">VISITAS AL PORTAL</p><h2 class="fw-bold m-0 text-dark" id="kpi-vistas">0</h2></div>
+                                <div class="kpi-icon bg-grad-blue"><i class="bi bi-globe"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card kpi-card p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div><p class="text-secondary fw-semibold mb-1" style="font-size: 0.8rem; letter-spacing: 0.5px;">USUARIOS TOTALES</p><h2 class="fw-bold m-0 text-dark" id="kpi-usuarios">0</h2></div>
+                                <div class="kpi-icon bg-grad-purple"><i class="bi bi-person-hearts"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card kpi-card p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div><p class="text-secondary fw-semibold mb-1" style="font-size: 0.8rem; letter-spacing: 0.5px;">PUBLICACIONES</p><h2 class="fw-bold m-0 text-dark" id="kpi-posts">0</h2></div>
+                                <div class="kpi-icon bg-grad-green"><i class="bi bi-stack"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="card kpi-card p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div><p class="text-secondary fw-semibold mb-1" style="font-size: 0.8rem; letter-spacing: 0.5px;">INTERACCIONES</p><h2 class="fw-bold m-0 text-dark" id="kpi-interacciones">0</h2></div>
+                                <div class="kpi-icon bg-grad-orange"><i class="bi bi-lightning-charge-fill"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-8">
+                        <div class="card kpi-card p-4 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="fw-bold m-0 text-dark">Evolución de Publicaciones</h5>
+                                <span class="badge bg-light text-secondary border">Últimos meses</span>
+                            </div>
+                            <div style="position: relative; height: 280px; width: 100%;">
+                                <canvas id="lineChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card kpi-card p-4 h-100">
+                            <h5 class="fw-bold mb-4 text-dark">Distribución por Tipo</h5>
+                            <div class="d-flex justify-content-center align-items-center h-100 pb-2" style="position: relative; height: 250px; width: 100%;">
+                                <canvas id="doughnutChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-xl-5">
+                        <div class="card kpi-card p-4 h-100">
+                            <h5 class="fw-bold mb-4 text-dark"><i class="bi bi-trophy-fill text-warning me-2"></i> Top 5 Más Vistos</h5>
+                            <div style="position: relative; height: 350px; width: 100%;">
+                                <canvas id="barChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-7">
+                        <div class="card kpi-card p-4 h-100">
+                            <h5 class="fw-bold mb-4 text-dark">Rendimiento Detallado</h5>
+                            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                                <table class="table table-hover align-middle m-0">
+                                    <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                                        <tr>
+                                            <th class="text-secondary font-inter" style="font-size: 0.8rem;">TÍTULO</th>
+                                            <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">TIPO</th>
+                                            <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">VISTAS</th>
+                                            <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ENGAGEMENT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="posts-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: GESTIÓN DE USUARIOS -->
+            <div id="usuarios-tab" class="admin-section" style="display: none;">
+                <div class="card kpi-card p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 border-bottom pb-4 border-light-subtle">
+                        <div>
+                            <h5 class="fw-bold m-0 text-dark">Directorio de Usuarios</h5>
+                            <p class="text-secondary small m-0 mt-1">Administra permisos y visualiza reputación de la comunidad.</p>
+                        </div>
+                        <div class="d-flex gap-2 w-100" style="max-width: 400px;">
+                            <div class="input-group shadow-sm" style="flex: 1;">
+                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                <input type="text" id="buscar-usuario" class="form-control border-start-0 shadow-none font-inter" placeholder="Buscar usuario...">
+                            </div>
+                            <button class="btn shadow-sm text-white px-3 d-flex align-items-center fw-semibold" style="background-color: #009668;" onclick="window.exportarUsuariosCSV()" title="Descargar Excel/CSV">
+                                <i class="bi bi-cloud-download me-md-2"></i> <span class="d-none d-md-inline">Exportar</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" style="min-width: 650px;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-secondary font-inter" style="font-size: 0.8rem;">USUARIO</th>
+                                    <th class="text-secondary font-inter" style="font-size: 0.8rem;">CORREO</th>
+                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">REPUTACIÓN</th>
+                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ESTADO/ROL</th>
+                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ASIGNAR RANGO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usuarios-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SECCIÓN 3: ROLES Y PERMISOS -->
+            <div id="roles-tab" class="admin-section" style="display: none;">
+                <div class="card kpi-card p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 border-bottom pb-4 border-light-subtle">
+                        <div>
+                            <h5 class="fw-bold m-0 text-dark">Gestión de Rangos</h5>
+                            <p class="text-secondary small m-0 mt-1">Crea roles personalizados y asigna permisos jerárquicos.</p>
+                        </div>
+                        <button class="btn shadow-sm text-white px-4 py-2 fw-semibold" style="background-color: #3b82f6;" onclick="window.abrirModalRol()">
+                            <i class="bi bi-shield-plus me-2"></i> Crear Rango
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" style="min-width: 600px;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-secondary font-inter" style="font-size: 0.8rem;">NOMBRE DEL RANGO</th>
+                                    <th class="text-secondary font-inter" style="font-size: 0.8rem;">PERMISOS ACTIVOS</th>
+                                    <th class="text-secondary font-inter text-center" style="font-size: 0.8rem;">ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roles-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 4: EDICIÓN DE WEB (NUEVA PESTAÑA FOOTER) -->
+            <div id="edicion-tab" class="admin-section" style="display: none;">
+                <div class="card kpi-card p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 border-bottom pb-4 border-light-subtle">
+                        <div>
+                            <h5 class="fw-bold m-0 text-dark">Diseño del Pie de Página (Footer)</h5>
+                            <p class="text-secondary small m-0 mt-1">Modifica los textos informativos, botones y enlaces institucionales de la web pública.</p>
+                        </div>
+                        <button class="btn shadow-sm text-white px-4 py-2 fw-semibold d-flex align-items-center" style="background-color: #009668;" onclick="window.guardarFooterAdmin()" id="btn-save-footer">
+                            <i class="bi bi-floppy-fill me-2"></i> Guardar Cambios
+                        </button>
+                    </div>
+
+                    <div class="row g-4 mb-3">
+                        <div class="col-lg-12">
+                            <h6 class="fw-bold text-primary mb-3 font-inter"><i class="bi bi-text-paragraph me-2"></i> Textos Principales</h6>
+                            <div class="row g-4">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-muted">Texto Ubicación (Columna 1)</label>
+                                    <textarea id="admin-f-ubicacion" class="form-control font-inter shadow-sm bg-light border-0" rows="3" placeholder="Ej: Campus Principal..."></textarea>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-muted">Texto Contacto (Columna 2)</label>
+                                    <textarea id="admin-f-contacto" class="form-control font-inter shadow-sm bg-light border-0" rows="3"></textarea>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-muted">Texto Sobre la UNP (Columna 3)</label>
+                                    <textarea id="admin-f-sobre" class="form-control font-inter shadow-sm bg-light border-0" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div class="col-lg-12 border-top pt-4">
+                            <h6 class="fw-bold text-primary mb-4 font-inter"><i class="bi bi-image me-2"></i> Configuración de Destacado Cuadrado</h6>
+                            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                                <form id="form-destacado">
+                                    <div class="row g-4">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small text-secondary">URL de la Imagen (Se recortará 1:1)</label>
+                                            <input type="url" class="form-control bg-light border-0 py-2 rounded-3" id="admin-img-url" placeholder="https://ejemplo.com/foto.jpg">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small text-secondary">Enlace de Redirección</label>
+                                            <input type="url" class="form-control bg-light border-0 py-2 rounded-3" id="admin-link-url" placeholder="https://ejemplo.com">
+                                        </div>
+                                        <div class="col-12 text-end">
+                                            <button type="submit" class="btn px-4 rounded-pill shadow-sm text-white fw-bold" style="background: #009668; border: none;">Guardar Configuración</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-12 border-top pt-4">
+                            <h6 class="fw-bold text-primary mb-4 font-inter"><i class="bi bi-link-45deg me-2"></i> Configuración de Botones y Enlaces</h6>
+                            <div class="row g-4">
+                                <!-- Columna 1 -->
+                                <div class="col-md-4">
+                                    <div class="p-4 bg-light rounded-4 border shadow-sm h-100">
+                                        <label class="form-label small fw-bold text-secondary mb-3"><i class="bi bi-geo-alt me-1"></i> Columna 1: Accesos Rápidos</label>
+                                        
+                                        <div class="mb-3 border-bottom pb-3">
+                                            <input type="text" id="admin-f-link1-text" class="form-control form-control-sm font-inter mb-2 border-0 shadow-sm" placeholder="Texto Link 1 (Ej: Cómo llegar)">
+                                            <input type="text" id="admin-f-link1-url" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="Enlace URL Link 1">
+                                        </div>
+                                        <div>
+                                            <input type="text" id="admin-f-link2-text" class="form-control form-control-sm font-inter mb-2 border-0 shadow-sm" placeholder="Texto Link 2 (Ej: Ver mapa)">
+                                            <input type="text" id="admin-f-link2-url" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="Enlace URL Link 2">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Columna 2 -->
+                                <div class="col-md-4">
+                                    <div class="p-4 bg-light rounded-4 border shadow-sm h-100">
+                                        <label class="form-label small fw-bold text-secondary mb-3"><i class="bi bi-ui-radios me-1"></i> Columna 2: Botones Call-to-Action</label>
+                                        
+                                        <div class="mb-3 border-bottom pb-3">
+                                            <input type="text" id="admin-f-btn1-text" class="form-control form-control-sm font-inter mb-2 border-0 shadow-sm" placeholder="Texto Botón Transparente">
+                                            <input type="text" id="admin-f-btn1-url" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="Enlace URL Botón">
+                                        </div>
+                                        <div>
+                                            <input type="text" id="admin-f-btn2-text" class="form-control form-control-sm font-inter mb-2 border-0 shadow-sm" placeholder="Texto Botón Blanco Fijo">
+                                            <input type="text" id="admin-f-btn2-url" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="Enlace URL Botón">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Columna 3 -->
+                                <div class="col-md-4">
+                                    <div class="p-4 bg-light rounded-4 border shadow-sm h-100">
+                                        <label class="form-label small fw-bold text-secondary mb-3"><i class="bi bi-shield-check me-1"></i> Columna 3: Legales e Institucional</label>
+                                        
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6"><input type="text" id="admin-f-link3-text" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="Texto L1"></div>
+                                            <div class="col-6"><input type="text" id="admin-f-link3-url" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="URL L1"></div>
+                                        </div>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6"><input type="text" id="admin-f-link4-text" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="Texto L2"></div>
+                                            <div class="col-6"><input type="text" id="admin-f-link4-url" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="URL L2"></div>
+                                        </div>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6"><input type="text" id="admin-f-link5-text" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="Texto L3"></div>
+                                            <div class="col-6"><input type="text" id="admin-f-link5-url" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="URL L3"></div>
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col-6"><input type="text" id="admin-f-link6-text" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="Texto L4"></div>
+                                            <div class="col-6"><input type="text" id="admin-f-link6-url" class="form-control form-control-sm font-inter border-0 shadow-sm" placeholder="URL L4"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL PARA CREAR/EDITAR ROL -->
+    <div class="modal fade" id="modalRol" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header border-bottom-0 pb-0 mt-2 mx-2">
+                    <h5 class="fw-bold text-dark" id="modalRolTitle">Nuevo Rango</h5>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4">
+                    <input type="hidden" id="rol-id">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small text-secondary">Nombre del Rango (Ej. Moderador, Editor)</label>
+                        <input type="text" id="rol-nombre" class="form-control font-inter border-secondary shadow-none bg-light" placeholder="Escribe el nombre...">
+                    </div>
+                    <div class="mb-3 fw-bold small text-dark">Permisos Específicos:</div>
+                    
+                    <div class="form-check form-switch mb-3 custom-switch">
+                        <input class="form-check-input fs-5 cursor-pointer border-secondary" type="checkbox" id="perm-panel">
+                        <label class="form-check-label font-inter text-dark ms-2 mt-1 cursor-pointer" for="perm-panel"><strong>Ingresar al Panel Admin</strong> (Obligatorio para los demás)</label>
+                    </div>
+                    <div class="form-check form-switch mb-3 custom-switch">
+                        <input class="form-check-input fs-5 cursor-pointer border-secondary" type="checkbox" id="perm-stats">
+                        <label class="form-check-label font-inter text-dark ms-2 mt-1 cursor-pointer" for="perm-stats">Ver Estadísticas y Overview</label>
+                    </div>
+                    <div class="form-check form-switch mb-3 custom-switch">
+                        <input class="form-check-input fs-5 cursor-pointer border-secondary" type="checkbox" id="perm-users">
+                        <label class="form-check-label font-inter text-dark ms-2 mt-1 cursor-pointer" for="perm-users">Gestionar Usuarios (Dar/Quitar rangos)</label>
+                    </div>
+                    <div class="form-check form-switch mb-3 custom-switch">
+                        <input class="form-check-input fs-5 cursor-pointer border-secondary" type="checkbox" id="perm-roles">
+                        <label class="form-check-label font-inter text-dark ms-2 mt-1 cursor-pointer" for="perm-roles">Crear y Editar otros Rangos</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 pb-3 mx-2 d-flex justify-content-between">
+                    <button type="button" class="btn btn-light rounded-pill fw-semibold px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn text-white rounded-pill fw-semibold px-4" style="background-color: #009668;" onclick="window.guardarRol()" id="btn-save-rol">Guardar Rango</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE BOOTSTRAP -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const closeBtn = document.getElementById('btn-close-sidebar');
+
+        const cerrarMenuMobile = () => {
+            if(window.innerWidth <= 992) { sidebar.classList.remove('show'); overlay.classList.remove('show'); }
+        };
+
+        toggleBtn.addEventListener('click', () => { sidebar.classList.add('show'); overlay.classList.add('show'); });
+        overlay.addEventListener('click', cerrarMenuMobile);
+        closeBtn.addEventListener('click', cerrarMenuMobile);
+
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => { link.addEventListener('click', cerrarMenuMobile); });
+    </script>
+
     <script type="module" src="admin.js"></script>
 </body>
 </html>
