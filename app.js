@@ -413,3 +413,41 @@ async function cargarDestacadoCuadrado() {
     }
 }
 document.addEventListener("DOMContentLoaded", cargarDestacadoCuadrado);
+
+async function cargarDestacadosPequenosPublico() {
+    const contenedor = document.getElementById('contenedor-destacados-pequenos');
+    if (!contenedor) return;
+
+    try {
+        const q = query(collection(db, "destacados_pequenos"), orderBy("fecha", "asc"), limit(10));
+        const snap = await getDocs(q);
+        
+        let html = '';
+        snap.forEach(docSnap => {
+            const d = docSnap.data();
+            // Diseño estilo botón/tarjeta (idéntico al de tu imagen)
+            html += `
+            <a href="${d.enlace}" target="_blank" class="text-decoration-none">
+                <div class="card border-0 rounded-4 p-3 d-flex flex-row align-items-center shadow-sm" style="background-color: #eaf6f6; transition: transform 0.2s; cursor:pointer;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="me-3 shadow-sm rounded" style="width: 42px; height: 42px; overflow: hidden; flex-shrink: 0; background:white;">
+                        <img src="${d.imagen}" alt="icon" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <h6 class="mb-1 fw-bold text-truncate" style="color: #00796b; font-size: 0.92rem;">${d.titulo}</h6>
+                        <p class="text-muted mb-0 text-truncate" style="font-size: 0.78rem; line-height: 1.1;">${d.descripcion}</p>
+                    </div>
+                    <div class="ms-2" style="color: #00796b;">
+                        <i class="bi bi-arrow-right fw-bold"></i>
+                    </div>
+                </div>
+            </a>
+            `;
+        });
+        contenedor.innerHTML = html;
+    } catch (e) {
+        console.error("Error cargando destacados pequeños en portada:", e);
+    }
+}
+
+// Llama a esta función cuando cargues el contenido de tu web (ej. DOMContentLoaded o junto a tus otras cargas de Firebase)
+cargarDestacadosPequenosPublico();
