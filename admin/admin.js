@@ -848,8 +848,10 @@ function iniciarSeccionesOpinionAdmin() {
     });
 }
 
-formSeccion.addEventListener('submit', async e => {
-    e.preventDefault();
+// El formulario es controlado desde el HTML para evitar cualquier envío nativo
+// (y recarga) incluso si Firebase no llega a cargar este módulo.
+window.guardarSeccionOpinion = async () => {
+    if (btnGuardarSeccion.disabled) return;
     const nombre = inputSeccion.value.trim().replace(/\s+/g, ' ');
     if (!nombre || nombre.length > 60) return informarSeccion('El nombre debe tener entre 1 y 60 caracteres.', true);
     if (seccionesOpinionAdmin.some(s => s.id !== seccionEnEdicion && s.nombre.toLocaleLowerCase('es') === nombre.toLocaleLowerCase('es'))) {
@@ -867,11 +869,13 @@ formSeccion.addEventListener('submit', async e => {
         reiniciarEditorSeccion();
     } catch (error) {
         console.error('Error al guardar sección:', error);
-        informarSeccion('No se pudo guardar la sección. Verifica tus permisos de administrador.', true);
+        informarSeccion(error.code === 'permission-denied'
+            ? 'Firebase rechazó el guardado. Verifica que publicaste las reglas con permisos para secciones_opinion y que tu cuenta sea administradora.'
+            : 'No se pudo guardar la sección: ' + (error.message || 'Error desconocido.'), true);
     } finally {
         btnGuardarSeccion.disabled = false;
     }
-});
+};
 
 async function eliminarSeccionOpinion(seccion) {
     if (!confirm(`¿Eliminar la sección "${seccion.nombre}"? Las columnas que pertenezcan a ella pasarán a General, sin perder contenido, comentarios ni destacado general.`)) return;

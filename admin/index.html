@@ -525,7 +525,20 @@
     <!-- ¡IMPORTANTE! AQUÍ SE CARGA EL SCRIPT DE CROPPER ANTES DE admin.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     
-    <!-- Aquí cargas tu script (asegúrate que sea type="module" si usas import de Firebase) -->
-    <script type="module" src="admin.js"></script>
+    <!-- Evita que Crear sección recargue toda la página, incluso si el módulo falla. -->
+    <script>
+        document.getElementById('admin-seccion-form').addEventListener('submit', (event) => {
+            event.preventDefault();
+            if (typeof window.guardarSeccionOpinion === 'function') {
+                window.guardarSeccionOpinion();
+            } else {
+                const aviso = document.getElementById('admin-seccion-mensaje');
+                aviso.textContent = 'No se pudo cargar el gestor de secciones. Comprueba que admin/admin.js esté actualizado y recarga la página.';
+                aviso.className = 'small mb-2 text-danger';
+            }
+        });
+    </script>
+    <!-- Versión actualizada para evitar que el navegador reutilice el admin.js antiguo. -->
+    <script type="module" src="admin.js?v=20261106-secciones-fix"></script>
 </body>
 </html>
