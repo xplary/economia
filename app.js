@@ -415,31 +415,62 @@ async function cargarDestacadoCuadrado() {
 document.addEventListener("DOMContentLoaded", cargarDestacadoCuadrado);
 
 // ==========================================
-// CARGAR DESTACADOS PEQUEÑOS EN PORTADA
+// DESTACADOS PEQUEÑOS: CUADRÍCULA PÚBLICA
+// Se mantiene sincronizada con la colección de Firebase del panel admin.
 // ==========================================
-async function cargarDestacadosPequenosPublico() {
+function cargarDestacadosPequenosPublico() {
     const contenedor = document.getElementById('contenedor-destacados-pequenos');
     if (!contenedor) return;
 
-    try {
-        const { query, orderBy, limit, collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js");
-        const q = query(collection(db, "destacados_pequenos"), orderBy("fecha", "asc"), limit(10));
-        const snap = await getDocs(q);
-        
-        let html = '';
-        snap.forEach(docSnap => {
-            const d = docSnap.data();
-            html += `
-            <div class="col-6 col-md-4 col-lg-6">
-                <a href="${d.enlace}" target="_blank" class="d-block text-decoration-none shadow-sm rounded-4 overflow-hidden" style="transition: transform 0.2s; cursor:pointer; aspect-ratio: 1/1;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                    <img src="${d.imagen}" alt="Destacado Pequeño" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-                </a>
-            </div>
-            `;
+    const consulta = query(collection(db, 'destacados_pequenos'), orderBy('fecha', 'asc'));
+
+    onSnapshot(consulta, (snapshot) => {
+        const fragmento = document.createDocumentFragment();
+        let mostrados = 0;
+
+        snapshot.forEach((documento) => {
+            if (mostrados >= 10) return;
+            const datos = documento.data();
+            if (typeof datos.imagen !== 'string' || !datos.imagen) return;
+            if (!/^(data:image\/(jpeg|png|webp);base64,|https?:\/\/)/i.test(datos.imagen)) return;
+
+            let enlaceSeguro;
+            try {
+                enlaceSeguro = new URL(datos.enlace);
+                if (!['http:', 'https:'].includes(enlaceSeguro.protocol)) return;
+            } catch (_) {
+                return;
+            }
+
+            const columna = document.createElement('div');
+            columna.className = 'col-6 col-md-4 col-lg-6';
+
+            const enlace = document.createElement('a');
+            enlace.href = enlaceSeguro.href;
+            enlace.target = '_blank';
+            enlace.rel = 'noopener noreferrer';
+            enlace.className = 'destacado-pequeno-link shadow-sm rounded-4 overflow-hidden';
+            enlace.setAttribute('aria-label', `Abrir destacado ${mostrados + 1}`);
+
+            const imagen = document.createElement('img');
+            imagen.src = datos.imagen;
+            imagen.alt = `Destacado ${mostrados + 1}`;
+            imagen.loading = 'lazy';
+            imagen.decoding = 'async';
+            imagen.className = 'd-block w-100 h-100 object-fit-cover';
+
+            enlace.appendChild(imagen);
+            columna.appendChild(enlace);
+            fragmento.appendChild(columna);
+            mostrados++;
         });
-        contenedor.innerHTML = html;
-    } catch (e) {
-        console.error("Error cargando destacados pequeños en portada:", e);
-    }
+
+        contenedor.replaceChildren(fragmento);
+        contenedor.classList.toggle('d-none', mostrados === 0);
+    }, (error) => {
+        console.error('Error al cargar destacados pequeños:', error);
+        contenedor.replaceChildren();
+        contenedor.classList.add('d-none');
+    });
 }
-document.addEventListener("DOMContentLoaded", cargarDestacadosPequenosPublico);
+document.addEventListener('DOMContentLoaded', cargarDestacadosPequenosPublico);

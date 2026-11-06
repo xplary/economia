@@ -96,3 +96,23 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 
 .footer-btn-solid { background: #ffffff; color: #004b79 !important; border: 1px solid #ffffff; transition: 0.2s ease; padding: 0.9rem; border-radius: 4px; }
 .footer-btn-solid:hover { background: #f8f9fa; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+/* DESTACADOS PEQUEÑOS: debajo del destacado principal, en la barra lateral. */
+.destacado-pequeno-link {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.destacado-pequeno-link:hover,
+.destacado-pequeno-link:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 75, 121, 0.12) !important;
+}
+.destacado-pequeno-link:focus-visible { outline: 2px solid #009668; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+    .destacado-pequeno-link { transition: none; }
+    .destacado-pequeno-link:hover { transform: none; }
+}
