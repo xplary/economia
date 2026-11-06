@@ -354,20 +354,31 @@ async function cargarDestacadoCuadrado() {
         const docRef = doc(db, "configuracion", "destacado"); 
         const docSnap = await getDoc(docRef);
         
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const imgElement = document.getElementById('sb-imagen');
-            const placeholder = document.getElementById('sb-placeholder');
-            const enlace = document.getElementById('sb-enlace');
+        const imgElement = document.getElementById('sb-imagen');
+        const placeholder = document.getElementById('sb-placeholder');
+        const enlace = document.getElementById('sb-enlace');
+        const skeleton = document.getElementById('sb-skeleton');
             
-            if (imgElement && placeholder && enlace) {
+        if (imgElement && placeholder && enlace && skeleton) {
+            
+            // Ocultar esqueleto inmediatamente al recibir respuesta de la BD
+            skeleton.classList.add('d-none');
+            skeleton.classList.remove('d-flex');
+            
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                
                 if (data.bannerImageUrl && data.bannerImageUrl.trim() !== '') {
                     imgElement.src = data.bannerImageUrl;
                     imgElement.classList.remove('d-none');
+                    
                     placeholder.classList.add('d-none');
+                    placeholder.classList.remove('d-flex');
                 } else {
                     imgElement.classList.add('d-none');
+                    
                     placeholder.classList.remove('d-none');
+                    placeholder.classList.add('d-flex');
                 }
 
                 if (data.bannerLinkUrl && data.bannerLinkUrl.trim() !== '') {
@@ -377,10 +388,28 @@ async function cargarDestacadoCuadrado() {
                     enlace.removeAttribute("href");
                     enlace.style.pointerEvents = "none";
                 }
+            } else {
+                imgElement.classList.add('d-none');
+                
+                placeholder.classList.remove('d-none');
+                placeholder.classList.add('d-flex');
+                
+                enlace.removeAttribute("href");
+                enlace.style.pointerEvents = "none";
             }
         }
     } catch (error) {
         console.error("Error cargando el panel destacado: ", error);
+        
+        // Prevención: Si falla la conexión a Firebase, quitamos el esqueleto para que no cargue infinito
+        const skeleton = document.getElementById('sb-skeleton');
+        const placeholder = document.getElementById('sb-placeholder');
+        if (skeleton && placeholder) {
+            skeleton.classList.add('d-none');
+            skeleton.classList.remove('d-flex');
+            placeholder.classList.remove('d-none');
+            placeholder.classList.add('d-flex');
+        }
     }
 }
 document.addEventListener("DOMContentLoaded", cargarDestacadoCuadrado);
