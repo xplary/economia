@@ -562,3 +562,128 @@ setTimeout(async () => {
         }
     } catch (e) {}
 }, 1500);
+
+let cropperDp = null;
+let dpCount = 0;
+
+// Escuchar input de imagen
+const inputFileDp = document.getElementById('admin-dp-file');
+if (inputFileDp) {
+    inputFileDp.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.getElementById('cropper-image-dp');
+                img.src = event.target.result;
+                document.getElementById('cropper-container-dp').style.display = 'block';
+                if (cropperDp) cropperDp.destroy();
+                cropperDp = new Cropper(img, { aspectRatio: 1, viewMode: 2, autoCropArea: 1 });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+// Botón Guardar
+const btnGuardarDp = document.getElementById('btn-guardar-dp');
+if (btnGuardarDp) {
+    btnGuardarDp.addEventListener('click', async (e) => {
+        if (dpCount >= 10) return alert("Has alcanzado el límite máximo de 10 destacados pequeños. Elimina uno para agregar otro.");
+
+        const titulo = document.getElementById('admin-dp-titulo').value.trim();
+        const desc = document.getElementById('admin-dp-desc').value.trim();
+        const enlace = document.getElementById('admin-dp-enlace').value.trim();
+
+        if (!titulo || !enlace) return alert("El título y el enlace son obligatorios.");
+        if (!cropperDp) return alert("Debes seleccionar y recortar un icono.");
+
+        const btn = e.target;
+        const textoOriginal = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+        btn.disabled = true;
+
+        try {
+            // Recorte pequeño para optimizar base de datos
+            const imgFinal = cropperDp.getCroppedCanvas({ width: 120, height: 120 }).toDataURL('image/jpeg', 0.85);
+            
+            await addDoc(collection(db, "destacados_pequenos"), {
+                imagen: imgFinal,
+                titulo: titulo,
+                descripcion: desc,
+                enlace: enlace,
+                fecha: new Date().toISOString() // Para mantener el orden
+            });
+
+            // Limpiar campos
+            document.getElementById('admin-dp-titulo').value = '';
+            document.getElementById('admin-dp-desc').value = '';
+            document.getElementById('admin-dp-enlace').value = '';
+            document.getElementById('admin-dp-file').value = '';
+            cropperDp.destroy();
+            cropperDp = null;
+            document.getElementById('cropper-container-dp').style.display = 'none';
+
+            await cargarDestacadosPequenosAdmin();
+            alert("¡Destacado pequeño agregado exitosamente!");
+        } catch (error) {
+            console.error("Error al guardar:", error);
+            alert("Error al guardar. Revisa los permisos.");
+        } finally {
+            btn.innerHTML = textoOriginal;
+            btn.disabled = false;
+        }
+    });
+}
+
+// Cargar la tabla en admin
+async function cargarDestacadosPequenosAdmin() {
+    const tbody = document.getElementById('lista-dp-body');
+    if (!tbody) return;
+    
+    try {
+        // Importante: asegúrate de haber importado query, orderBy de firestore
+        import { query, orderBy } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+        
+        const q = query(collection(db, "destacados_pequenos"), orderBy("fecha", "asc"));
+        const snap = await getDocs(q);
+        dpCount = snap.size;
+        tbody.innerHTML = '';
+        
+        if (snap.empty) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-muted py-3">Aún no has agregado destacados pequeños.</td></tr>';
+            return;
+        }
+
+        snap.forEach(docSnap => {
+            const d = docSnap.data();
+            tbody.innerHTML += `
+                <tr>
+                    <td><img src="${d.imagen}" width="35" height="35" class="rounded shadow-sm" style="object-fit:cover;"></td>
+                    <td class="fw-bold text-dark text-start">${d.titulo}</td>
+                    <td class="text-muted small text-start">${d.descripcion}</td>
+                    <td><a href="${d.enlace}" target="_blank" class="small text-truncate d-inline-block" style="max-width:120px;">Ver Link</a></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="window.eliminarDp('${docSnap.id}')"><i class="bi bi-trash-fill"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (e) {
+        console.error("Error al cargar lista DP:", e);
+    }
+}
+
+window.eliminarDp = async (id) => {
+    if(confirm("¿Seguro que deseas eliminar este destacado? Desaparecerá de la web pública de inmediato.")) {
+        try {
+            await deleteDoc(doc(db, "destacados_pequenos", id));
+            await cargarDestacadosPequenosAdmin();
+        } catch(e) { 
+            alert("Error al eliminar: " + e.message); 
+        }
+    }
+};
+
+// Activar la carga cuando se entra al panel (puedes poner esto dentro de onAuthStateChanged cuando esAdmin es true)
+setTimeout(cargarDestacadosPequenosAdmin, 2000);
