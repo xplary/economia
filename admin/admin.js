@@ -560,7 +560,7 @@ setTimeout(async () => {
 
 
 // ==========================================
-// 8. DESTACADOS PEQUEÑOS (PURA IMAGEN 1:1)
+// 8. DESTACADOS PEQUEÑOS (BANNER HORIZONTAL 12:5)
 // Esta sección vive DENTRO de "Edición de Web".
 // Los cambios se guardan en "destacados_pequenos" y se ven en index.html.
 // ==========================================
@@ -603,7 +603,7 @@ if (inputFileDp) {
                 imagenRecorte.onload = null;
                 contenedorRecorte.style.display = 'block';
                 cropperDp = new Cropper(imagenRecorte, {
-                    aspectRatio: 1,
+                    aspectRatio: 12 / 5,
                     viewMode: 2,
                     autoCropArea: 1,
                     responsive: true,
@@ -633,7 +633,7 @@ if (btnGuardarDp) {
             return alert('Ingresa un enlace válido que empiece por https:// o http://.');
         }
 
-        if (!cropperDp) return alert('Selecciona una imagen y ajusta su recorte cuadrado primero.');
+        if (!cropperDp) return alert('Selecciona una imagen y ajusta su recorte horizontal primero.');
         if (dpCount >= 10) return alert('Ya hay 10 destacados pequeños. Elimina uno para agregar otro.');
 
         const textoOriginal = btnGuardarDp.innerHTML;
@@ -649,8 +649,8 @@ if (btnGuardarDp) {
             }
 
             const lienzo = cropperDp.getCroppedCanvas({
-                width: 300,
-                height: 300,
+                width: 960,
+                height: 400,
                 imageSmoothingEnabled: true,
                 imageSmoothingQuality: 'high'
             });
@@ -707,8 +707,8 @@ function mostrarDestacadosPequenosAdmin(snapshot) {
         const imagen = document.createElement('img');
         imagen.src = datos.imagen || '';
         imagen.alt = 'Vista previa del destacado';
-        imagen.width = 60;
-        imagen.height = 60;
+        imagen.width = 120;
+        imagen.height = 50;
         imagen.className = 'rounded shadow-sm';
         imagen.style.objectFit = 'cover';
         celdaImagen.appendChild(imagen);
