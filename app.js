@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, updateDoc, deleteDoc, increment } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, updateDoc, deleteDoc, increment, writeBatch } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1" });
 const auth = getAuth(app); const db = getFirestore(app);
@@ -228,7 +228,7 @@ document.getElementById('not-imagen').addEventListener('change', function(e) {
 });
 
 window.cancelarEdicion = () => { 
-    window.editandoId = null; document.querySelectorAll('input:not([type="color"]), textarea').forEach(i => i.value = ''); if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(''); document.getElementById('not-principal').checked = false; document.getElementById('not-form-title').innerText = "Editor de Columnas"; 
+    window.editandoId = null; document.querySelectorAll('input:not([type="color"]), textarea').forEach(i => i.value = ''); if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(''); document.getElementById('not-principal').checked = false; document.getElementById('not-principal-seccion').checked = false; document.getElementById('not-seccion').value = ''; actualizarPrincipalPorSeccion(); document.getElementById('not-form-title').innerText = "Editor de Columnas"; 
     if(window.noticiaCropper) { window.noticiaCropper.destroy(); window.noticiaCropper = null; } const cropCont = document.getElementById('cropper-container'); if(cropCont) { cropCont.style.display = 'none'; document.getElementById('cropper-image').src = ''; } bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide(); 
 };
 
@@ -276,26 +276,175 @@ document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => {
     }); 
 });
 
-let noticiasData = []; let qBuscar = ''; let ordDesc = true; document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); }); document.getElementById('btn-ordenar').addEventListener('click', () => { ordDesc = !ordDesc; document.getElementById('btn-ordenar').innerText = ordDesc ? 'Ordenar: Recientes ↓' : 'Ordenar: Antiguos ↑'; renderNoticias(); }); 
+let noticiasData = []; let noticiasCargadas = false; let qBuscar = ''; let ordDesc = true; document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = e.target.value.toLowerCase(); renderNoticias(); }); document.getElementById('btn-ordenar').addEventListener('click', () => { ordDesc = !ordDesc; document.getElementById('btn-ordenar').innerText = ordDesc ? 'Ordenar: Recientes ↓' : 'Ordenar: Antiguos ↑'; renderNoticias(); }); 
 
-document.getElementById('btn-pub-noticia').onclick = async () => { 
-    const titulo = document.getElementById('not-titulo').value; if(!titulo) return alert("Falta el titular."); const etiquetas = document.getElementById('not-tags').value ? document.getElementById('not-tags').value.split(',').map(t=>t.trim()).filter(Boolean) : ['Opinión']; 
-    let imgFinal = ''; const imgFile = document.getElementById('not-imagen').files[0]; 
-    if (window.noticiaCropper) { imgFinal = window.noticiaCropper.getCroppedCanvas({ maxWidth: 1280, maxHeight: 720 }).toDataURL('image/jpeg', 0.9); } else if (imgFile) { imgFinal = await compressImg(imgFile); } else if (window.editandoId && window.postsData[window.editandoId].imagen) { imgFinal = window.postsData[window.editandoId].imagen; }
-    
-    const editorContent = tinymce.get('editor-noticias').getContent(); const isPrincipal = document.getElementById('not-principal').checked;
-    const data = { titulo, etiquetas, colorTag: document.getElementById('not-color').value, imagen: imgFinal, principal: isPrincipal, contenido: editorContent, vistas: 0 }; 
-    
-    if (isPrincipal) { noticiasData.forEach(n => { if (n.principal && n.id !== window.editandoId) { updateDoc(doc(db, "noticias", n.id), { principal: false }); } }); }
-    if (window.editandoId) await updateDoc(doc(db, "noticias", window.editandoId), data); else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "noticias"), data); } 
-    cancelarEdicion(); 
-}; 
+// ==========================================
+// SECCIONES DE ARTÍCULOS Y OPINIÓN
+// Los nombres viven en "secciones_opinion" y se asignan por ID estable.
+// "principal" sigue siendo la portada general; "principalSeccion" es independiente.
+// ==========================================
+let seccionesOpinion = [];
+let seccionOpinionActiva = '';
+const selectorEditorOpinion = document.getElementById('not-seccion');
+const selectorMovilOpinion = document.getElementById('opinion-secciones-movil');
+const menuOpinion = document.getElementById('menu-secciones-opinion');
 
-onSnapshot(collection(db, "noticias"), (snap) => { noticiasData = []; snap.forEach(d => { noticiasData.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'noticias'); }); renderNoticias(); if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias', true); });
+function actualizarPrincipalPorSeccion() {
+    const tieneSeccion = Boolean(selectorEditorOpinion.value);
+    const checkbox = document.getElementById('not-principal-seccion');
+    checkbox.disabled = !tieneSeccion;
+    if (!tieneSeccion) checkbox.checked = false;
+    document.getElementById('not-principal-seccion-ayuda').textContent = tieneSeccion
+        ? 'Solo será principal dentro de la sección seleccionada; no afecta a la portada general.'
+        : 'Selecciona una sección para activar esta opción.';
+}
+selectorEditorOpinion.addEventListener('change', () => {
+    document.getElementById('not-principal-seccion').checked = false;
+    actualizarPrincipalPorSeccion();
+});
 
-function renderNoticias() { 
-    let filtradas = noticiasData.filter(n => (n.titulo||'').toLowerCase().includes(qBuscar) || (n.contenido||'').toLowerCase().includes(qBuscar)); 
-    let principalDefinitiva = null; const principales = filtradas.filter(n => n.principal);
+function cambiarSeccionOpinion(id = '') {
+    seccionOpinionActiva = id && seccionesOpinion.some(s => s.id === id) ? id : '';
+    const actual = seccionesOpinion.find(s => s.id === seccionOpinionActiva);
+    const filtro = document.getElementById('opinion-filtro-activo');
+    filtro.classList.toggle('d-none', !actual);
+    document.getElementById('opinion-nombre-seccion').textContent = actual ? actual.nombre : '';
+    selectorMovilOpinion.value = seccionOpinionActiva;
+    menuOpinion.querySelectorAll('[data-seccion-opinion]').forEach(btn => {
+        const activo = btn.dataset.seccionOpinion === seccionOpinionActiva;
+        btn.classList.toggle('active', activo);
+        btn.setAttribute('aria-current', activo ? 'true' : 'false');
+    });
+    renderNoticias();
+}
+
+// El botón padre siempre muestra TODAS las columnas, no una sección anterior.
+['nav-opinion-general', 'nav-opinion-mobile', 'opinion-ver-todas'].forEach(id => {
+    document.getElementById(id).addEventListener('click', () => cambiarSeccionOpinion(''));
+});
+selectorMovilOpinion.addEventListener('change', e => cambiarSeccionOpinion(e.target.value));
+menuOpinion.addEventListener('click', event => {
+    const btn = event.target.closest('[data-seccion-opinion]');
+    if (!btn) return;
+    const tab = document.getElementById('nav-opinion-general');
+    // Mostrar la pestaña aunque se haya navegado a Papers o Encuestas.
+    bootstrap.Tab.getOrCreateInstance(tab).show();
+    cambiarSeccionOpinion(btn.dataset.seccionOpinion);
+});
+
+// Solo cambia la presentación del menú; la selección y el filtrado siguen intactos.
+function renderizarMenuSeccionesOpinion() {
+    menuOpinion.innerHTML = `
+        <div class="opinion-submenu-options">
+            <button type="button" class="opinion-submenu-link opinion-submenu-general" data-seccion-opinion="">
+                <span class="opinion-submenu-icon"><i class="bi bi-grid-1x2" aria-hidden="true"></i></span>
+                <span class="opinion-submenu-label">Todas las columnas</span>
+                <i class="bi bi-check-lg opinion-submenu-indicator" aria-hidden="true"></i>
+            </button>
+            ${seccionesOpinion.length ? '<span class="opinion-submenu-section-title">Secciones</span>' : ''}
+            ${seccionesOpinion.map(s => `
+                <button type="button" class="opinion-submenu-link" data-seccion-opinion="${escapeHTML(s.id)}">
+                    <span class="opinion-submenu-icon"><i class="bi bi-bookmark" aria-hidden="true"></i></span>
+                    <span class="opinion-submenu-label">${escapeHTML(s.nombre)}</span>
+                    <i class="bi bi-chevron-right opinion-submenu-indicator" aria-hidden="true"></i>
+                    <i class="bi bi-check-lg opinion-submenu-indicator" aria-hidden="true"></i>
+                </button>`).join('')}
+        </div>`;
+}
+
+onSnapshot(collection(db, 'secciones_opinion'), snapshot => {
+    seccionesOpinion = snapshot.docs.map(d => ({ id: d.id, nombre: d.data().nombre || 'Sin nombre' }))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
+
+    const anteriorEditor = selectorEditorOpinion.value;
+    const opciones = seccionesOpinion.map(s => `<option value="${escapeHTML(s.id)}">${escapeHTML(s.nombre)}</option>`).join('');
+    selectorEditorOpinion.innerHTML = '<option value="">General (sin sección específica)</option>' + opciones;
+    selectorEditorOpinion.value = seccionesOpinion.some(s => s.id === anteriorEditor) ? anteriorEditor : '';
+    actualizarPrincipalPorSeccion();
+
+    selectorMovilOpinion.innerHTML = '<option value="">Todas las columnas</option>' + opciones;
+    renderizarMenuSeccionesOpinion();
+    // Si se borra una sección, volver automáticamente a Todas las columnas.
+    cambiarSeccionOpinion(seccionOpinionActiva);
+}, error => {
+    console.error('No se pudieron cargar las secciones de opinión:', error);
+    selectorMovilOpinion.innerHTML = '<option value="">Todas las columnas</option>';
+    seccionesOpinion = [];
+    renderizarMenuSeccionesOpinion();
+});
+
+document.getElementById('btn-pub-noticia').onclick = async () => {
+    const boton = document.getElementById('btn-pub-noticia');
+    const titulo = document.getElementById('not-titulo').value.trim();
+    if (!titulo) return alert('Falta el titular.');
+    const seccionId = selectorEditorOpinion.value || null;
+    if (seccionId && !seccionesOpinion.some(s => s.id === seccionId)) {
+        return alert('La sección ya no existe. Selecciona otra antes de guardar.');
+    }
+    const etiquetas = document.getElementById('not-tags').value
+        ? document.getElementById('not-tags').value.split(',').map(t => t.trim()).filter(Boolean)
+        : ['Opinión'];
+    const esPrincipalGeneral = document.getElementById('not-principal').checked;
+    const esPrincipalSeccion = Boolean(seccionId && document.getElementById('not-principal-seccion').checked);
+    boton.disabled = true;
+    try {
+        let imgFinal = '';
+        const imgFile = document.getElementById('not-imagen').files[0];
+        if (window.noticiaCropper) {
+            imgFinal = window.noticiaCropper.getCroppedCanvas({ maxWidth: 1280, maxHeight: 720 }).toDataURL('image/jpeg', 0.9);
+        } else if (imgFile) {
+            imgFinal = await compressImg(imgFile);
+        } else if (window.editandoId && window.postsData[window.editandoId]?.imagen) {
+            imgFinal = window.postsData[window.editandoId].imagen;
+        }
+
+        const data = {
+            titulo, etiquetas, colorTag: document.getElementById('not-color').value,
+            imagen: imgFinal, principal: esPrincipalGeneral,
+            principalSeccion: esPrincipalSeccion, seccionId,
+            contenido: tinymce.get('editor-noticias').getContent()
+        };
+        const batch = writeBatch(db);
+        // Solo se retira la marca dentro del ámbito seleccionado.
+        noticiasData.forEach(n => {
+            if (n.id === window.editandoId) return;
+            const updates = {};
+            if (esPrincipalGeneral && n.principal) updates.principal = false;
+            if (esPrincipalSeccion && n.seccionId === seccionId && n.principalSeccion) updates.principalSeccion = false;
+            if (Object.keys(updates).length) batch.update(doc(db, 'noticias', n.id), updates);
+        });
+        if (window.editandoId) {
+            batch.update(doc(db, 'noticias', window.editandoId), data);
+        } else {
+            batch.set(doc(collection(db, 'noticias')), {
+                ...data, fecha: serverTimestamp(), comentarios: [], vistas: 0
+            });
+        }
+        await batch.commit();
+        cancelarEdicion();
+    } catch (error) {
+        console.error('Error al publicar la columna:', error);
+        alert('No se pudo guardar la columna. Revisa tu conexión y los permisos de Firestore.');
+    } finally {
+        boton.disabled = false;
+    }
+};
+
+onSnapshot(collection(db, "noticias"), (snap) => { noticiasData = []; snap.forEach(d => { noticiasData.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'noticias'); }); noticiasCargadas = true; renderNoticias(); if(window.modalActual.col === 'noticias' && window.modalActual.id) abrirModal(window.modalActual.id, 'noticias', true); }, (error) => {
+    console.error('Error al cargar las columnas:', error);
+    noticiasCargadas = true;
+    const principal = document.getElementById('contenedor-noticia-principal');
+    principal.setAttribute('aria-busy', 'false');
+    principal.replaceChildren();
+    document.getElementById('contenedor-noticias-lista').innerHTML = '<div class="text-center text-muted">No se pudieron cargar las columnas.</div>';
+});
+
+function renderNoticias() {
+    // El cambio de secciones no debe retirar el esqueleto antes de la primera respuesta de noticias.
+    if (!noticiasCargadas) return;
+    document.getElementById('contenedor-noticia-principal').setAttribute('aria-busy', 'false');
+    let filtradas = noticiasData.filter(n => (!seccionOpinionActiva || n.seccionId === seccionOpinionActiva) && ((n.titulo||'').toLowerCase().includes(qBuscar) || (n.contenido||'').toLowerCase().includes(qBuscar))); 
+    let principalDefinitiva = null; const principales = filtradas.filter(n => seccionOpinionActiva ? n.principalSeccion : n.principal);
     if (principales.length > 0) { principales.sort((a,b) => { let tA = a.fecha?.toMillis()||0; let tB = b.fecha?.toMillis()||0; return tB - tA; }); principalDefinitiva = principales[0]; }
     filtradas.sort((a,b) => { let tA = a.fecha?.toMillis()||0; let tB = b.fecha?.toMillis()||0; return ordDesc ? tB - tA : tA - tB; }); 
     const cLista = document.getElementById('contenedor-noticias-lista'); const cPrinc = document.getElementById('contenedor-noticia-principal'); 
@@ -306,7 +455,7 @@ function renderNoticias() {
 
         if (principalDefinitiva && d.id === principalDefinitiva.id) { 
             const tHTMLPrincipal = (d.etiquetas||[]).map(t => `<span class="badge border text-secondary bg-transparent rounded-1 me-2 px-2 py-1 font-inter" style="border-color: #cbd5e1 !important; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">${escapeHTML(t)}</span>`).join('');
-            const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-3 shadow-sm cursor-pointer" style="height:350px; object-fit: cover; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-3 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer" style="height:350px;" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; 
+            const imgP = d.imagen ? `<img src="${d.imagen}" class="img-fluid w-100 rounded-3 shadow-sm cursor-pointer opinion-principal-media" style="object-fit: cover; background-color: #f1f3f5;" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="w-100 rounded-3 shadow-sm d-flex align-items-center justify-content-center bg-light text-muted border cursor-pointer opinion-principal-media" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; 
             hPrinc = `<div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-white mx-auto" style="border: 1px solid #e2e8f0 !important; max-width: 100%;"><div class="row g-0 align-items-center"><div class="col-lg-7 pe-lg-4 mb-4 mb-lg-0">${imgP}</div><div class="col-lg-5 ps-lg-2 pe-lg-3 d-flex flex-column h-100"><div class="mb-3">${tHTMLPrincipal}</div><h2 class="fw-bold mb-3 font-serif cursor-pointer text-dark" style="font-size: 2.2rem; line-height: 1.25;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h2><div class="text-secondary mb-4 text-truncate-3 font-inter" style="font-size: 1.05rem; line-height: 1.6;">${textoLimpioPreview}</div><div class="d-flex justify-content-between align-items-center mt-auto pt-2"><small class="text-muted fw-semibold font-inter"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2">${avgStr}</span></small><small class="text-muted fw-semibold cursor-pointer font-inter hover-text-primary" onclick="compartir('${d.id}', 'noticias')"><i class="bi bi-share me-1"></i> Compartir</small></div></div></div></div><div style="height: 2px; background-color: #009668; width: 100%; margin-bottom: 2.5rem; opacity: 0.3;"></div>`; 
         } 
         
@@ -316,7 +465,7 @@ function renderNoticias() {
     }); 
     cPrinc.innerHTML = principalDefinitiva ? hPrinc : ''; cLista.innerHTML = hLista; 
 }
-window.editarNoticia = (id) => { const d = window.postsData[id]; document.getElementById('not-titulo').value = d.titulo; document.getElementById('not-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('not-color').value = d.colorTag || '#004b79'; document.getElementById('not-principal').checked = d.principal; if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(d.contenido || ''); window.editandoId = id; document.getElementById('not-form-title').innerText = "Editando Columna"; document.getElementById('btn-pub-noticia').innerText = "Guardar"; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colNoticia')).show(); window.scrollTo(0,0); };
+window.editarNoticia = (id) => { const d = window.postsData[id]; document.getElementById('not-titulo').value = d.titulo; document.getElementById('not-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('not-color').value = d.colorTag || '#004b79'; document.getElementById('not-principal').checked = !!d.principal; selectorEditorOpinion.value = seccionesOpinion.some(s => s.id === d.seccionId) ? d.seccionId : ''; actualizarPrincipalPorSeccion(); document.getElementById('not-principal-seccion').checked = !!d.principalSeccion && !!selectorEditorOpinion.value; if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(d.contenido || ''); window.editandoId = id; document.getElementById('not-form-title').innerText = "Editando Columna"; document.getElementById('btn-pub-noticia').innerText = "Guardar"; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colNoticia')).show(); window.scrollTo(0,0); };
 
 document.getElementById('btn-pub-articulo').onclick = async () => { const t = document.getElementById('art-titulo').value; const l = document.getElementById('art-link').value; if(!t||!l) return alert("Falta Título o Link."); const et = document.getElementById('art-tags').value ? document.getElementById('art-tags').value.split(',').map(x=>x.trim()).filter(Boolean) : ['Paper']; const data = { titulo: t, link: l, resumen: document.getElementById('art-resumen').value, etiquetas: et, colorTag: document.getElementById('art-color').value, vistas: 0 }; if(window.editandoId) await updateDoc(doc(db, "articulos", window.editandoId), data); else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "articulos"), data); } cancelarEdicion(); };
 onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) => { const cont = document.getElementById('contenedor-articulos'); if(snap.empty) return cont.innerHTML = '<div class="col-12 text-center text-muted font-inter">No hay papers.</div>'; let h = ''; snap.forEach(d => { const data = d.data(); window.postsData[d.id] = data; checkDeepLink(d.id, 'articulos'); const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios); const tHTML = (data.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${data.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join(''); h += `<article class="col-12 mb-5 pb-4 border-bottom border-light-subtle"><div class="row align-items-start"><div class="col-md-2 col-4 cursor-pointer" onclick="abrirModal('${d.id}', 'articulos')"><div class="paper-cover mx-auto rounded-1"><i class="bi bi-file-earmark-pdf-fill text-secondary fs-1"></i><div class="mt-2" style="width: 80%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-1" style="width: 60%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-auto" style="width: 40%; height: 4px; background: #cbd5e1; border-radius: 2px;"></div></div></div><div class="col-md-10 col-8 d-flex flex-column h-100 ps-md-4"><div class="d-flex justify-content-between align-items-start mb-2"><div>${tHTML} <span class="badge bg-secondary ms-1 fw-semibold font-inter" style="letter-spacing: 0.5px;">Acceso Abierto</span></div><div class="text-nowrap ms-3"><i class="bi bi-share-fill text-primary cursor-pointer me-3" onclick="compartir('${d.id}', 'articulos')"></i><i class="bi bi-pencil-fill text-warning me-3 admin-only-inline cursor-pointer" onclick="editarArt('${d.id}')"></i><i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('articulos', '${d.id}')"></i></div></div><a href="javascript:void(0)" onclick="abrirModal('${d.id}', 'articulos')" class="paper-title-link fw-bold font-serif mb-1" style="font-size: 1.45rem;">${d.data().titulo}</a><div class="text-muted small mb-3 font-inter">${data.fecha ? '(Publicado el ' + data.fecha.toDate().toLocaleDateString() + ')' : ''}</div><p class="text-muted mb-3 font-inter text-truncate-3" style="font-size: 1.05rem; line-height: 1.6;">${escapeHTML(data.resumen)}</p><div class="mt-auto d-flex align-items-center"><button class="btn btn-sm text-primary fw-bold font-inter rounded-pill me-3 shadow-sm" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${d.id}', 'articulos')">Leer documento <i class="bi bi-arrow-right ms-1"></i></button><span class="ms-2">${avgStr}</span></div></div></div></article>`; }); cont.innerHTML = h; if(window.modalActual.col === 'articulos' && window.modalActual.id) abrirModal(window.modalActual.id, 'articulos', true); });
@@ -348,71 +497,61 @@ document.getElementById('modalLectura').addEventListener('hidden.bs.modal', () =
 document.getElementById('modalFormulario').addEventListener('hidden.bs.modal', () => { if(window.modalActual.col === 'formularios') window.modalActual = { id: null, col: null }; });
 
 
-// --- NUEVA LÓGICA: DESTACADO CUADRADO ---
+// --- DESTACADO LATERAL: esqueleto visible hasta que la imagen esté lista ---
 async function cargarDestacadoCuadrado() {
-    try {
-        const docRef = doc(db, "configuracion", "destacado"); 
-        const docSnap = await getDoc(docRef);
-        
-        const imgElement = document.getElementById('sb-imagen');
-        const placeholder = document.getElementById('sb-placeholder');
-        const enlace = document.getElementById('sb-enlace');
-        const skeleton = document.getElementById('sb-skeleton');
-            
-        if (imgElement && placeholder && enlace && skeleton) {
-            
-            // Ocultar esqueleto inmediatamente al recibir respuesta de la BD
-            skeleton.classList.add('d-none');
-            skeleton.classList.remove('d-flex');
-            
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                
-                if (data.bannerImageUrl && data.bannerImageUrl.trim() !== '') {
-                    imgElement.src = data.bannerImageUrl;
-                    imgElement.classList.remove('d-none');
-                    
-                    placeholder.classList.add('d-none');
-                    placeholder.classList.remove('d-flex');
-                } else {
-                    imgElement.classList.add('d-none');
-                    
-                    placeholder.classList.remove('d-none');
-                    placeholder.classList.add('d-flex');
-                }
+    const imgElement = document.getElementById('sb-imagen');
+    const placeholder = document.getElementById('sb-placeholder');
+    const enlace = document.getElementById('sb-enlace');
+    const skeleton = document.getElementById('sb-skeleton');
+    if (!imgElement || !placeholder || !enlace || !skeleton) return;
 
-                if (data.bannerLinkUrl && data.bannerLinkUrl.trim() !== '') {
-                    enlace.href = data.bannerLinkUrl;
-                    enlace.style.pointerEvents = "auto";
-                } else {
-                    enlace.removeAttribute("href");
-                    enlace.style.pointerEvents = "none";
-                }
-            } else {
-                imgElement.classList.add('d-none');
-                
-                placeholder.classList.remove('d-none');
-                placeholder.classList.add('d-flex');
-                
-                enlace.removeAttribute("href");
-                enlace.style.pointerEvents = "none";
-            }
+    const ocultarEsqueleto = () => skeleton.classList.add('d-none');
+    const mostrarVacio = () => {
+        imgElement.classList.add('d-none');
+        placeholder.classList.remove('d-none');
+        placeholder.classList.add('d-flex');
+        ocultarEsqueleto();
+    };
+    const mostrarImagen = () => {
+        placeholder.classList.add('d-none');
+        placeholder.classList.remove('d-flex');
+        imgElement.classList.remove('d-none');
+        ocultarEsqueleto();
+    };
+    const quitarEnlace = () => {
+        enlace.removeAttribute('href');
+        enlace.style.pointerEvents = 'none';
+    };
+
+    try {
+        const docSnap = await getDoc(doc(db, 'configuracion', 'destacado'));
+        const data = docSnap.exists() ? docSnap.data() : {};
+        if (typeof data.bannerLinkUrl === 'string' && data.bannerLinkUrl.trim()) {
+            enlace.href = data.bannerLinkUrl;
+            enlace.style.pointerEvents = 'auto';
+        } else {
+            quitarEnlace();
+        }
+
+        if (typeof data.bannerImageUrl === 'string' && data.bannerImageUrl.trim()) {
+            // No retirar el shimmer tras getDoc: la imagen puede seguir descargándose.
+            imgElement.onload = mostrarImagen;
+            imgElement.onerror = () => {
+                quitarEnlace();
+                mostrarVacio();
+            };
+            imgElement.src = data.bannerImageUrl;
+            if (imgElement.complete && imgElement.naturalWidth > 0) mostrarImagen();
+        } else {
+            mostrarVacio();
         }
     } catch (error) {
-        console.error("Error cargando el panel destacado: ", error);
-        
-        // Prevención: Si falla la conexión a Firebase, quitamos el esqueleto para que no cargue infinito
-        const skeleton = document.getElementById('sb-skeleton');
-        const placeholder = document.getElementById('sb-placeholder');
-        if (skeleton && placeholder) {
-            skeleton.classList.add('d-none');
-            skeleton.classList.remove('d-flex');
-            placeholder.classList.remove('d-none');
-            placeholder.classList.add('d-flex');
-        }
+        console.error('Error cargando el panel destacado:', error);
+        quitarEnlace();
+        mostrarVacio();
     }
 }
-document.addEventListener("DOMContentLoaded", cargarDestacadoCuadrado);
+document.addEventListener('DOMContentLoaded', cargarDestacadoCuadrado);
 
 // ==========================================
 // DESTACADOS PEQUEÑOS: BANNERS HORIZONTALES PÚBLICOS
@@ -449,27 +588,47 @@ function cargarDestacadosPequenosPublico() {
             enlace.href = enlaceSeguro.href;
             enlace.target = '_blank';
             enlace.rel = 'noopener noreferrer';
-            enlace.className = 'destacado-pequeno-link shadow-sm rounded-4 overflow-hidden';
+            enlace.className = 'destacado-pequeno-link shadow-sm rounded-4 overflow-hidden position-relative';
             enlace.setAttribute('aria-label', `Abrir destacado ${mostrados + 1}`);
 
+            const esqueleto = document.createElement('span');
+            esqueleto.className = 'skeleton-box destacado-pequeno-skeleton';
+            esqueleto.setAttribute('aria-hidden', 'true');
+
             const imagen = document.createElement('img');
-            imagen.src = datos.imagen;
             imagen.alt = `Destacado ${mostrados + 1}`;
             imagen.loading = 'lazy';
             imagen.decoding = 'async';
             imagen.className = 'd-block w-100 h-100 object-fit-contain';
+            const mostrarImagen = () => {
+                enlace.classList.add('is-loaded');
+                esqueleto.remove();
+            };
+            const retirarImagenFallida = () => {
+                columna.remove();
+                if (!contenedor.querySelector('.destacado-pequeno-link')) {
+                    contenedor.classList.add('d-none');
+                }
+            };
+            imagen.addEventListener('load', mostrarImagen, { once: true });
+            imagen.addEventListener('error', retirarImagenFallida, { once: true });
 
+            enlace.appendChild(esqueleto);
             enlace.appendChild(imagen);
             columna.appendChild(enlace);
+            imagen.src = datos.imagen;
+            if (imagen.complete && imagen.naturalWidth > 0) mostrarImagen();
             fragmento.appendChild(columna);
             mostrados++;
         });
 
         contenedor.replaceChildren(fragmento);
+        contenedor.setAttribute('aria-busy', 'false');
         contenedor.classList.toggle('d-none', mostrados === 0);
     }, (error) => {
         console.error('Error al cargar destacados pequeños:', error);
         contenedor.replaceChildren();
+        contenedor.setAttribute('aria-busy', 'false');
         contenedor.classList.add('d-none');
     });
 }

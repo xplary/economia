@@ -97,6 +97,36 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 .footer-btn-solid { background: #ffffff; color: #004b79 !important; border: 1px solid #ffffff; transition: 0.2s ease; padding: 0.9rem; border-radius: 4px; }
 .footer-btn-solid:hover { background: #f8f9fa; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 
+/* Esqueletos de los destacados: la misma animación de la portada.
+   El lateral es cuadrado y los banners respetan la proporción 12:5. */
+.destacado-lateral-skeleton {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    z-index: 1;
+}
+.destacado-pequeno-skeleton {
+    display: block;
+    width: 100%;
+    aspect-ratio: 12 / 5;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--bs-border-radius-xl, 1rem);
+}
+.destacado-pequeno-link > .destacado-pequeno-skeleton {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    z-index: 1;
+    border: 0;
+}
+.destacado-pequeno-link > img { opacity: 0; }
+.destacado-pequeno-link.is-loaded > img { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-box { animation: none; }
+}
+
 /* DESTACADOS PEQUEÑOS: banners horizontales a todo el ancho de la barra lateral. */
 .destacado-pequeno-link {
     display: block;
@@ -115,4 +145,127 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 @media (prefers-reduced-motion: reduce) {
     .destacado-pequeno-link { transition: none; }
     .destacado-pequeno-link:hover { transform: none; }
+}
+
+/* Artículos y Opinión: desplegable integrado con la cabecera verde/azul de CAFÉ UNP. */
+.nav-opinion-item { position: relative; }
+.nav-opinion-item .opinion-caret {
+    display: inline-block;
+    font-size: .69rem;
+    vertical-align: .14rem;
+    transition: transform .2s ease;
+}
+.nav-opinion-item:hover .opinion-caret,
+.nav-opinion-item:has(:focus-visible) .opinion-caret { transform: rotate(180deg); }
+
+/* Puente transparente: el cursor puede bajar hasta el panel sin cerrar el menú. */
+.nav-opinion-item::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 19px;
+    pointer-events: none;
+}
+.nav-opinion-item:hover::after,
+.nav-opinion-item:has(:focus-visible)::after { pointer-events: auto; }
+
+.opinion-submenu {
+    position: absolute;
+    /* El nav tiene py-3 (16px): el panel arranca debajo de toda la barra. */
+    top: calc(100% + 1rem);
+    left: 0;
+    width: 320px;
+    max-width: min(340px, 90vw);
+    max-height: min(68vh, 500px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 0 0 .62rem;
+    margin: 0;
+    background: #fff;
+    border: 1px solid #dce9e9;
+    border-top: 3px solid #009668;
+    border-radius: 0;
+    box-shadow: 0 18px 40px rgba(0, 50, 71, .19), 0 4px 12px rgba(0, 50, 71, .07);
+    z-index: 1100;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-7px);
+    transition: opacity .2s ease, visibility .2s ease, transform .2s ease;
+    scrollbar-color: #c3dcd7 #fff;
+    scrollbar-width: thin;
+}
+.nav-opinion-item:hover .opinion-submenu,
+.nav-opinion-item:has(:focus-visible) .opinion-submenu {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+.opinion-submenu-options { padding: .5rem; }
+.opinion-submenu-section-title {
+    display: block;
+    margin: .55rem .65rem .18rem;
+    padding-top: .8rem;
+    border-top: 1px solid #eaf0f3;
+    color: #758697;
+    font: 700 .66rem 'Inter', sans-serif;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+.opinion-submenu-link {
+    display: flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    gap: .7rem;
+    padding: .64rem .7rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #314f60;
+    text-align: left;
+    font: 500 .87rem 'Inter', sans-serif;
+    cursor: pointer;
+    transition: background .17s ease, color .17s ease;
+}
+.opinion-submenu-link:hover,
+.opinion-submenu-link:focus-visible { background: #f0f7f6; color: #005e65; outline: none; }
+.opinion-submenu-link:focus-visible { box-shadow: inset 0 0 0 2px #009668; }
+.opinion-submenu-link.active { background: #e9f6f1; color: #007459; font-weight: 700; }
+.opinion-submenu-icon {
+    display: inline-flex;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    background: #eff5f7;
+    color: #126e86;
+    font-size: .96rem;
+    transition: background .17s ease;
+}
+.opinion-submenu-link.active .opinion-submenu-icon { background: #d4ede2; color: #007459; }
+.opinion-submenu-link:hover .opinion-submenu-icon { background: #dff0e9; }
+.opinion-submenu-label { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.4; }
+.opinion-submenu-indicator { flex: 0 0 auto; font-size: .95rem; color: #9aadb5; }
+.opinion-submenu-link .bi-check-lg.opinion-submenu-indicator { display: none; color: #009668; }
+.opinion-submenu-link.active .bi-check-lg.opinion-submenu-indicator { display: block; }
+.opinion-submenu-link.active .bi-chevron-right.opinion-submenu-indicator { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-opinion-item .opinion-caret,
+    .opinion-submenu,
+    .opinion-submenu-link,
+    .opinion-submenu-icon { transition: none; }
+    .opinion-submenu { transform: none; }
+}
+
+/* Portada de Artículos y Opinión: rectángulo ligeramente más alto. */
+.opinion-principal-media { height: 410px; }
+@media (max-width: 767.98px) {
+    .opinion-principal-media { height: 290px; }
 }
