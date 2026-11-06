@@ -328,6 +328,55 @@
     </div>
 </div>
 
+                        <div class="card mt-4 shadow-sm border-0">
+    <div class="card-header bg-white border-bottom pb-0 pt-3">
+        <h6 class="mb-3 text-primary"><i class="bi bi-view-list me-2"></i>Destacados Pequeños (Máx 10)</h6>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-4 p-3 bg-light rounded border">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-dark">Icono (1:1 Cuadrado)</label>
+                <input type="file" class="form-control form-control-sm" id="admin-dp-file" accept="image/*">
+                <div id="cropper-container-dp" style="display:none; margin-top:10px;">
+                    <img id="cropper-image-dp" style="max-width:100%;">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-dark">Título</label>
+                <input type="text" class="form-control form-control-sm" id="admin-dp-titulo" placeholder="Ej: Requisitos para publicar">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-dark">Descripción (Corta)</label>
+                <input type="text" class="form-control form-control-sm" id="admin-dp-desc" placeholder="Breve texto secundario">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-dark">Enlace (Link)</label>
+                <input type="url" class="form-control form-control-sm" id="admin-dp-enlace" placeholder="https://...">
+            </div>
+            <div class="col-12 text-end mt-3">
+                <button class="btn btn-sm btn-success px-4" id="btn-guardar-dp"><i class="bi bi-plus-lg me-1"></i> Agregar Destacado</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-center font-inter">
+                <thead class="table-light">
+                    <tr>
+                        <th>Icono</th>
+                        <th>Título</th>
+                        <th>Descripción</th>
+                        <th>Enlace</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-dp-body">
+                    <!-- JS rellena esto automáticamente -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
                         <div class="col-lg-12 border-top pt-4">
                             <h6 class="fw-bold text-primary mb-4 font-inter"><i class="bi bi-link-45deg me-2"></i> Configuración de Botones y Enlaces</h6>
                             <div class="row g-4">
