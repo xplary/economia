@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc, addDoc, deleteDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc, addDoc, deleteDoc, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1" });
 const auth = getAuth(app); 
@@ -59,6 +59,7 @@ onAuthStateChanged(auth, async (user) => {
                     if (misPermisos.stats) cargarDatosDashboard();
                     if (misPermisos.users) cargarUsuarios();
                     cargarDatosFooterAdmin();
+                    iniciarDestacadosPequenosAdmin();
                 } else {
                     document.getElementById('loading-screen').style.display = 'none';
                     document.getElementById('access-denied').style.display = 'flex';
@@ -560,111 +561,208 @@ setTimeout(async () => {
 
 // ==========================================
 // 8. DESTACADOS PEQUEÑOS (PURA IMAGEN 1:1)
+// Esta sección vive DENTRO de "Edición de Web".
+// Los cambios se guardan en "destacados_pequenos" y se ven en index.html.
 // ==========================================
 let cropperDp = null;
 let dpCount = 0;
+let dejarDeEscucharDp = null;
 
 const inputFileDp = document.getElementById('admin-dp-file');
+const btnGuardarDp = document.getElementById('btn-guardar-dp');
+
+function normalizarEnlaceDp(valor) {
+    const url = new URL(valor);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+        throw new Error('Ingresa un enlace válido que comience por https:// o http://.');
+    }
+    return url.href;
+}
+
 if (inputFileDp) {
-    inputFileDp.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = document.getElementById('cropper-image-dp');
-                img.src = event.target.result;
-                document.getElementById('cropper-container-dp').style.display = 'block';
-                if (cropperDp) cropperDp.destroy();
-                cropperDp = new Cropper(img, { aspectRatio: 1, viewMode: 2, autoCropArea: 1 });
-            };
-            reader.readAsDataURL(file);
+    inputFileDp.addEventListener('change', (evento) => {
+        const archivo = evento.target.files?.[0];
+        const contenedorRecorte = document.getElementById('cropper-container-dp');
+        const imagenRecorte = document.getElementById('cropper-image-dp');
+
+        if (cropperDp) {
+            cropperDp.destroy();
+            cropperDp = null;
         }
+        contenedorRecorte.style.display = 'none';
+        if (!archivo) return;
+        if (!archivo.type.startsWith('image/')) {
+            alert('Selecciona un archivo de imagen válido.');
+            inputFileDp.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (lectura) => {
+            imagenRecorte.onload = () => {
+                imagenRecorte.onload = null;
+                contenedorRecorte.style.display = 'block';
+                cropperDp = new Cropper(imagenRecorte, {
+                    aspectRatio: 1,
+                    viewMode: 2,
+                    autoCropArea: 1,
+                    responsive: true,
+                    background: false
+                });
+            };
+            imagenRecorte.onerror = () => {
+                alert('No se pudo abrir la imagen seleccionada.');
+                inputFileDp.value = '';
+            };
+            imagenRecorte.src = lectura.target.result;
+        };
+        reader.onerror = () => alert('No se pudo leer la imagen seleccionada.');
+        reader.readAsDataURL(archivo);
     });
 }
 
-const btnGuardarDp = document.getElementById('btn-guardar-dp');
 if (btnGuardarDp) {
-    btnGuardarDp.addEventListener('click', async (e) => {
-        if (dpCount >= 10) return alert("Has alcanzado el límite máximo de 10 destacados pequeños.");
+    btnGuardarDp.addEventListener('click', async () => {
+        const valor = document.getElementById('admin-dp-enlace').value.trim();
+        if (!valor) return alert('El enlace de redirección es obligatorio.');
 
-        const enlace = document.getElementById('admin-dp-enlace').value.trim();
-        if (!enlace) return alert("El enlace es obligatorio.");
-        if (!cropperDp) return alert("Debes seleccionar y recortar una imagen.");
+        let enlace;
+        try {
+            enlace = normalizarEnlaceDp(valor);
+        } catch (_) {
+            return alert('Ingresa un enlace válido que empiece por https:// o http://.');
+        }
 
-        const btn = e.target;
-        const textoOriginal = btn.innerHTML;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
-        btn.disabled = true;
+        if (!cropperDp) return alert('Selecciona una imagen y ajusta su recorte cuadrado primero.');
+        if (dpCount >= 10) return alert('Ya hay 10 destacados pequeños. Elimina uno para agregar otro.');
+
+        const textoOriginal = btnGuardarDp.innerHTML;
+        btnGuardarDp.disabled = true;
+        btnGuardarDp.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
 
         try {
-            // El recorte será cuadrado puro
-            const imgFinal = cropperDp.getCroppedCanvas({ width: 300, height: 300 }).toDataURL('image/jpeg', 0.85);
-            
-            await addDoc(collection(db, "destacados_pequenos"), {
-                imagen: imgFinal,
-                enlace: enlace,
+            // Revalidar el límite, por si otro administrador añadió una imagen.
+            const consulta = query(collection(db, 'destacados_pequenos'), orderBy('fecha', 'asc'));
+            const existentes = await getDocs(consulta);
+            if (existentes.size >= 10) {
+                throw new Error('Ya existen 10 destacados pequeños. Elimina uno antes de guardar.');
+            }
+
+            const lienzo = cropperDp.getCroppedCanvas({
+                width: 300,
+                height: 300,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+            if (!lienzo) throw new Error('No se pudo recortar la imagen. Selecciónala otra vez.');
+            const imagen = lienzo.toDataURL('image/jpeg', 0.85);
+
+            await addDoc(collection(db, 'destacados_pequenos'), {
+                imagen,
+                enlace,
                 fecha: new Date().toISOString()
             });
 
             document.getElementById('admin-dp-enlace').value = '';
-            document.getElementById('admin-dp-file').value = '';
+            inputFileDp.value = '';
             cropperDp.destroy();
             cropperDp = null;
             document.getElementById('cropper-container-dp').style.display = 'none';
-
-            await cargarDestacadosPequenosAdmin();
-            alert("¡Destacado pequeño agregado exitosamente!");
+            alert('¡Destacado pequeño publicado correctamente!');
         } catch (error) {
-            console.error("Error al guardar:", error);
-            alert("Error al guardar. Revisa los permisos.");
+            console.error('Error al guardar destacado pequeño:', error);
+            alert('No se pudo guardar el destacado: ' + error.message);
         } finally {
-            btn.innerHTML = textoOriginal;
-            btn.disabled = false;
+            btnGuardarDp.innerHTML = textoOriginal;
+            btnGuardarDp.disabled = false;
         }
     });
 }
 
-async function cargarDestacadosPequenosAdmin() {
+function mostrarDestacadosPequenosAdmin(snapshot) {
     const tbody = document.getElementById('lista-dp-body');
+    const contador = document.getElementById('admin-dp-count');
     if (!tbody) return;
-    
-    try {
-        const q = query(collection(db, "destacados_pequenos"), orderBy("fecha", "asc"));
-        const snap = await getDocs(q);
-        dpCount = snap.size;
-        tbody.innerHTML = '';
-        
-        if (snap.empty) {
-            tbody.innerHTML = '<tr><td colspan="3" class="text-muted py-3">Aún no hay destacados pequeños.</td></tr>';
-            return;
-        }
 
-        snap.forEach(docSnap => {
-            const d = docSnap.data();
-            tbody.innerHTML += `
-                <tr>
-                    <td><img src="${d.imagen}" width="60" height="60" class="rounded shadow-sm" style="object-fit:cover;"></td>
-                    <td><a href="${d.enlace}" target="_blank" class="small text-primary text-truncate d-inline-block" style="max-width:150px;">${d.enlace}</a></td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="window.eliminarDp('${docSnap.id}')"><i class="bi bi-trash-fill"></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-    } catch (e) {
-        console.error("Error al cargar lista DP:", e);
+    dpCount = snapshot.size;
+    if (contador) contador.textContent = `${dpCount} de 10 publicados`;
+    tbody.replaceChildren();
+
+    if (snapshot.empty) {
+        const fila = document.createElement('tr');
+        const celda = document.createElement('td');
+        celda.colSpan = 3;
+        celda.className = 'text-muted py-3';
+        celda.textContent = 'Aún no hay destacados pequeños.';
+        fila.appendChild(celda);
+        tbody.appendChild(fila);
+        return;
     }
+
+    snapshot.forEach((documento) => {
+        const datos = documento.data();
+        const fila = document.createElement('tr');
+
+        const celdaImagen = document.createElement('td');
+        const imagen = document.createElement('img');
+        imagen.src = datos.imagen || '';
+        imagen.alt = 'Vista previa del destacado';
+        imagen.width = 60;
+        imagen.height = 60;
+        imagen.className = 'rounded shadow-sm';
+        imagen.style.objectFit = 'cover';
+        celdaImagen.appendChild(imagen);
+
+        const celdaEnlace = document.createElement('td');
+        const enlace = document.createElement('a');
+        enlace.className = 'small text-primary text-truncate d-inline-block';
+        enlace.style.maxWidth = '230px';
+        enlace.textContent = datos.enlace || '(Sin enlace)';
+        enlace.target = '_blank';
+        enlace.rel = 'noopener noreferrer';
+        try {
+            enlace.href = normalizarEnlaceDp(datos.enlace || '');
+        } catch (_) {
+            enlace.removeAttribute('href');
+        }
+        celdaEnlace.appendChild(enlace);
+
+        const celdaAccion = document.createElement('td');
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.className = 'btn btn-sm btn-outline-danger shadow-sm';
+        boton.setAttribute('aria-label', 'Eliminar destacado');
+        boton.title = 'Eliminar destacado';
+        boton.innerHTML = '<i class="bi bi-trash-fill"></i>';
+        boton.addEventListener('click', () => window.eliminarDp(documento.id));
+        celdaAccion.appendChild(boton);
+
+        fila.append(celdaImagen, celdaEnlace, celdaAccion);
+        tbody.appendChild(fila);
+    });
+}
+
+function iniciarDestacadosPequenosAdmin() {
+    if (dejarDeEscucharDp) return;
+    const tbody = document.getElementById('lista-dp-body');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="3" class="text-muted py-3">Cargando destacados...</td></tr>';
+
+    const consulta = query(collection(db, 'destacados_pequenos'), orderBy('fecha', 'asc'));
+    dejarDeEscucharDp = onSnapshot(consulta, mostrarDestacadosPequenosAdmin, (error) => {
+        console.error('Error al cargar destacados pequeños:', error);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="3" class="text-danger py-3">No se pudo cargar la lista. Revisa los permisos de Firebase.</td></tr>';
+        const contador = document.getElementById('admin-dp-count');
+        if (contador) contador.textContent = 'No disponible';
+    });
 }
 
 window.eliminarDp = async (id) => {
-    if(confirm("¿Eliminar este destacado pequeño? Desaparecerá de la web de inmediato.")) {
-        try {
-            await deleteDoc(doc(db, "destacados_pequenos", id));
-            await cargarDestacadosPequenosAdmin();
-        } catch(e) { 
-            alert("Error al eliminar: " + e.message); 
-        }
+    if (!confirm('¿Eliminar este destacado pequeño? También desaparecerá de la web pública.')) return;
+    try {
+        await deleteDoc(doc(db, 'destacados_pequenos', id));
+        // El listener actualiza automáticamente la tabla y la web pública.
+    } catch (error) {
+        console.error('Error al eliminar destacado pequeño:', error);
+        alert('No se pudo eliminar el destacado: ' + error.message);
     }
 };
-
-setTimeout(cargarDestacadosPequenosAdmin, 2000);
