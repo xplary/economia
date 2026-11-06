@@ -97,12 +97,12 @@ body { font-family: 'Inter', sans-serif; color: #333; background-color: #f8f9fa;
 .footer-btn-solid { background: #ffffff; color: #004b79 !important; border: 1px solid #ffffff; transition: 0.2s ease; padding: 0.9rem; border-radius: 4px; }
 .footer-btn-solid:hover { background: #f8f9fa; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 
-/* DESTACADOS PEQUEÑOS: debajo del destacado principal, en la barra lateral. */
+/* DESTACADOS PEQUEÑOS: banners horizontales a todo el ancho de la barra lateral. */
 .destacado-pequeno-link {
     display: block;
     width: 100%;
-    aspect-ratio: 1 / 1;
-    background: #f1f5f9;
+    aspect-ratio: 12 / 5;
+    background: #fff;
     border: 1px solid #e2e8f0;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }

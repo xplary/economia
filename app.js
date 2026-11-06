@@ -415,7 +415,7 @@ async function cargarDestacadoCuadrado() {
 document.addEventListener("DOMContentLoaded", cargarDestacadoCuadrado);
 
 // ==========================================
-// DESTACADOS PEQUEÑOS: CUADRÍCULA PÚBLICA
+// DESTACADOS PEQUEÑOS: BANNERS HORIZONTALES PÚBLICOS
 // Se mantiene sincronizada con la colección de Firebase del panel admin.
 // ==========================================
 function cargarDestacadosPequenosPublico() {
@@ -443,7 +443,7 @@ function cargarDestacadosPequenosPublico() {
             }
 
             const columna = document.createElement('div');
-            columna.className = 'col-6 col-md-4 col-lg-6';
+            columna.className = 'col-12';
 
             const enlace = document.createElement('a');
             enlace.href = enlaceSeguro.href;
@@ -457,7 +457,7 @@ function cargarDestacadosPequenosPublico() {
             imagen.alt = `Destacado ${mostrados + 1}`;
             imagen.loading = 'lazy';
             imagen.decoding = 'async';
-            imagen.className = 'd-block w-100 h-100 object-fit-cover';
+            imagen.className = 'd-block w-100 h-100 object-fit-contain';
 
             enlace.appendChild(imagen);
             columna.appendChild(enlace);
