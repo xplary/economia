@@ -85,6 +85,11 @@
                 
                 <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-4" style="letter-spacing: 1px; font-size: 0.7rem;">Plataforma</li>
                 <li class="nav-item mt-2" id="nav-edicion" style="display:none;"><a class="nav-link" data-target="edicion-tab"><i class="bi bi-layout-text-window-reverse me-3 fs-5 align-middle"></i> Edición de Web</a></li>
+                <li class="nav-item mb-1">
+    <a href="#" class="nav-link text-dark py-2 px-3 rounded d-flex align-items-center fw-semibold font-inter" data-target="section-destacados-pequenos">
+        <i class="bi bi-grid-fill me-3 fs-5 text-secondary"></i> Cuadrados Pequeños
+    </a>
+</li>
                 
                 <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-5" style="letter-spacing: 1px; font-size: 0.7rem;">Sistema</li>
                 <li class="nav-item"><a href="../index.html" class="nav-link text-warning"><i class="bi bi-box-arrow-up-right me-3 fs-5 align-middle"></i> Salir al Portal</a></li>
@@ -328,53 +333,48 @@
     </div>
 </div>
 
-                        <div class="card mt-4 shadow-sm border-0">
-    <div class="card-header bg-white border-bottom pb-0 pt-3">
-        <h6 class="mb-3 text-primary"><i class="bi bi-view-list me-2"></i>Destacados Pequeños (Máx 10)</h6>
-    </div>
-    <div class="card-body">
-        <div class="row g-3 mb-4 p-3 bg-light rounded border">
-            <div class="col-md-3">
-                <label class="form-label small fw-bold text-dark">Icono (1:1 Cuadrado)</label>
-                <input type="file" class="form-control form-control-sm" id="admin-dp-file" accept="image/*">
-                <div id="cropper-container-dp" style="display:none; margin-top:10px;">
-                    <img id="cropper-image-dp" style="max-width:100%;">
+
+<!-- CONFIGURACIÓN DE DESTACADOS PEQUEÑOS (PURA IMAGEN) -->
+    <div id="section-destacados-pequenos" class="admin-section" style="display: none;">
+        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+            <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                <h6 class="fw-bold text-primary mb-0"><i class="bi bi-grid-fill me-2"></i>Destacados Pequeños (Máx 10)</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3 bg-light p-3 rounded-4 mb-4 border">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-dark">Subir Imagen (Formato 1:1 Cuadrado)</label>
+                        <input type="file" class="form-control form-control-sm" id="admin-dp-file" accept="image/*">
+                        <div id="cropper-container-dp" style="display:none; margin-top:10px;">
+                            <img id="cropper-image-dp" style="max-width:100%;">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-dark">Enlace de Redirección</label>
+                        <input type="url" class="form-control form-control-sm" id="admin-dp-enlace" placeholder="https://...">
+                    </div>
+                    <div class="col-12 text-end mt-3">
+                        <button class="btn btn-success fw-bold px-4 rounded-pill" id="btn-guardar-dp"><i class="bi bi-save-fill me-2"></i>Guardar Cuadrado Pequeño</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-center font-inter">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Imagen</th>
+                                <th>Enlace</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-dp-body">
+                            <!-- JS rellena esto -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            <div class="col-md-3">
-                <label class="form-label small fw-bold text-dark">Título</label>
-                <input type="text" class="form-control form-control-sm" id="admin-dp-titulo" placeholder="Ej: Requisitos para publicar">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label small fw-bold text-dark">Descripción (Corta)</label>
-                <input type="text" class="form-control form-control-sm" id="admin-dp-desc" placeholder="Breve texto secundario">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label small fw-bold text-dark">Enlace (Link)</label>
-                <input type="url" class="form-control form-control-sm" id="admin-dp-enlace" placeholder="https://...">
-            </div>
-            <div class="col-12 text-end mt-3">
-                <button class="btn btn-sm btn-success px-4" id="btn-guardar-dp"><i class="bi bi-plus-lg me-1"></i> Agregar Destacado</button>
-            </div>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 text-center font-inter">
-                <thead class="table-light">
-                    <tr>
-                        <th>Icono</th>
-                        <th>Título</th>
-                        <th>Descripción</th>
-                        <th>Enlace</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="lista-dp-body">
-                    <!-- JS rellena esto automáticamente -->
-                </tbody>
-            </table>
         </div>
     </div>
-</div>
+
 
 
                         <div class="col-lg-12 border-top pt-4">
