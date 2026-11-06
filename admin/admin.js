@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc, addDoc, deleteDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1" });
 const auth = getAuth(app); 
@@ -459,7 +459,6 @@ window.guardarFooterAdmin = async () => {
 let cropperDestacado = null;
 let imagenGuardada = ''; 
 
-// Escuchar el input de imagen físico del HTML
 const inputFile = document.getElementById('admin-sb-imagen-file');
 if (inputFile) {
     inputFile.addEventListener('change', function(e) {
@@ -474,7 +473,7 @@ if (inputFile) {
                 if (cropperDestacado) cropperDestacado.destroy();
                 
                 cropperDestacado = new Cropper(img, {
-                    aspectRatio: 1, // Cuadrado 1:1
+                    aspectRatio: 1, 
                     viewMode: 2,
                     autoCropArea: 1,
                     guides: true,
@@ -486,7 +485,6 @@ if (inputFile) {
     });
 }
 
-// Guardar el destacado
 const btnGuardarDestacado = document.getElementById('btn-guardar-destacado');
 if (btnGuardarDestacado) {
     btnGuardarDestacado.addEventListener('click', async (e) => {
@@ -509,7 +507,6 @@ if (btnGuardarDestacado) {
         }
 
         try {
-            console.log("Guardando en Firebase...");
             const dataPayload = { 
                 sb_imagen: imgFinal, 
                 sb_enlace: link,
@@ -517,10 +514,8 @@ if (btnGuardarDestacado) {
                 bannerLinkUrl: link 
             };
 
-            // Guarda la data para mantener compatibilidad en varias partes de tu app
             await setDoc(doc(db, "configuracion", "general"), dataPayload, { merge: true });
             await setDoc(doc(db, "configuracion", "destacado"), dataPayload, { merge: true });
-            
             await setDoc(doc(db, "destacados", "principal"), {
                 imagen: imgFinal,
                 fecha: new Date().toISOString()
@@ -546,7 +541,6 @@ if (btnGuardarDestacado) {
     });
 }
 
-// Cargar el enlace actual al abrir el admin
 setTimeout(async () => {
     try {
         let docSnap = await getDoc(doc(db, "configuracion", "general"));
@@ -563,10 +557,13 @@ setTimeout(async () => {
     } catch (e) {}
 }, 1500);
 
+
+// ==========================================
+// 8. DESTACADOS PEQUEÑOS (PURA IMAGEN 1:1)
+// ==========================================
 let cropperDp = null;
 let dpCount = 0;
 
-// Escuchar input de imagen
 const inputFileDp = document.getElementById('admin-dp-file');
 if (inputFileDp) {
     inputFileDp.addEventListener('change', function(e) {
@@ -585,18 +582,14 @@ if (inputFileDp) {
     });
 }
 
-// Botón Guardar
 const btnGuardarDp = document.getElementById('btn-guardar-dp');
 if (btnGuardarDp) {
     btnGuardarDp.addEventListener('click', async (e) => {
-        if (dpCount >= 10) return alert("Has alcanzado el límite máximo de 10 destacados pequeños. Elimina uno para agregar otro.");
+        if (dpCount >= 10) return alert("Has alcanzado el límite máximo de 10 destacados pequeños.");
 
-        const titulo = document.getElementById('admin-dp-titulo').value.trim();
-        const desc = document.getElementById('admin-dp-desc').value.trim();
         const enlace = document.getElementById('admin-dp-enlace').value.trim();
-
-        if (!titulo || !enlace) return alert("El título y el enlace son obligatorios.");
-        if (!cropperDp) return alert("Debes seleccionar y recortar un icono.");
+        if (!enlace) return alert("El enlace es obligatorio.");
+        if (!cropperDp) return alert("Debes seleccionar y recortar una imagen.");
 
         const btn = e.target;
         const textoOriginal = btn.innerHTML;
@@ -604,20 +597,15 @@ if (btnGuardarDp) {
         btn.disabled = true;
 
         try {
-            // Recorte pequeño para optimizar base de datos
-            const imgFinal = cropperDp.getCroppedCanvas({ width: 120, height: 120 }).toDataURL('image/jpeg', 0.85);
+            // El recorte será cuadrado puro
+            const imgFinal = cropperDp.getCroppedCanvas({ width: 300, height: 300 }).toDataURL('image/jpeg', 0.85);
             
             await addDoc(collection(db, "destacados_pequenos"), {
                 imagen: imgFinal,
-                titulo: titulo,
-                descripcion: desc,
                 enlace: enlace,
-                fecha: new Date().toISOString() // Para mantener el orden
+                fecha: new Date().toISOString()
             });
 
-            // Limpiar campos
-            document.getElementById('admin-dp-titulo').value = '';
-            document.getElementById('admin-dp-desc').value = '';
             document.getElementById('admin-dp-enlace').value = '';
             document.getElementById('admin-dp-file').value = '';
             cropperDp.destroy();
@@ -636,22 +624,18 @@ if (btnGuardarDp) {
     });
 }
 
-// Cargar la tabla en admin
 async function cargarDestacadosPequenosAdmin() {
     const tbody = document.getElementById('lista-dp-body');
     if (!tbody) return;
     
     try {
-        // Importante: asegúrate de haber importado query, orderBy de firestore
-        import { query, orderBy } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-        
         const q = query(collection(db, "destacados_pequenos"), orderBy("fecha", "asc"));
         const snap = await getDocs(q);
         dpCount = snap.size;
         tbody.innerHTML = '';
         
         if (snap.empty) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-muted py-3">Aún no has agregado destacados pequeños.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" class="text-muted py-3">Aún no hay destacados pequeños.</td></tr>';
             return;
         }
 
@@ -659,10 +643,8 @@ async function cargarDestacadosPequenosAdmin() {
             const d = docSnap.data();
             tbody.innerHTML += `
                 <tr>
-                    <td><img src="${d.imagen}" width="35" height="35" class="rounded shadow-sm" style="object-fit:cover;"></td>
-                    <td class="fw-bold text-dark text-start">${d.titulo}</td>
-                    <td class="text-muted small text-start">${d.descripcion}</td>
-                    <td><a href="${d.enlace}" target="_blank" class="small text-truncate d-inline-block" style="max-width:120px;">Ver Link</a></td>
+                    <td><img src="${d.imagen}" width="60" height="60" class="rounded shadow-sm" style="object-fit:cover;"></td>
+                    <td><a href="${d.enlace}" target="_blank" class="small text-primary text-truncate d-inline-block" style="max-width:150px;">${d.enlace}</a></td>
                     <td>
                         <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="window.eliminarDp('${docSnap.id}')"><i class="bi bi-trash-fill"></i></button>
                     </td>
@@ -675,7 +657,7 @@ async function cargarDestacadosPequenosAdmin() {
 }
 
 window.eliminarDp = async (id) => {
-    if(confirm("¿Seguro que deseas eliminar este destacado? Desaparecerá de la web pública de inmediato.")) {
+    if(confirm("¿Eliminar este destacado pequeño? Desaparecerá de la web de inmediato.")) {
         try {
             await deleteDoc(doc(db, "destacados_pequenos", id));
             await cargarDestacadosPequenosAdmin();
@@ -685,5 +667,4 @@ window.eliminarDp = async (id) => {
     }
 };
 
-// Activar la carga cuando se entra al panel (puedes poner esto dentro de onAuthStateChanged cuando esAdmin es true)
 setTimeout(cargarDestacadosPequenosAdmin, 2000);
