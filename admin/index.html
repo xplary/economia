@@ -1,8 +1,9 @@
+<!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CAFE UNP | Admin</title>
-    <title>Panel Admin</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -85,11 +86,6 @@
                 
                 <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-4" style="letter-spacing: 1px; font-size: 0.7rem;">Plataforma</li>
                 <li class="nav-item mt-2" id="nav-edicion" style="display:none;"><a class="nav-link" data-target="edicion-tab"><i class="bi bi-layout-text-window-reverse me-3 fs-5 align-middle"></i> Edición de Web</a></li>
-                <li class="nav-item mb-1">
-    <a href="#" class="nav-link text-dark py-2 px-3 rounded d-flex align-items-center fw-semibold font-inter" data-target="section-destacados-pequenos">
-        <i class="bi bi-grid-fill me-3 fs-5 text-secondary"></i> Cuadrados Pequeños
-    </a>
-</li>
                 
                 <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-5" style="letter-spacing: 1px; font-size: 0.7rem;">Sistema</li>
                 <li class="nav-item"><a href="../index.html" class="nav-link text-warning"><i class="bi bi-box-arrow-up-right me-3 fs-5 align-middle"></i> Salir al Portal</a></li>
@@ -335,10 +331,11 @@
 
 
 <!-- CONFIGURACIÓN DE DESTACADOS PEQUEÑOS (PURA IMAGEN) -->
-    <div id="section-destacados-pequenos" class="admin-section" style="display: none;">
+    <div id="section-destacados-pequenos" class="col-lg-12 border-top pt-4">
         <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
-            <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
-                <h6 class="fw-bold text-primary mb-0"><i class="bi bi-grid-fill me-2"></i>Destacados Pequeños (Máx 10)</h6>
+            <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h6 class="fw-bold text-primary mb-0"><i class="bi bi-grid-fill me-2"></i> Destacados Pequeños (Máx. 10)</h6>
+                <small class="text-secondary fw-semibold" id="admin-dp-count" aria-live="polite">Cargando destacados...</small>
             </div>
             <div class="card-body p-4">
                 <div class="row g-3 bg-light p-3 rounded-4 mb-4 border">
@@ -354,7 +351,7 @@
                         <input type="url" class="form-control form-control-sm" id="admin-dp-enlace" placeholder="https://...">
                     </div>
                     <div class="col-12 text-end mt-3">
-                        <button class="btn btn-success fw-bold px-4 rounded-pill" id="btn-guardar-dp"><i class="bi bi-save-fill me-2"></i>Guardar Cuadrado Pequeño</button>
+                        <button type="button" class="btn btn-success fw-bold px-4 rounded-pill" id="btn-guardar-dp"><i class="bi bi-save-fill me-2"></i>Guardar Cuadrado Pequeño</button>
                     </div>
                 </div>
                 <div class="table-responsive">
