@@ -1,24 +1,18 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-// Este es el fragmento de código que debes usar en tu admin.js
-// Asegúrate de tener importado setDoc y doc de Firestore
 
 const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1" });
 const auth = getAuth(app); 
 const db = getFirestore(app);
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.x.x/firebase-firestore.js";
 
 let allUsers = [];
 let allRoles = [];
 let chartInstances = {}; 
-// Suponiendo que ya inicializaste 'db'
-// const db = getFirestore(app);
 
 let misPermisos = { panel: false, stats: false, users: false, roles: false };
 let isSuperAdminLogueado = false;
 let miRolId = null;
-let cropper; // Variable global para el cropper
 
 // ==========================================
 // 1. AUTENTICACIÓN Y SEGURIDAD DINÁMICA
@@ -50,25 +44,21 @@ onAuthStateChanged(auth, async (user) => {
                     document.getElementById('admin-avatar').src = user.photoURL || 'https://via.placeholder.com/32';
                     document.getElementById('admin-name').innerText = user.displayName || 'Equipo';
 
-                    // Ocultar tabs prohibidas
                     if(!misPermisos.stats) document.getElementById('nav-overview').style.display = 'none'; else document.getElementById('nav-overview').style.display = 'block';
                     if(!misPermisos.users) document.getElementById('nav-users').style.display = 'none'; else document.getElementById('nav-users').style.display = 'block';
                     if(!misPermisos.roles) document.getElementById('nav-roles').style.display = 'none'; else document.getElementById('nav-roles').style.display = 'block';
                     
-                    // Mostrar pestaña Edicion Web a todos los que puedan entrar al panel
                     document.getElementById('nav-edicion').style.display = 'block';
 
-                    // Navegar a la primera tab que tenga permitida
                     if(misPermisos.stats) { document.getElementById('nav-overview').querySelector('.nav-link').click(); }
                     else if(misPermisos.users) { document.getElementById('nav-users').querySelector('.nav-link').click(); }
                     else if(misPermisos.roles) { document.getElementById('nav-roles').querySelector('.nav-link').click(); }
                     else { document.getElementById('nav-edicion').querySelector('.nav-link').click(); }
 
-                    // Cargar datos
                     await cargarRolesBD(); 
                     if (misPermisos.stats) cargarDatosDashboard();
                     if (misPermisos.users) cargarUsuarios();
-                    cargarDatosFooterAdmin(); // Cargar la nueva tab
+                    cargarDatosFooterAdmin();
                 } else {
                     document.getElementById('loading-screen').style.display = 'none';
                     document.getElementById('access-denied').style.display = 'flex';
@@ -77,6 +67,7 @@ onAuthStateChanged(auth, async (user) => {
                 window.location.href = "../index.html";
             }
         } catch (error) {
+            console.error("Error de permisos: ", error);
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('access-denied').style.display = 'flex';
         }
@@ -173,14 +164,12 @@ async function cargarRolesBD() {
         allRoles = [];
         snap.forEach(d => { allRoles.push({ id: d.id, ...d.data() }); });
         if(misPermisos.roles) renderListaRoles();
-    } catch(e) {}
+    } catch(e) { console.error("Error al cargar roles", e); }
 }
 
 function renderListaRoles() {
     const tbody = document.getElementById('roles-table-body');
-    tbody.innerHTML = '';
-    
-    tbody.innerHTML += `
+    tbody.innerHTML = `
         <tr>
             <td class="fw-bold text-dark font-inter"><i class="bi bi-star-fill text-warning me-2"></i> Super Administrador (Dueño)</td>
             <td><span class="badge badge-soft bg-primary bg-opacity-10 text-primary">Todos los permisos</span></td>
@@ -246,16 +235,13 @@ window.guardarRol = async () => {
         roles: document.getElementById('perm-roles').checked
     };
 
-    const dataObj = { nombre, permisos };
     const btn = document.getElementById('btn-save-rol');
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
     try {
-        if(id) {
-            await updateDoc(doc(db, "roles", id), dataObj);
-        } else {
-            await addDoc(collection(db, "roles"), dataObj);
-        }
+        if(id) await updateDoc(doc(db, "roles", id), { nombre, permisos });
+        else await addDoc(collection(db, "roles"), { nombre, permisos });
+        
         await cargarRolesBD(); 
         if(misPermisos.users) await cargarUsuarios(); 
         bootstrap.Modal.getInstance(document.getElementById('modalRol')).hide();
@@ -267,7 +253,7 @@ window.guardarRol = async () => {
 };
 
 window.eliminarRol = async (id) => {
-    if(confirm("¿Seguro que deseas eliminar este rango? Los usuarios que lo tengan volverán a ser usuarios normales.")) {
+    if(confirm("¿Seguro que deseas eliminar este rango? Los usuarios volverán a ser normales.")) {
         try {
             await deleteDoc(doc(db, "roles", id));
             await cargarRolesBD();
@@ -334,7 +320,6 @@ function renderUsuarios(usersList) {
         }
 
         const nombre = u.nombre || 'Sin nombre';
-
         tbody.innerHTML += `
             <tr>
                 <td class="fw-semibold text-dark font-inter">
@@ -362,13 +347,9 @@ window.cambiarRangoUsuario = async (uid, nuevoRangoVal) => {
     if(confirm("¿Estás seguro de modificar los permisos de este usuario?")) {
         try {
             let updates = {};
-            if (nuevoRangoVal === 'SUPERADMIN') {
-                updates = { owner: true, rolId: null };
-            } else if (nuevoRangoVal === 'NONE') {
-                updates = { owner: false, rolId: null };
-            } else {
-                updates = { owner: false, rolId: nuevoRangoVal };
-            }
+            if (nuevoRangoVal === 'SUPERADMIN') updates = { owner: true, rolId: null };
+            else if (nuevoRangoVal === 'NONE') updates = { owner: false, rolId: null };
+            else updates = { owner: false, rolId: nuevoRangoVal };
             
             await updateDoc(doc(db, "usuarios", uid), updates);
             
@@ -409,7 +390,7 @@ window.exportarUsuariosCSV = () => {
 };
 
 // ==========================================
-// 6. GESTIÓN DEL PIE DE PÁGINA (NUEVO)
+// 6. GESTIÓN DEL PIE DE PÁGINA 
 // ==========================================
 async function cargarDatosFooterAdmin() {
     try {
@@ -421,8 +402,10 @@ async function cargarDatosFooterAdmin() {
         document.getElementById('admin-f-sobre').value = d.sobre || '';
 
         const setVal = (idStr, valObj, defText, defUrl) => {
-            document.getElementById(`admin-${idStr}-text`).value = (valObj && valObj.text) ? valObj.text : defText;
-            document.getElementById(`admin-${idStr}-url`).value = (valObj && valObj.url) ? valObj.url : defUrl;
+            const textEl = document.getElementById(`admin-${idStr}-text`);
+            const urlEl = document.getElementById(`admin-${idStr}-url`);
+            if (textEl) textEl.value = (valObj && valObj.text) ? valObj.text : defText;
+            if (urlEl) urlEl.value = (valObj && valObj.url) ? valObj.url : defUrl;
         };
 
         setVal('f-link1', d.link1, 'Cómo llegar', '#');
@@ -433,9 +416,7 @@ async function cargarDatosFooterAdmin() {
         setVal('f-link6', d.link6, 'Procedimiento de devoluciones', '#');
         setVal('f-btn1', d.btn1, 'Enviar mensaje', '#');
         setVal('f-btn2', d.btn2, 'Libro de Reclamaciones', '#');
-    } catch(e) {
-        console.error("Error cargando Footer: ", e);
-    }
+    } catch(e) {}
 }
 
 window.guardarFooterAdmin = async () => {
@@ -446,23 +427,19 @@ window.guardarFooterAdmin = async () => {
 
     const getVal = (idStr) => {
         return {
-            text: document.getElementById(`admin-${idStr}-text`).value,
-            url: document.getElementById(`admin-${idStr}-url`).value
+            text: document.getElementById(`admin-${idStr}-text`)?.value || '',
+            url: document.getElementById(`admin-${idStr}-url`)?.value || ''
         };
     };
 
     const newData = {
-        ubicacion: document.getElementById('admin-f-ubicacion').value,
-        contacto: document.getElementById('admin-f-contacto').value,
-        sobre: document.getElementById('admin-f-sobre').value,
-        link1: getVal('f-link1'),
-        link2: getVal('f-link2'),
-        link3: getVal('f-link3'),
-        link4: getVal('f-link4'),
-        link5: getVal('f-link5'),
-        link6: getVal('f-link6'),
-        btn1: getVal('f-btn1'),
-        btn2: getVal('f-btn2')
+        ubicacion: document.getElementById('admin-f-ubicacion')?.value || '',
+        contacto: document.getElementById('admin-f-contacto')?.value || '',
+        sobre: document.getElementById('admin-f-sobre')?.value || '',
+        link1: getVal('f-link1'), link2: getVal('f-link2'),
+        link3: getVal('f-link3'), link4: getVal('f-link4'),
+        link5: getVal('f-link5'), link6: getVal('f-link6'),
+        btn1: getVal('f-btn1'), btn2: getVal('f-btn2')
     };
 
     try {
@@ -476,116 +453,102 @@ window.guardarFooterAdmin = async () => {
     }
 };
 
-// --- NUEVO SISTEMA DE DESTACADO (CROPPER + FIREBASE) ---
+// ==========================================
+// 7. SISTEMA DE DESTACADO CON CROPPER
+// ==========================================
 let cropperDestacado = null;
 let imagenGuardada = ''; 
 
-// 1. Mostrar Cropper al seleccionar archivo local
-document.getElementById('admin-sb-imagen-file')?.addEventListener('change', function(e) {
-// 1. LÓGICA DE CROPPER (Para solucionar el error de la línea 489)
-document.getElementById('input-imagen-destacado').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const img = document.getElementById('cropper-image-destacado');
-            img.src = event.target.result;
-            document.getElementById('cropper-container-destacado').style.display = 'block';
-            
-            if (cropperDestacado) cropperDestacado.destroy();
-            const imageElement = document.getElementById('imagen-preview');
-            imageElement.src = event.target.result;
-            imageElement.style.display = 'block';
-
-            if (cropper) { cropper.destroy(); } // Destruir instancia anterior si existe
-
-            cropperDestacado = new Cropper(img, {
-                aspectRatio: 1,
-                viewMode: 2,
-                autoCropArea: 1,
-                guides: true,
-                center: true
-            // AQUÍ ESTÁ CROPPER (Ya no dará error porque está en el HTML)
-            cropper = new Cropper(imageElement, {
-                aspectRatio: 16 / 9,
-                viewMode: 1,
-            });
-        };
-        reader.readAsDataURL(file);
-    }
-});
-
-// 2. Procesar y guardar en Firebase
-document.getElementById('btn-guardar-destacado')?.addEventListener('click', async (e) => {
-    const btn = e.target;
-    const link = document.getElementById('admin-sb-enlace').value;
-    const textoOriginal = btn.innerHTML;
-    
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
-    btn.disabled = true;
-
-    // Si cortó una imagen nueva, la convertimos a Base64. Si no, mantenemos la anterior.
-    let imgFinal = imagenGuardada;
-    if (cropperDestacado) {
-        imgFinal = cropperDestacado.getCroppedCanvas({ width: 800, height: 800 }).toDataURL('image/jpeg', 0.85);
-// 2. LÓGICA PARA GUARDAR EN FIRESTORE (Soluciona el error de la línea 541 y crea BD automática)
-document.getElementById('btn-guardar-destacado').addEventListener('click', async function() {
-    if (!cropper) {
-        alert("Por favor, selecciona y recorta una imagen primero.");
-        return;
-    }
-
-    try {
-        // Guardamos usando la nomenclatura exacta que lee tu index.html principal
-        // Lo guardamos tanto en "general" como en "destacado" para asegurar compatibilidad total con tu app.js
-        const dataPayload = { 
-            sb_imagen: imgFinal, 
-            sb_enlace: link,
-            bannerImageUrl: imgFinal, 
-            bannerLinkUrl: link 
-        };
-
-        await setDoc(doc(db, "configuracion", "general"), dataPayload, { merge: true });
-        await setDoc(doc(db, "configuracion", "destacado"), dataPayload, { merge: true });
-    // Obtener la imagen en base64
-    const imagenBase64 = cropper.getCroppedCanvas().toDataURL('image/jpeg');
-
-        imagenGuardada = imgFinal;
-    try {
-        console.log("Guardando en Firebase...");
-
-        // Limpiar la interfaz
-        if (cropperDestacado) {
-            cropperDestacado.destroy();
-            cropperDestacado = null;
+// Escuchar el input de imagen físico del HTML
+const inputFile = document.getElementById('admin-sb-imagen-file');
+if (inputFile) {
+    inputFile.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.getElementById('cropper-image-destacado');
+                img.src = event.target.result;
+                document.getElementById('cropper-container-destacado').style.display = 'block';
+                
+                if (cropperDestacado) cropperDestacado.destroy();
+                
+                cropperDestacado = new Cropper(img, {
+                    aspectRatio: 1, // Cuadrado 1:1
+                    viewMode: 2,
+                    autoCropArea: 1,
+                    guides: true,
+                    center: true
+                });
+            };
+            reader.readAsDataURL(file);
         }
-        document.getElementById('cropper-container-destacado').style.display = 'none';
-        document.getElementById('admin-sb-imagen-file').value = '';
-        // ESTO CREA AUTOMÁTICAMENTE LA COLECCIÓN 'destacados' Y EL DOCUMENTO 'principal'
-        const destacadoRef = doc(db, "destacados", "principal");
+    });
+}
+
+// Guardar el destacado
+const btnGuardarDestacado = document.getElementById('btn-guardar-destacado');
+if (btnGuardarDestacado) {
+    btnGuardarDestacado.addEventListener('click', async (e) => {
+        const btn = e.target;
+        const link = document.getElementById('admin-sb-enlace')?.value || '';
+        const textoOriginal = btn.innerHTML;
         
-        await setDoc(destacadoRef, {
-            imagen: imagenBase64,
-            fecha: new Date().toISOString(),
-            // Puedes añadir título, enlace, etc.
-        });
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+        btn.disabled = true;
 
-        alert("¡Imagen destacada subida y vinculada con éxito!");
-        alert("¡Destacado guardado con éxito! Se creó en la base de datos.");
-    } catch (error) {
-        console.error("Error al guardar destacado:", error);
-        alert("Hubo un problema al guardar. Revisa la consola.");
-    } finally {
-        btn.innerHTML = textoOriginal;
-        btn.disabled = false;
-        alert("Error de permisos: Asegúrate que tu UID tenga rol 'admin' en la colección 'usuarios'.");
-    }
-});
+        let imgFinal = imagenGuardada;
+        
+        if (cropperDestacado) {
+            imgFinal = cropperDestacado.getCroppedCanvas({ width: 800, height: 800 }).toDataURL('image/jpeg', 0.85);
+        } else if (!imgFinal) {
+            alert("Por favor, selecciona y recorta una imagen primero.");
+            btn.innerHTML = textoOriginal;
+            btn.disabled = false;
+            return;
+        }
 
-// 3. Cargar el enlace actual al abrir el admin
+        try {
+            console.log("Guardando en Firebase...");
+            const dataPayload = { 
+                sb_imagen: imgFinal, 
+                sb_enlace: link,
+                bannerImageUrl: imgFinal, 
+                bannerLinkUrl: link 
+            };
+
+            // Guarda la data para mantener compatibilidad en varias partes de tu app
+            await setDoc(doc(db, "configuracion", "general"), dataPayload, { merge: true });
+            await setDoc(doc(db, "configuracion", "destacado"), dataPayload, { merge: true });
+            
+            await setDoc(doc(db, "destacados", "principal"), {
+                imagen: imgFinal,
+                fecha: new Date().toISOString()
+            });
+
+            imagenGuardada = imgFinal;
+
+            if (cropperDestacado) {
+                cropperDestacado.destroy();
+                cropperDestacado = null;
+            }
+            document.getElementById('cropper-container-destacado').style.display = 'none';
+            if(inputFile) inputFile.value = '';
+
+            alert("¡Destacado guardado con éxito! Se creó en la base de datos.");
+        } catch (error) {
+            console.error("Error al guardar destacado:", error);
+            alert("Error de permisos o conexión. Revisa la consola.");
+        } finally {
+            btn.innerHTML = textoOriginal;
+            btn.disabled = false;
+        }
+    });
+}
+
+// Cargar el enlace actual al abrir el admin
 setTimeout(async () => {
     try {
-        // Revisamos primero la configuración general (estilo footer)
         let docSnap = await getDoc(doc(db, "configuracion", "general"));
         if (!docSnap.exists() || !docSnap.data().sb_imagen) {
             docSnap = await getDoc(doc(db, "configuracion", "destacado"));
@@ -593,14 +556,9 @@ setTimeout(async () => {
         
         if (docSnap.exists()) {
             const data = docSnap.data();
-            // Soporte para ambas nomenclaturas
             imagenGuardada = data.sb_imagen || data.bannerImageUrl || '';
             const linkInput = document.getElementById('admin-sb-enlace');
-            if (linkInput) {
-                linkInput.value = data.sb_enlace || data.bannerLinkUrl || '';
-            }
+            if (linkInput) linkInput.value = data.sb_enlace || data.bannerLinkUrl || '';
         }
-    } catch (e) { 
-        console.error("Error cargando datos previos:", e); 
-    }
+    } catch (e) {}
 }, 1500);
