@@ -267,6 +267,30 @@
 
             <!-- SECCIÓN 4: EDICIÓN DE WEB (NUEVA PESTAÑA FOOTER) -->
             <div id="edicion-tab" class="admin-section" style="display: none;">
+                <!-- ADMINISTRACIÓN DE SECCIONES DE OPINIÓN -->
+                <div class="card kpi-card p-4 mb-4">
+                    <div class="border-bottom pb-3 mb-4">
+                        <h5 class="fw-bold text-dark mb-1"><i class="bi bi-collection me-2" style="color: #009668;"></i> Secciones de Artículos y Opinión</h5>
+                        <p class="text-secondary small mb-0">Crea, cambia el nombre o elimina las secciones del menú desplegable. Las columnas existentes no se borran al eliminar una sección.</p>
+                    </div>
+                    <form id="admin-seccion-form" class="row g-2 align-items-end mb-3">
+                        <div class="col-md-8">
+                            <label for="admin-seccion-nombre" class="form-label small fw-bold text-secondary">Nombre de la sección</label>
+                            <input type="text" class="form-control" id="admin-seccion-nombre" maxlength="60" placeholder="Ej: Economía, Actualidad, Vida universitaria" required>
+                        </div>
+                        <div class="col-md-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-success fw-semibold flex-grow-1" id="admin-seccion-guardar" style="background: #009668; border-color: #009668;"><i class="bi bi-plus-lg me-1"></i> Crear sección</button>
+                            <button type="button" class="btn btn-outline-secondary d-none" id="admin-seccion-cancelar">Cancelar</button>
+                        </div>
+                    </form>
+                    <p id="admin-seccion-mensaje" class="small mb-2" role="status" aria-live="polite"></p>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 font-inter">
+                            <thead class="table-light"><tr><th>Sección</th><th class="text-end">Acciones</th></tr></thead>
+                            <tbody id="admin-secciones-lista"><tr><td colspan="2" class="text-muted small">Cargando secciones...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
                 <div class="card kpi-card p-4">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3 border-bottom pb-4 border-light-subtle">
                         <div>

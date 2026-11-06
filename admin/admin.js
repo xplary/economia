@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc, addDoc, deleteDoc, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc, addDoc, deleteDoc, query, orderBy, limit, onSnapshot, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 const app = initializeApp({ apiKey: "AIzaSyDvtzU8SGycfh99Cc_lLT7xabQ_uPBOpqE", authDomain: "economia-41d20.firebaseapp.com", databaseURL: "https://economia-41d20-default-rtdb.firebaseio.com", projectId: "economia-41d20", storageBucket: "economia-41d20.firebasestorage.app", messagingSenderId: "750639619847", appId: "1:750639619847:web:9a036501539ca6e3ceafa2", measurementId: "G-BWV82ZTSW1" });
 const auth = getAuth(app); 
@@ -60,6 +60,7 @@ onAuthStateChanged(auth, async (user) => {
                     if (misPermisos.users) cargarUsuarios();
                     cargarDatosFooterAdmin();
                     iniciarDestacadosPequenosAdmin();
+                    iniciarSeccionesOpinionAdmin();
                 } else {
                     document.getElementById('loading-screen').style.display = 'none';
                     document.getElementById('access-denied').style.display = 'flex';
@@ -766,3 +767,134 @@ window.eliminarDp = async (id) => {
         alert('No se pudo eliminar el destacado: ' + error.message);
     }
 };
+
+
+// ==========================================
+// 9. SECCIONES DEL MENÚ ARTÍCULOS Y OPINIÓN
+// ==========================================
+let seccionesOpinionAdmin = [];
+let seccionEnEdicion = null;
+let unsubscribeSeccionesOpinion = null;
+const formSeccion = document.getElementById('admin-seccion-form');
+const inputSeccion = document.getElementById('admin-seccion-nombre');
+const btnGuardarSeccion = document.getElementById('admin-seccion-guardar');
+const btnCancelarSeccion = document.getElementById('admin-seccion-cancelar');
+const tablaSecciones = document.getElementById('admin-secciones-lista');
+const msgSecciones = document.getElementById('admin-seccion-mensaje');
+
+function informarSeccion(mensaje, error = false) {
+    msgSecciones.textContent = mensaje;
+    msgSecciones.className = `small mb-2 ${error ? 'text-danger' : 'text-success'}`;
+}
+function reiniciarEditorSeccion() {
+    seccionEnEdicion = null;
+    inputSeccion.value = '';
+    btnGuardarSeccion.innerHTML = '<i class="bi bi-plus-lg me-1"></i> Crear sección';
+    btnCancelarSeccion.classList.add('d-none');
+}
+btnCancelarSeccion.addEventListener('click', () => {
+    reiniciarEditorSeccion();
+    informarSeccion('');
+});
+
+function iniciarSeccionesOpinionAdmin() {
+    if (unsubscribeSeccionesOpinion) return;
+    unsubscribeSeccionesOpinion = onSnapshot(collection(db, 'secciones_opinion'), snapshot => {
+        seccionesOpinionAdmin = snapshot.docs.map(d => ({ id: d.id, nombre: d.data().nombre || '' }))
+            .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
+        tablaSecciones.replaceChildren();
+        if (!seccionesOpinionAdmin.length) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 2;
+            td.className = 'text-secondary small py-3';
+            td.textContent = 'Todavía no hay secciones. Crea la primera usando el formulario.';
+            tr.append(td);
+            tablaSecciones.append(tr);
+            return;
+        }
+        seccionesOpinionAdmin.forEach(seccion => {
+            const tr = document.createElement('tr');
+            const nombre = document.createElement('td');
+            nombre.className = 'fw-semibold text-dark';
+            nombre.textContent = seccion.nombre;
+            const acciones = document.createElement('td');
+            acciones.className = 'text-end text-nowrap';
+            const editar = document.createElement('button');
+            editar.type = 'button';
+            editar.className = 'btn btn-sm btn-outline-primary me-2';
+            editar.innerHTML = '<i class="bi bi-pencil-square me-1"></i> Editar';
+            editar.addEventListener('click', () => {
+                seccionEnEdicion = seccion.id;
+                inputSeccion.value = seccion.nombre;
+                btnGuardarSeccion.innerHTML = '<i class="bi bi-floppy me-1"></i> Guardar nombre';
+                btnCancelarSeccion.classList.remove('d-none');
+                informarSeccion('');
+                inputSeccion.focus();
+            });
+            const eliminar = document.createElement('button');
+            eliminar.type = 'button';
+            eliminar.className = 'btn btn-sm btn-outline-danger';
+            eliminar.innerHTML = '<i class="bi bi-trash me-1"></i> Borrar';
+            eliminar.addEventListener('click', () => eliminarSeccionOpinion(seccion));
+            acciones.append(editar, eliminar);
+            tr.append(nombre, acciones);
+            tablaSecciones.append(tr);
+        });
+        if (seccionEnEdicion && !seccionesOpinionAdmin.some(s => s.id === seccionEnEdicion)) reiniciarEditorSeccion();
+    }, error => {
+        console.error('Error al escuchar secciones:', error);
+        informarSeccion('No se pudieron cargar las secciones. Revisa las reglas de Firestore.', true);
+    });
+}
+
+formSeccion.addEventListener('submit', async e => {
+    e.preventDefault();
+    const nombre = inputSeccion.value.trim().replace(/\s+/g, ' ');
+    if (!nombre || nombre.length > 60) return informarSeccion('El nombre debe tener entre 1 y 60 caracteres.', true);
+    if (seccionesOpinionAdmin.some(s => s.id !== seccionEnEdicion && s.nombre.toLocaleLowerCase('es') === nombre.toLocaleLowerCase('es'))) {
+        return informarSeccion('Ya existe una sección con ese nombre.', true);
+    }
+    btnGuardarSeccion.disabled = true;
+    try {
+        if (seccionEnEdicion) {
+            await updateDoc(doc(db, 'secciones_opinion', seccionEnEdicion), { nombre });
+            informarSeccion('Sección actualizada. El menú y las columnas se actualizarán automáticamente.');
+        } else {
+            await addDoc(collection(db, 'secciones_opinion'), { nombre });
+            informarSeccion('Sección creada correctamente. Ya puedes asignarle columnas.');
+        }
+        reiniciarEditorSeccion();
+    } catch (error) {
+        console.error('Error al guardar sección:', error);
+        informarSeccion('No se pudo guardar la sección. Verifica tus permisos de administrador.', true);
+    } finally {
+        btnGuardarSeccion.disabled = false;
+    }
+});
+
+async function eliminarSeccionOpinion(seccion) {
+    if (!confirm(`¿Eliminar la sección "${seccion.nombre}"? Las columnas que pertenezcan a ella pasarán a General, sin perder contenido, comentarios ni destacado general.`)) return;
+    btnGuardarSeccion.disabled = true;
+    try {
+        // Se reasignan antes de borrar para no dejar columnas apuntando a una sección inexistente.
+        const columnas = await getDocs(query(collection(db, 'noticias'), where('seccionId', '==', seccion.id)));
+        const documentos = columnas.docs;
+        // Firestore permite un máximo de 500 operaciones por lote.
+        for (let i = 0; i < documentos.length; i += 450) {
+            const lote = writeBatch(db);
+            documentos.slice(i, i + 450).forEach(d => {
+                lote.update(d.ref, { seccionId: null, principalSeccion: false });
+            });
+            await lote.commit();
+        }
+        await deleteDoc(doc(db, 'secciones_opinion', seccion.id));
+        if (seccionEnEdicion === seccion.id) reiniciarEditorSeccion();
+        informarSeccion(`${seccion.nombre} eliminada. ${documentos.length} columna(s) se movieron a General.`);
+    } catch (error) {
+        console.error('Error al borrar sección:', error);
+        informarSeccion('No se pudo completar la eliminación. La sección se conservará hasta completar la operación.', true);
+    } finally {
+        btnGuardarSeccion.disabled = false;
+    }
+}
