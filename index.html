@@ -126,18 +126,26 @@
                     </div>
                     <div class="col-lg-4 ps-lg-4 mt-4 mt-lg-0">
                         <!-- El enlace envuelve la tarjeta -->
-                        <a href="#" id="sb-enlace" class="d-block text-decoration-none" target="_blank">
-                            <div class="bg-white shadow-sm position-relative rounded-4 overflow-hidden d-flex align-items-center justify-content-center" style="border: 1px solid #e2e8f0; aspect-ratio: 1/1; cursor: pointer;">
-                                <!-- Imagen -->
-                                <img id="sb-imagen" src="" alt="Destacado" class="w-100 h-100 object-fit-cover d-none">
-                                <!-- Placeholder -->
-                                <div id="sb-placeholder" class="text-center text-muted p-4 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-light">
-                                    <i class="bi bi-image mb-2 text-secondary" style="font-size: 3rem;"></i>
-                                    <span class="fw-bold font-inter" style="font-size: 1.1rem; color: #2d3748;">Espacio Destacado</span>
-                                    <small class="text-muted mt-2" style="font-size: 0.8rem;">(Sin imagen configurada)</small>
-                                </div>
-                            </div>
-                        </a>
+                         <a href="#" id="sb-enlace" class="d-block text-decoration-none" target="_blank">
+    <div class="bg-white shadow-sm position-relative rounded-4 overflow-hidden d-flex align-items-center justify-content-center" style="border: 1px solid #e2e8f0; aspect-ratio: 1/1; cursor: pointer;">
+        
+        <!-- Esqueleto de carga (Muestra esto primero) -->
+        <div id="sb-skeleton" class="placeholder-glow w-100 h-100 d-flex">
+            <div class="placeholder w-100 h-100 bg-secondary" style="opacity: 0.2;"></div>
+        </div>
+        
+        <!-- Imagen configurada (Oculta por defecto) -->
+        <img id="sb-imagen" src="" alt="Destacado" class="w-100 h-100 object-fit-cover d-none">
+        
+        <!-- Placeholder cuando NO hay imagen (Oculto por defecto) -->
+        <div id="sb-placeholder" class="text-center text-muted p-4 w-100 h-100 d-none flex-column align-items-center justify-content-center bg-light">
+            <i class="bi bi-image mb-2 text-secondary" style="font-size: 3rem;"></i>
+            <span class="fw-bold font-inter" style="font-size: 1.1rem; color: #2d3748;">Espacio Destacado</span>
+            <small class="text-muted mt-2" style="font-size: 0.8rem;">(Sin imagen configurada)</small>
+        </div>
+        
+    </div>
+</a>
                     </div>
                 </div>
             </div>
