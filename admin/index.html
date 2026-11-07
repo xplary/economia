@@ -86,6 +86,7 @@
                 
                 <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-4" style="letter-spacing: 1px; font-size: 0.7rem;">Plataforma</li>
                 <li class="nav-item mt-2" id="nav-edicion" style="display:none;"><a class="nav-link" data-target="edicion-tab"><i class="bi bi-layout-text-window-reverse me-3 fs-5 align-middle"></i> Edición de Web</a></li>
+                <li class="nav-item mt-2" id="nav-revisiones" style="display:none;"><a class="nav-link" data-target="revisiones-tab"><i class="bi bi-inboxes-fill me-3 fs-5 align-middle"></i> Revisiones</a></li>
                 
                 <li class="nav-item text-uppercase text-secondary small fw-bold px-4 mb-2 mt-5" style="letter-spacing: 1px; font-size: 0.7rem;">Sistema</li>
                 <li class="nav-item"><a href="../index.html" class="nav-link text-warning"><i class="bi bi-box-arrow-up-right me-3 fs-5 align-middle"></i> Salir al Portal</a></li>
@@ -462,6 +463,38 @@
                 </div>
             </div>
 
+            <!-- REQUISITOS Y SOLICITUDES: PESTAÑA EXCLUSIVA OWNER -->
+            <section id="revisiones-tab" class="admin-section" style="display:none;" aria-labelledby="revisiones-heading">
+                <div class="card kpi-card p-4 mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 border-bottom pb-3 mb-3">
+                        <div>
+                            <h5 id="revisiones-heading" class="fw-bold text-dark mb-1"><i class="bi bi-inboxes me-2" style="color:#009668;"></i> Solicitudes de revisión editorial</h5>
+                            <p class="text-secondary small mb-0">Solo los owners pueden ver los correos y los enlaces recibidos. La comunicación con el autor se realiza por correo electrónico.</p>
+                        </div>
+                        <a href="../informe/" target="_blank" rel="noopener noreferrer" class="btn btn-success fw-semibold" style="background:#009668;border-color:#009668;"><i class="bi bi-file-earmark-text me-1"></i> Ver / editar requisitos</a>
+                    </div>
+                    <div class="row g-3 align-items-end mb-3">
+                        <div class="col-md-5">
+                            <label for="buscar-revisiones" class="form-label small fw-bold text-secondary">Buscar por correo o enlace</label>
+                            <input type="search" class="form-control" id="buscar-revisiones" placeholder="Buscar solicitud…" autocomplete="off">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="filtro-revisiones" class="form-label small fw-bold text-secondary">Estado</label>
+                            <select id="filtro-revisiones" class="form-select"><option value="todos">Todos los estados</option><option value="pendiente">Pendiente</option><option value="en_revision">En revisión</option><option value="revisado">Revisado</option><option value="archivado">Archivado</option></select>
+                        </div>
+                        <div class="col-md-3 text-md-end"><span class="badge bg-success bg-opacity-10 text-success px-3 py-2" id="contador-revisiones">0 solicitudes</span></div>
+                    </div>
+                    <div id="revisiones-mensaje" class="small text-muted mb-3" role="status" aria-live="polite">Cargando solicitudes…</div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" aria-label="Solicitudes para revisión editorial">
+                            <thead class="table-light"><tr><th>Fecha</th><th>Correo del autor</th><th>Documento</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+                            <tbody id="lista-revisiones"><tr><td colspan="5" class="text-center text-secondary py-4">Cargando revisiones…</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 small text-secondary"><i class="bi bi-info-circle me-1"></i> El sistema registra solicitudes, pero <strong>no envía correos automáticos</strong>. Utiliza «Responder» para contactar al autor desde tu aplicación de correo.</div>
+                </div>
+            </section>
+
     <!-- MODAL PARA CREAR/EDITAR ROL -->
     <div class="modal fade" id="modalRol" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -539,6 +572,6 @@
         });
     </script>
     <!-- Versión actualizada para evitar que el navegador reutilice el admin.js antiguo. -->
-    <script type="module" src="admin.js?v=20261106-secciones-fix"></script>
+    <script type="module" src="admin.js?v=20261107-revisiones-1"></script>
 </body>
 </html>

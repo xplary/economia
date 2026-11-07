@@ -13,6 +13,12 @@ let chartInstances = {};
 let misPermisos = { panel: false, stats: false, users: false, roles: false };
 let isSuperAdminLogueado = false;
 let miRolId = null;
+// Los owners pueden gestionar la página de requisitos y las revisiones.
+const OWNER_UIDS_REVISION = ['ljyeGkc7GbR901C2pXxQmc1hAp62', 'kpHISTlicgNuyKqHZr46FMGKrko2'];
+let ownerRevisionesActivo = false;
+let cancelarEscuchaRevisiones = null;
+let revisionesCargadas = [];
+
 
 // ==========================================
 // 1. AUTENTICACIÓN Y SEGURIDAD DINÁMICA
@@ -25,7 +31,7 @@ onAuthStateChanged(auth, async (user) => {
                 const uData = userDoc.data();
                 let tieneAcceso = false;
 
-                if (uData.owner === true) {
+                if (uData.owner === true || OWNER_UIDS_REVISION.includes(user.uid)) {
                     tieneAcceso = true;
                     isSuperAdminLogueado = true;
                     misPermisos = { panel: true, stats: true, users: true, roles: true };
@@ -49,6 +55,8 @@ onAuthStateChanged(auth, async (user) => {
                     if(!misPermisos.roles) document.getElementById('nav-roles').style.display = 'none'; else document.getElementById('nav-roles').style.display = 'block';
                     
                     document.getElementById('nav-edicion').style.display = 'block';
+                    ownerRevisionesActivo = isSuperAdminLogueado;
+                    document.getElementById('nav-revisiones').style.display = ownerRevisionesActivo ? 'block' : 'none';
 
                     if(misPermisos.stats) { document.getElementById('nav-overview').querySelector('.nav-link').click(); }
                     else if(misPermisos.users) { document.getElementById('nav-users').querySelector('.nav-link').click(); }
@@ -61,6 +69,7 @@ onAuthStateChanged(auth, async (user) => {
                     cargarDatosFooterAdmin();
                     iniciarDestacadosPequenosAdmin();
                     iniciarSeccionesOpinionAdmin();
+                    if (ownerRevisionesActivo) iniciarRevisionesAdmin();
                 } else {
                     document.getElementById('loading-screen').style.display = 'none';
                     document.getElementById('access-denied').style.display = 'flex';
@@ -901,4 +910,147 @@ async function eliminarSeccionOpinion(seccion) {
     } finally {
         btnGuardarSeccion.disabled = false;
     }
+}
+
+
+// ==========================================
+// 10. REVISIONES EDITORIALES (SOLO OWNERS)
+// ==========================================
+const listaRevisiones = document.getElementById('lista-revisiones');
+const mensajeRevisiones = document.getElementById('revisiones-mensaje');
+const filtroRevisiones = document.getElementById('filtro-revisiones');
+const buscarRevisiones = document.getElementById('buscar-revisiones');
+const estadosRevision = {
+    pendiente: 'Pendiente',
+    en_revision: 'En revisión',
+    revisado: 'Revisado',
+    archivado: 'Archivado'
+};
+
+function enlaceRevisionSeguro(valor) {
+    try {
+        const url = new URL(valor);
+        return url.protocol === 'https:' &&
+            ['drive.google.com', 'docs.google.com'].includes(url.hostname.toLowerCase()) &&
+            url.pathname.length > 1 && !url.username && !url.password;
+    } catch { return false; }
+}
+
+function mostrarEstadoRevisiones(texto, error = false) {
+    mensajeRevisiones.textContent = texto;
+    mensajeRevisiones.className = error ? 'small text-danger mb-3' : 'small text-muted mb-3';
+}
+
+function crearCeldaRevision(texto, clase = '') {
+    const td = document.createElement('td');
+    td.textContent = texto;
+    if (clase) td.className = clase;
+    return td;
+}
+
+function renderRevisionesAdmin() {
+    if (!ownerRevisionesActivo) return;
+    const filtro = filtroRevisiones.value;
+    const busqueda = buscarRevisiones.value.trim().toLocaleLowerCase('es');
+    const visibles = revisionesCargadas.filter(r =>
+        (filtro === 'todos' || r.estado === filtro) &&
+        (!busqueda || (r.correo || '').toLocaleLowerCase('es').includes(busqueda) ||
+            (r.enlaceDrive || '').toLocaleLowerCase('es').includes(busqueda)));
+
+    document.getElementById('contador-revisiones').textContent =
+        `${revisionesCargadas.length} solicitud${revisionesCargadas.length === 1 ? '' : 'es'}`;
+    listaRevisiones.replaceChildren();
+    if (!visibles.length) {
+        const tr = document.createElement('tr');
+        const td = crearCeldaRevision(revisionesCargadas.length ? 'No hay solicitudes que coincidan con el filtro.' : 'Todavía no se han recibido solicitudes.', 'text-center text-secondary py-4');
+        td.colSpan = 5; tr.append(td); listaRevisiones.append(tr);
+        return;
+    }
+
+    visibles.forEach(revision => {
+        const tr = document.createElement('tr');
+        const fecha = revision.creadoEn?.toDate?.();
+        tr.append(crearCeldaRevision(fecha ? new Intl.DateTimeFormat('es-PE', {dateStyle:'short',timeStyle:'short'}).format(fecha) : '—', 'small text-secondary'));
+        tr.append(crearCeldaRevision(revision.correo || 'Sin correo', 'fw-semibold text-dark'));
+
+        const celdaEnlace = document.createElement('td');
+        if (enlaceRevisionSeguro(revision.enlaceDrive)) {
+            const abrir = document.createElement('a');
+            abrir.href = revision.enlaceDrive;
+            abrir.target = '_blank'; abrir.rel = 'noopener noreferrer';
+            abrir.className = 'btn btn-sm btn-outline-primary fw-semibold';
+            abrir.innerHTML = '<i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i> Abrir Drive';
+            celdaEnlace.append(abrir);
+        } else {
+            celdaEnlace.textContent = 'Enlace no válido';
+            celdaEnlace.className = 'text-danger small';
+        }
+        tr.append(celdaEnlace);
+
+        const celdaEstado = document.createElement('td');
+        const selectEstado = document.createElement('select');
+        selectEstado.className = 'form-select form-select-sm';
+        selectEstado.setAttribute('aria-label', `Estado de revisión de ${revision.correo || 'solicitud'}`);
+        Object.entries(estadosRevision).forEach(([valor, etiqueta]) => {
+            const opcion = document.createElement('option');
+            opcion.value = valor; opcion.textContent = etiqueta;
+            selectEstado.append(opcion);
+        });
+        selectEstado.value = estadosRevision[revision.estado] ? revision.estado : 'pendiente';
+        selectEstado.addEventListener('change', async () => {
+            const original = revision.estado || 'pendiente';
+            selectEstado.disabled = true;
+            try {
+                await updateDoc(doc(db, 'solicitudes_revision', revision.id), {estado: selectEstado.value});
+                mostrarEstadoRevisiones('Estado actualizado correctamente.');
+            } catch (error) {
+                selectEstado.value = original;
+                mostrarEstadoRevisiones('No se pudo actualizar el estado: ' + error.message, true);
+            } finally { selectEstado.disabled = false; }
+        });
+        celdaEstado.append(selectEstado); tr.append(celdaEstado);
+
+        const celdaAcciones = document.createElement('td');
+        celdaAcciones.className = 'text-end';
+        const responder = document.createElement('a');
+        responder.className = 'btn btn-sm btn-light border me-1';
+        responder.href = 'mailto:' + encodeURIComponent(revision.correo || '') + '?subject=' + encodeURIComponent('Revisión editorial de CAFÉ UNP');
+        responder.title = 'Responder por correo';
+        responder.setAttribute('aria-label', 'Responder al autor por correo');
+        responder.innerHTML = '<i class="bi bi-envelope" aria-hidden="true"></i>';
+        const eliminar = document.createElement('button');
+        eliminar.type = 'button'; eliminar.className = 'btn btn-sm btn-light border text-danger';
+        eliminar.title = 'Eliminar solicitud';
+        eliminar.setAttribute('aria-label', 'Eliminar solicitud');
+        eliminar.innerHTML = '<i class="bi bi-trash" aria-hidden="true"></i>';
+        eliminar.addEventListener('click', async () => {
+            if (!confirm(`¿Eliminar definitivamente la solicitud de ${revision.correo}? Esta acción no se puede deshacer.`)) return;
+            eliminar.disabled = true;
+            try {
+                await deleteDoc(doc(db, 'solicitudes_revision', revision.id));
+                mostrarEstadoRevisiones('Solicitud eliminada.');
+            } catch (error) {
+                mostrarEstadoRevisiones('No se pudo eliminar: ' + error.message, true);
+            } finally { eliminar.disabled = false; }
+        });
+        celdaAcciones.append(responder, eliminar); tr.append(celdaAcciones);
+        listaRevisiones.append(tr);
+    });
+}
+
+buscarRevisiones.addEventListener('input', renderRevisionesAdmin);
+filtroRevisiones.addEventListener('change', renderRevisionesAdmin);
+
+function iniciarRevisionesAdmin() {
+    if (!ownerRevisionesActivo || cancelarEscuchaRevisiones) return;
+    mostrarEstadoRevisiones('Cargando solicitudes de revisión…');
+    cancelarEscuchaRevisiones = onSnapshot(
+        query(collection(db, 'solicitudes_revision'), orderBy('creadoEn', 'desc'), limit(500)),
+        instantanea => {
+            revisionesCargadas = instantanea.docs.map(d => ({id:d.id, ...d.data()}));
+            mostrarEstadoRevisiones('Mostrando las últimas 500 solicitudes como máximo. Actualización en tiempo real.');
+            renderRevisionesAdmin();
+        },
+        error => mostrarEstadoRevisiones('No se pudieron consultar las revisiones. Comprueba el acceso owner y las reglas de Firestore: ' + error.message, true)
+    );
 }
