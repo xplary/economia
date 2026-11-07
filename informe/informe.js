@@ -195,7 +195,8 @@ function mostrarSeccion(id, { cambiarURL = false, desplazar = false } = {}) {
   });
   $('ultima-actualizacion').hidden = !fechaPublicacion;
   if (fechaPublicacion) $('ultima-actualizacion').textContent = 'Última actualización: ' + new Intl.DateTimeFormat('es-PE', { dateStyle: 'long' }).format(fechaPublicacion);
-  if (desplazar) $('requirements-heading').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Al cambiar de sección, iniciar la lectura desde arriba y evitar el salto al título.
+  if (desplazar) window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 function renderizarIndice() {
