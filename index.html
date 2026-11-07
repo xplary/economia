@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=lectura-20261106">
     <style>
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar { width: 8px; background-color: transparent; }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track { background-color: transparent; }
@@ -236,9 +236,11 @@
                             </div>
                             
                             <div class="p-0 mb-4 border-0">
+                                <div class="mb-3 d-flex align-items-start gap-2 p-3 gform-builder-help"><i class="bi bi-layers text-success fs-5"></i><div class="small font-inter text-secondary">Organiza las preguntas en <strong>secciones</strong>. Cada sección será una página que los participantes recorrerán con <strong>Siguiente</strong> y <strong>Anterior</strong>.</div></div>
                                 <div id="contenedor-preguntas-builder" class="mb-4"></div>
                                 <div class="text-center mt-3">
-                                    <button onclick="agregarPreguntaFormBuilder()" class="btn btn-outline-secondary bg-white fw-bold rounded-pill shadow-sm px-4"><i class="bi bi-plus-circle me-1"></i> Añadir Pregunta</button>
+                                    <button type="button" onclick="agregarPreguntaFormBuilder()" class="btn btn-outline-secondary bg-white fw-bold rounded-pill shadow-sm px-4 me-2 mb-2"><i class="bi bi-plus-circle me-1"></i> Añadir Pregunta</button>
+                                    <button type="button" onclick="agregarSeccionFormBuilder()" class="btn btn-success fw-bold rounded-pill shadow-sm px-4 mb-2" style="background:#009668;border-color:#009668;"><i class="bi bi-plus-square me-1"></i> Añadir sección / página</button>
                                 </div>
                             </div>
                             
@@ -362,8 +364,103 @@
     </div>
 
     <!-- MODALES STANDARD -->
-    <div class="modal fade" id="modalNoticia" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-fullscreen m-0"><div class="modal-content border-0 bg-white rounded-0"><div class="modal-body p-0 d-flex justify-content-center align-items-start" style="padding-top: 5.5rem !important; padding-bottom: 3.5rem !important;"><div class="p-4 p-md-5 position-relative" style="width: 100%; max-width: 900px; min-height: 100vh;"><button type="button" class="btn-close shadow-none position-absolute top-0 end-0 m-4" data-bs-dismiss="modal"></button><div id="mn-tags" class="mb-3 mt-3"></div><h1 id="mn-titulo" class="fw-bold mb-3 font-serif text-dark" style="font-size: 2.5rem; line-height: 1.25;"></h1><div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom text-muted small font-inter"><span id="mn-fecha" class="fw-semibold"></span><span id="mn-promedio-estrellas" class="fw-bold fs-6"></span></div><img id="mn-imagen" src="" class="img-fluid w-100 rounded-4 mb-4 shadow-sm" style="max-height: 550px; object-fit: contain; background: #f8f9fa; display: none;"><div id="mn-contenido" class="contenido-apa mb-5 text-dark" style="font-size: 1.15rem;"></div><h4 class="fw-bold mb-4 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color: #009668;"></i> Comentarios</h4><div class="bg-light p-4 rounded-4 mb-4 border shadow-sm"><div class="d-flex align-items-center mb-3"><span class="text-dark small fw-bold me-3 fs-6 font-inter">Tu calificación:</span><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="1"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="2"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="3"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="4"></i><i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="5"></i><span class="text-muted small ms-3 font-inter" id="rating-text-mn"></span></div><textarea id="mn-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión..."></textarea><div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-2 font-inter shadow-sm" id="btn-enviar-comentario-mn">Publicar Comentario</button></div></div><div id="mn-lista-comentarios"></div></div></div></div></div>
+    <div class="modal fade" id="modalNoticia" tabindex="-1" aria-hidden="true" aria-labelledby="mn-titulo">
+        <div class="modal-dialog modal-fullscreen m-0">
+            <div class="modal-content border-0 bg-white rounded-0">
+                <div class="modal-body mn-reader-body p-0" id="mn-reader-scroll">
+                    <!-- Barra de navegación y progreso: permanece visible al leer. -->
+                    <div class="mn-reading-toolbar">
+                        <div class="mn-reading-toolbar-inner">
+                            <nav class="mn-breadcrumb font-inter" aria-label="Ruta del artículo">
+                                <button type="button" id="mn-volver-inicio" class="mn-breadcrumb-link"><i class="bi bi-house-door" aria-hidden="true"></i> Inicio</button>
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                                <button type="button" id="mn-volver-articulos" class="mn-breadcrumb-link">Artículos y Opinión</button>
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                                <span id="mn-ruta-seccion" class="mn-breadcrumb-current">Opinión</span>
+                            </nav>
+                            <div class="mn-reading-status font-inter" role="group" aria-label="Avance de lectura">
+                                <span id="mn-lectura-porcentaje">Lectura: 0%</span>
+                                <div class="mn-reading-track" role="progressbar" id="mn-lectura-barra" aria-label="Porcentaje leído" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                    <span id="mn-lectura-progreso"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mn-reader-shell">
+                        <button type="button" class="btn-close mn-reader-close shadow-none" data-bs-dismiss="modal" aria-label="Cerrar artículo"></button>
+                        <header class="mn-reader-header">
+                            <div id="mn-tags" class="mn-reader-tags"></div>
+                            <h1 id="mn-titulo" class="fw-bold font-serif text-dark"></h1>
+                            <div class="mn-reader-meta font-inter">
+                                <span id="mn-fecha" class="fw-semibold"></span>
+                                <span id="mn-tiempo-lectura"><i class="bi bi-clock" aria-hidden="true"></i> 1 min de lectura</span>
+                                <span id="mn-promedio-estrellas" class="fw-bold"></span>
+                            </div>
+                        </header>
+
+                        <img id="mn-imagen" src="" alt="Imagen principal del artículo" class="mn-reader-image shadow-sm" style="display: none;">
+                        <div id="mn-contenido" class="contenido-apa mn-reader-content text-dark"></div>
+
+                        <!-- Comentarios existentes: sin cambios de funcionamiento. -->
+                        <section class="mn-reader-comments" aria-label="Comentarios del artículo">
+                            <h4 class="fw-bold mb-4 font-serif text-dark border-top pt-4"><i class="bi bi-chat-square-text me-2" style="color: #009668;"></i> Comentarios</h4>
+                            <div class="bg-light p-4 rounded-4 mb-4 border shadow-sm">
+                                <div class="d-flex align-items-center mb-3">
+                                    <span class="text-dark small fw-bold me-3 fs-6 font-inter">Tu calificación:</span>
+                                    <i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="1"></i>
+                                    <i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="2"></i>
+                                    <i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="3"></i>
+                                    <i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="4"></i>
+                                    <i class="bi bi-star cursor-pointer star-btn-mn fs-3 me-1 text-muted" data-val="5"></i>
+                                    <span class="text-muted small ms-3 font-inter" id="rating-text-mn"></span>
+                                </div>
+                                <textarea id="mn-comentario-texto" class="form-control border-0 shadow-sm mb-3 font-inter" rows="3" placeholder="Escribe tu opinión..."></textarea>
+                                <div class="text-end"><button class="btn btn-ingresar rounded-pill fw-bold px-4 py-2 font-inter shadow-sm" id="btn-enviar-comentario-mn">Publicar Comentario</button></div>
+                            </div>
+                            <div id="mn-lista-comentarios"></div>
+                        </section>
+
+                        <!-- Pie editorial de artículos: temas, compartir y otras lecturas. -->
+                        <footer class="mn-reader-footer font-inter" id="mn-pie-editorial" hidden>
+                            <div class="mn-reader-footer-tools">
+                                <div class="mn-related-topics" id="mn-temas-fila" hidden>
+                                    <span class="mn-footer-caption"><i class="bi bi-tag" aria-hidden="true"></i> Temas relacionados:</span>
+                                    <div id="mn-temas-relacionados" class="mn-topics-list"></div>
+                                </div>
+                                <div class="mn-share-row">
+                                    <span class="mn-footer-caption">Compartir:</span>
+                                    <div class="mn-share-actions" aria-label="Compartir artículo">
+                                        <button type="button" class="mn-share-button mn-share-whatsapp" data-mn-red="whatsapp" aria-label="Compartir en WhatsApp" title="WhatsApp"><i class="bi bi-whatsapp" aria-hidden="true"></i></button>
+                                        <button type="button" class="mn-share-button" data-mn-red="x" aria-label="Compartir en X" title="X"><i class="bi bi-twitter-x" aria-hidden="true"></i></button>
+                                        <button type="button" class="mn-share-button" data-mn-red="facebook" aria-label="Compartir en Facebook" title="Facebook"><i class="bi bi-facebook" aria-hidden="true"></i></button>
+                                        <button type="button" class="mn-share-button" data-mn-red="linkedin" aria-label="Compartir en LinkedIn" title="LinkedIn"><i class="bi bi-linkedin" aria-hidden="true"></i></button>
+                                        <button type="button" class="mn-share-button" data-mn-red="copiar" aria-label="Copiar enlace del artículo" title="Copiar enlace"><i class="bi bi-link-45deg" aria-hidden="true"></i></button>
+                                    </div>
+                                    <span id="mn-copiado" class="mn-copied-message" role="status" aria-live="polite"></span>
+                                </div>
+                            </div>
+                            <div class="mn-reader-recommendations" id="mn-recomendaciones" hidden>
+                                <button type="button" class="mn-related-card" id="mn-mas-leido" hidden>
+                                    <span class="mn-related-heading"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> Lo más leído</span>
+                                    <span class="mn-related-card-body">
+                                        <span class="mn-related-thumbnail"><img alt="" loading="lazy"><i class="bi bi-newspaper" aria-hidden="true"></i></span>
+                                        <span class="mn-related-details"><strong class="mn-related-title"></strong><small class="mn-related-date"></small></span>
+                                    </span>
+                                </button>
+                                <button type="button" class="mn-related-card" id="mn-nota-relacionada" hidden>
+                                    <span class="mn-related-heading"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Notas relacionadas</span>
+                                    <span class="mn-related-card-body">
+                                        <span class="mn-related-thumbnail"><img alt="" loading="lazy"><i class="bi bi-newspaper" aria-hidden="true"></i></span>
+                                        <span class="mn-related-details"><strong class="mn-related-title"></strong><small class="mn-related-date"></small></span>
+                                    </span>
+                                </button>
+                            </div>
+                        </footer>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="modal fade" id="modalLectura" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
@@ -387,11 +484,16 @@
                             <p class="text-danger small mt-3 mb-0 fw-semibold" id="mf-req-text">* Indica que la pregunta es obligatoria</p>
                         </div>
                         
+                        <div id="mf-paginacion" class="gform-progress mb-4 d-none" aria-live="polite"><div class="d-flex justify-content-between align-items-center font-inter small fw-semibold text-secondary mb-2"><span id="mf-paso-actual">Página 1 de 1</span><span>CAFE UNP</span></div><div class="progress"><div id="mf-paso-barra" class="progress-bar" role="progressbar" style="width:100%" aria-label="Progreso del formulario"></div></div></div>
                         <div id="mf-contenido" class="font-inter"></div>
                         
                         <div class="d-flex justify-content-between align-items-center mt-4 bg-white p-4 shadow-sm" style="border-radius: 12px; display: none;" id="mf-footer-container">
                             <span id="mf-status" class="small fw-bold text-muted"></span>
-                            <button type="button" class="btn btn-success px-4 py-2 rounded-3 fw-bold shadow-sm" id="btn-enviar-formulario" style="background-color: #009668; border-color:#009668;">Enviar Respuestas</button>
+                            <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                <button type="button" class="btn btn-outline-secondary px-3 py-2 rounded-3 fw-bold" id="btn-anterior-formulario" style="display:none;">Anterior</button>
+                                <button type="button" class="btn btn-success px-4 py-2 rounded-3 fw-bold shadow-sm" id="btn-siguiente-formulario" style="background-color: #009668; border-color:#009668; display:none;">Siguiente <i class="bi bi-arrow-right ms-1"></i></button>
+                                <button type="button" class="btn btn-success px-4 py-2 rounded-3 fw-bold shadow-sm" id="btn-enviar-formulario" style="background-color: #009668; border-color:#009668;">Enviar Respuestas</button>
+                            </div>
                         </div>
                         
                     </div>
@@ -401,6 +503,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="app.js"></script>
+    <script type="module" src="app.js?v=lectura-20261106"></script>
 </body>
 </html>
