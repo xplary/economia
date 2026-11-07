@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
-    <link rel="stylesheet" href="./style.css?v=modal-encuestas-borradores-20261107-2">
+    <link rel="stylesheet" href="./style.css?v=editor-forms-20261107-3">
     <style>
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar { width: 8px; background-color: transparent; }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track { background-color: transparent; }
@@ -269,7 +269,7 @@
         </div>
     </footer>
 
-    <!-- Editor de debates y encuestas: misma lógica, ahora en ventana emergente. -->
+    <!-- Editor de Debates y Encuestas: presentación tipo formularios, lógica original intacta. -->
     <div class="modal fade editor-formulario-modal" id="colFormulario" tabindex="-1" aria-labelledby="form-header-title" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
@@ -284,48 +284,78 @@
                     </div>
                     <button type="button" class="editor-form-cerrar" onclick="cancelarEdicionFormulario()" aria-label="Cerrar editor" title="Cerrar editor"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                 </div>
+                <nav class="editor-form-tabs" role="tablist" aria-label="Apartados del editor de encuestas">
+                    <button type="button" id="tab-editor-preguntas" class="editor-form-tab active" role="tab" aria-controls="editor-panel-preguntas" aria-selected="true" data-form-tab="preguntas" onclick="mostrarPestanaEditorFormulario('preguntas')"><i class="bi bi-ui-checks-grid" aria-hidden="true"></i> Preguntas</button>
+                    <button type="button" id="tab-editor-respuestas" class="editor-form-tab" role="tab" aria-controls="editor-panel-respuestas" aria-selected="false" data-form-tab="respuestas" onclick="mostrarPestanaEditorFormulario('respuestas')"><i class="bi bi-bar-chart" aria-hidden="true"></i> Respuestas</button>
+                    <button type="button" id="tab-editor-configuracion" class="editor-form-tab" role="tab" aria-controls="editor-panel-configuracion" aria-selected="false" data-form-tab="configuracion" onclick="mostrarPestanaEditorFormulario('configuracion')"><i class="bi bi-sliders" aria-hidden="true"></i> Configuración</button>
+                </nav>
                 <div class="modal-body editor-form-body">
-                    <section class="editor-form-panel" aria-labelledby="editor-form-general-titulo">
-                        <h3 class="editor-form-panel-titulo" id="editor-form-general-titulo"><i class="bi bi-card-text" aria-hidden="true"></i> Información general</h3>
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="editor-form-etiqueta" for="form-titulo">Título del debate o encuesta</label>
-                                <input type="text" id="form-titulo" class="form-control form-control-lg editor-form-campo-titulo" placeholder="Escribe el título de tu formulario">
+                    <div id="editor-panel-preguntas" class="editor-form-tab-panel" role="tabpanel" aria-labelledby="tab-editor-preguntas" data-form-panel="preguntas">
+                        <section class="editor-form-panel editor-form-portada" aria-label="Título y descripción del formulario">
+                            <div class="editor-form-portada-acento" aria-hidden="true"></div>
+                            <label for="form-titulo" class="editor-form-visually-hidden">Título del debate o encuesta</label>
+                            <input type="text" id="form-titulo" class="form-control form-control-lg editor-form-campo-titulo" placeholder="Formulario sin título" aria-label="Título del formulario">
+                            <label for="form-desc" class="editor-form-visually-hidden">Descripción o instrucciones</label>
+                            <textarea id="form-desc" class="form-control editor-form-campo-descripcion" rows="2" placeholder="Descripción del formulario" aria-label="Descripción del formulario"></textarea>
+                        </section>
+                        <div class="editor-form-builder-layout">
+                            <div class="editor-form-builder-main">
+                                <section class="editor-form-estructura" aria-labelledby="editor-form-estructura-titulo">
+                                    <h3 class="editor-form-panel-titulo editor-form-builder-label" id="editor-form-estructura-titulo"><i class="bi bi-layers" aria-hidden="true"></i> Secciones y preguntas</h3>
+                                    <div class="editor-form-ayuda gform-builder-help"><i class="bi bi-info-circle" aria-hidden="true"></i> Cada sección es una página. Los participantes avanzarán con <strong>Siguiente</strong> y <strong>Anterior</strong>.</div>
+                                    <div id="contenedor-preguntas-builder"></div>
+                                    <div class="editor-form-acciones-builder">
+                                        <button type="button" onclick="agregarPreguntaFormBuilder()" class="btn editor-form-boton-agregar"><i class="bi bi-plus-circle" aria-hidden="true"></i> Añadir pregunta</button>
+                                        <button type="button" onclick="agregarSeccionFormBuilder()" class="btn editor-form-boton-seccion"><i class="bi bi-plus-square" aria-hidden="true"></i> Añadir sección / página</button>
+                                    </div>
+                                </section>
                             </div>
-                            <div class="col-12">
-                                <label class="editor-form-etiqueta" for="form-desc">Descripción o instrucciones</label>
-                                <textarea id="form-desc" class="form-control" rows="3" placeholder="Explica a los participantes de qué trata y cómo responder..."></textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="editor-form-etiqueta" for="form-imagen">Imagen de cabecera <span class="editor-form-opcional">(opcional)</span></label>
-                                <input type="file" id="form-imagen" class="form-control" accept="image/*">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="editor-form-etiqueta" for="form-fecha">Fecha límite <span class="editor-form-opcional">(opcional)</span></label>
-                                <input type="date" id="form-fecha" class="form-control">
-                            </div>
+                            <aside class="editor-form-rail-wrap" aria-label="Herramientas del formulario">
+                                <div class="editor-form-rail">
+                                    <button type="button" onclick="herramientaEditorFormulario('pregunta')" title="Añadir pregunta" aria-label="Añadir pregunta"><i class="bi bi-plus-circle" aria-hidden="true"></i></button>
+                                    <button type="button" onclick="herramientaEditorFormulario('duplicar')" title="Duplicar pregunta seleccionada" aria-label="Duplicar pregunta seleccionada"><i class="bi bi-files" aria-hidden="true"></i></button>
+                                    <button type="button" onclick="herramientaEditorFormulario('titulo')" title="Editar título y descripción" aria-label="Editar título y descripción"><i class="bi bi-type" aria-hidden="true"></i></button>
+                                    <button type="button" onclick="herramientaEditorFormulario('imagen')" title="Imagen de cabecera" aria-label="Imagen de cabecera"><i class="bi bi-image" aria-hidden="true"></i></button>
+                                    <span class="editor-form-rail-separador" aria-hidden="true"></span>
+                                    <button type="button" onclick="herramientaEditorFormulario('seccion')" title="Añadir sección o página" aria-label="Añadir sección o página"><i class="bi bi-view-stacked" aria-hidden="true"></i></button>
+                                    <button type="button" onclick="mostrarPestanaEditorFormulario('configuracion')" title="Configuración" aria-label="Configuración"><i class="bi bi-gear" aria-hidden="true"></i></button>
+                                </div>
+                            </aside>
+                        </div>
+                    </div>
+                    <section id="editor-panel-respuestas" class="editor-form-tab-panel" role="tabpanel" aria-labelledby="tab-editor-respuestas" data-form-panel="respuestas" hidden>
+                        <div class="editor-form-panel editor-form-respuestas-card">
+                            <span class="editor-form-respuestas-icon"><i class="bi bi-bar-chart-line" aria-hidden="true"></i></span>
+                            <h3>Respuestas del formulario</h3>
+                            <div class="editor-form-respuestas-cifra" id="form-total-respuestas">0</div>
+                            <p id="form-respuestas-mensaje">Las respuestas aparecerán una vez que publiques el formulario.</p>
+                            <button type="button" class="btn editor-form-boton-seccion" id="form-exportar-respuestas" onclick="exportarRespuestasEditorFormulario()" disabled><i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> Exportar respuestas a Excel</button>
                         </div>
                     </section>
-                    <section class="editor-form-panel editor-form-estructura" aria-labelledby="editor-form-estructura-titulo">
-                        <h3 class="editor-form-panel-titulo" id="editor-form-estructura-titulo"><i class="bi bi-layers" aria-hidden="true"></i> Secciones y preguntas</h3>
-                        <div class="editor-form-ayuda gform-builder-help">
-                            <i class="bi bi-info-circle" aria-hidden="true"></i>
-                            <span>Organiza tus preguntas por secciones. Cada sección será una página que los participantes recorrerán con <strong>Siguiente</strong> y <strong>Anterior</strong>.</span>
-                        </div>
-                        <div id="contenedor-preguntas-builder"></div>
-                        <div class="editor-form-acciones-builder">
-                            <button type="button" onclick="agregarPreguntaFormBuilder()" class="btn editor-form-boton-agregar"><i class="bi bi-plus-circle" aria-hidden="true"></i> Añadir pregunta</button>
-                            <button type="button" onclick="agregarSeccionFormBuilder()" class="btn editor-form-boton-seccion"><i class="bi bi-plus-square" aria-hidden="true"></i> Añadir sección / página</button>
+                    <section id="editor-panel-configuracion" class="editor-form-tab-panel" role="tabpanel" aria-labelledby="tab-editor-configuracion" data-form-panel="configuracion" hidden>
+                        <div class="editor-form-panel editor-form-ajustes-card">
+                            <h3 class="editor-form-panel-titulo"><i class="bi bi-sliders" aria-hidden="true"></i> Configuración del formulario</h3>
+                            <p class="editor-form-ajustes-descripcion">Personaliza las opciones de publicación de tu debate o encuesta.</p>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="editor-form-etiqueta" for="form-imagen"><i class="bi bi-image me-1" aria-hidden="true"></i> Imagen de cabecera <span class="editor-form-opcional">(opcional)</span></label>
+                                    <input type="file" id="form-imagen" class="form-control" accept="image/*">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="editor-form-etiqueta" for="form-fecha"><i class="bi bi-calendar-event me-1" aria-hidden="true"></i> Fecha límite <span class="editor-form-opcional">(opcional)</span></label>
+                                    <input type="date" id="form-fecha" class="form-control">
+                                </div>
+                            </div>
                         </div>
                     </section>
                 </div>
                 <div class="modal-footer editor-form-footer">
-                    <div class="me-auto d-flex flex-column align-items-start" style="min-width:0; font-family:Inter, sans-serif;">
+                    <div class="me-auto d-flex flex-column align-items-start editor-form-borrador" style="min-width:0; font-family:Inter, sans-serif;">
                         <small id="estado-borrador-formulario" class="text-secondary" role="status" aria-live="polite">Guardado automático en este dispositivo</small>
                         <button type="button" class="btn btn-link text-secondary p-0 text-decoration-underline" style="font-size:12px;" onclick="descartarBorradorEditor('formulario')">Descartar borrador</button>
                     </div>
                     <button type="button" class="btn editor-form-cancelar" onclick="cancelarEdicionFormulario()">Cancelar</button>
-                    <button type="button" id="btn-pub-formulario" class="btn editor-form-publicar"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i> Publicar y Activar</button>
+                    <button type="button" id="btn-pub-formulario" class="btn editor-form-publicar"><i class="bi bi-send-check me-1" aria-hidden="true"></i> Publicar y Activar</button>
                 </div>
             </div>
         </div>
@@ -591,6 +621,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="app.js?v=borradores-20261107"></script>
+    <script type="module" src="app.js?v=editor-forms-20261107-3"></script>
 </body>
 </html>

@@ -214,7 +214,7 @@ function activarBorrador(tipo, id = null) {
                         obligatoria: q.obligatoria, imagen: q.imagen
                     }, p.id);
                     const block = [...document.querySelectorAll('#contenedor-preguntas-builder .builder-q-block')].at(-1);
-                    if (block) block.querySelector('.q-opts').value = q.opcionesTexto || '';
+                    if (block) { block.querySelector('.q-opts').value = q.opcionesTexto || ''; actualizarVistaOpcionesPregunta(block); }
                 }
             }
             if (!paginasEnEditor().length) window.agregarPreguntaFormBuilder();
@@ -929,6 +929,111 @@ onSnapshot(doc(db, "config", "reputacion"), (s) => { if(s.exists() && s.data().r
 document.getElementById('btn-iniciar-crear-form').onclick = () => { const isOwner = document.body.classList.contains('is-owner'); if (!isOwner && userReputacion < reqReputacion) { alert(`☕ Necesitas al menos ${reqReputacion} puntos de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion} cafecitos.\n\n¡Gana +5 de reputación aportando tus respuestas a la comunidad!`); return; } window.editandoFormId = null; document.getElementById('form-header-title').innerText = "Nuevo Formulario"; document.getElementById('btn-pub-formulario').innerText = "Publicar y Activar"; document.getElementById('form-titulo').value = ''; document.getElementById('form-desc').value = ''; document.getElementById('form-fecha').value = ''; document.getElementById('form-imagen').value = ''; document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; numPaginasForm = 0; window.agregarPreguntaFormBuilder(); bootstrap.Modal.getOrCreateInstance(document.getElementById('colFormulario')).show(); };
 window.editarReqReputacion = async () => { const val = prompt("¿Cuántos puntos de reputación se necesitan para crear una encuesta?", reqReputacion); if(val !== null && !isNaN(parseInt(val))) { await setDoc(doc(db, "config", "reputacion"), { requerida: parseInt(val) }, { merge: true }); alert("Configuración de reputación actualizada."); } };
 window.cancelarEdicionFormulario = (descartar = false) => { if (!descartar) guardarBorradorAhora('formulario'); estadosBorrador.formulario = null; window.editandoFormId = null; document.getElementById('form-titulo').value = ''; document.getElementById('form-desc').value = ''; document.getElementById('form-fecha').value = ''; document.getElementById('form-imagen').value = ''; document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; numPaginasForm = 0; bootstrap.Modal.getInstance(document.getElementById('colFormulario'))?.hide(); };
+// Pestañas y herramientas del editor: presentación únicamente, sin alterar la estructura de datos.
+window.mostrarPestanaEditorFormulario = (nombre = 'preguntas') => {
+    const modal = document.getElementById('colFormulario');
+    if (!['preguntas', 'respuestas', 'configuracion'].includes(nombre)) return;
+    modal.querySelectorAll('[data-form-tab]').forEach(btn => {
+        const activo = btn.dataset.formTab === nombre;
+        btn.classList.toggle('active', activo);
+        btn.setAttribute('aria-selected', String(activo));
+        btn.tabIndex = activo ? 0 : -1;
+    });
+    modal.querySelectorAll('[data-form-panel]').forEach(panel => {
+        panel.hidden = panel.dataset.formPanel !== nombre;
+    });
+    if (nombre === 'respuestas') {
+        const docForm = window.editandoFormId ? window.postsData[window.editandoFormId] : null;
+        const total = Array.isArray(docForm?.respuestas) ? docForm.respuestas.length : 0;
+        document.getElementById('form-total-respuestas').textContent = String(total);
+        document.getElementById('form-respuestas-mensaje').textContent = !window.editandoFormId
+            ? 'Publica el formulario para empezar a recibir respuestas.'
+            : total ? `Hay ${total} respuesta${total === 1 ? '' : 's'} guardada${total === 1 ? '' : 's'}. Puedes exportarlas con la función existente.`
+                    : 'Todavía no se han recibido respuestas para este formulario.';
+        document.getElementById('form-exportar-respuestas').disabled = total === 0;
+    }
+    // Cambiar de pestaña no destruye campos ni provoca recargas.
+    modal.querySelector('.editor-form-body').scrollTop = 0;
+};
+window.exportarRespuestasEditorFormulario = () => {
+    const id = window.editandoFormId;
+    if (id) window.exportarExcel(id);
+};
+window.herramientaEditorFormulario = (accion) => {
+    if (accion === 'titulo') {
+        window.mostrarPestanaEditorFormulario('preguntas');
+        document.getElementById('form-titulo').focus();
+        return;
+    }
+    if (accion === 'imagen') {
+        window.mostrarPestanaEditorFormulario('configuracion');
+        document.getElementById('form-imagen').focus();
+        return;
+    }
+    if (accion === 'seccion') {
+        const pagina = window.agregarSeccionFormBuilder();
+        pagina.querySelector('.gform-page-title')?.focus();
+        pagina.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        return;
+    }
+    const bloqueActivo = document.querySelector('#contenedor-preguntas-builder .builder-q-block.gform-block-active');
+    if (accion === 'duplicar') {
+        const bloque = bloqueActivo || [...document.querySelectorAll('#contenedor-preguntas-builder .builder-q-block')].at(-1);
+        if (bloque) window.duplicarPregunta(bloque.querySelector('.editor-form-pregunta-acciones button'));
+        return;
+    }
+    if (accion === 'pregunta') {
+        const paginaId = bloqueActivo?.closest('.gform-builder-page')?.dataset.pageId || paginasEnEditor().at(-1)?.dataset.pageId || null;
+        const pagina = paginaId ? paginasEnEditor().find(p => p.dataset.pageId === paginaId) : null;
+        window.agregarPreguntaFormBuilder(null, paginaId);
+        const bloque = pagina?.querySelector('.gform-page-questions .builder-q-block:last-child') ||
+            [...document.querySelectorAll('#contenedor-preguntas-builder .builder-q-block')].at(-1);
+        bloque?.querySelector('.q-title')?.focus();
+        bloque?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+};
+document.getElementById('colFormulario').addEventListener('show.bs.modal', () => window.mostrarPestanaEditorFormulario('preguntas'));
+// Pestañas accesibles por flechas, igual que los botones de navegación existentes.
+document.querySelector('#colFormulario .editor-form-tabs').addEventListener('keydown', e => {
+    if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+    const botones = [...e.currentTarget.querySelectorAll('[data-form-tab]')];
+    const actual = botones.indexOf(document.activeElement);
+    if (actual < 0) return;
+    e.preventDefault();
+    const siguiente = botones[(actual + (e.key === 'ArrowRight' ? 1 : -1) + botones.length) % botones.length];
+    window.mostrarPestanaEditorFormulario(siguiente.dataset.formTab);
+    siguiente.focus();
+});
+
+// Vista ilustrativa de las opciones: el campo original .q-opts sigue siendo la fuente de verdad.
+function actualizarVistaOpcionesPregunta(bloque) {
+    const cont = bloque?.querySelector('.gform-option-preview');
+    if (!cont) return;
+    cont.replaceChildren();
+    const tipo = bloque.querySelector('.q-type').value;
+    if (!['radio', 'checkbox', 'select'].includes(tipo)) return;
+    const opciones = bloque.querySelector('.q-opts').value.split(',').map(x => x.trim()).filter(Boolean);
+    const valores = opciones.length ? opciones.slice(0, 6) : ['Opción 1'];
+    valores.forEach(valor => {
+        const fila = document.createElement('div');
+        fila.className = 'gform-option-row';
+        const icono = document.createElement('i');
+        icono.className = tipo === 'checkbox' ? 'bi bi-square' : tipo === 'select' ? 'bi bi-chevron-down' : 'bi bi-circle';
+        icono.setAttribute('aria-hidden', 'true');
+        const texto = document.createElement('span');
+        texto.textContent = valor;
+        fila.append(icono, texto);
+        cont.appendChild(fila);
+    });
+    const nota = document.createElement('div');
+    nota.className = 'gform-option-hint';
+    nota.textContent = 'Edita las opciones en el campo de arriba, separándolas con comas.';
+    cont.appendChild(nota);
+}
+document.getElementById('contenedor-preguntas-builder').addEventListener('input', e => {
+    if (e.target.matches('.q-opts')) actualizarVistaOpcionesPregunta(e.target.closest('.builder-q-block'));
+});
+
 let numPreguntasForm = 0;
 let numPaginasForm = 0;
 
@@ -1013,11 +1118,7 @@ window.agregarPreguntaFormBuilder = (qData = null, paginaId = null) => {
     const opcionesOcultas = ['text', 'textarea', 'date', 'time', 'scale'].includes(type);
     div.innerHTML = `
         <div class="editor-form-pregunta-cabecera">
-            <span class="editor-form-pregunta-indicador"><i class="bi bi-question-circle" aria-hidden="true"></i> Pregunta</span>
-            <div class="editor-form-pregunta-acciones">
-                <button type="button" class="btn editor-form-boton-icono" onclick="duplicarPregunta(this)" title="Duplicar pregunta" aria-label="Duplicar pregunta"><i class="bi bi-copy" aria-hidden="true"></i></button>
-                <button type="button" class="btn editor-form-boton-icono editor-form-icono-eliminar" onclick="this.closest('.builder-q-block').remove()" title="Eliminar pregunta" aria-label="Eliminar pregunta"><i class="bi bi-trash" aria-hidden="true"></i></button>
-            </div>
+            <span class="editor-form-pregunta-indicador"><i class="bi bi-grip-horizontal" aria-hidden="true"></i> PREGUNTA</span>
         </div>
         <div class="row g-3 align-items-start">
             <div class="col-md-7">
@@ -1042,6 +1143,7 @@ window.agregarPreguntaFormBuilder = (qData = null, paginaId = null) => {
                 <label class="editor-form-etiqueta" for="q-opts-${numPreguntasForm}">Opciones de respuesta</label>
                 <input type="text" id="q-opts-${numPreguntasForm}" class="form-control q-opts" placeholder="Ej.: Sí, No, Tal vez" value="${escapeHTML(opts)}">
                 <small class="editor-form-ayuda-campo">Separa las opciones utilizando comas.</small>
+                <div class="gform-option-preview" aria-hidden="true"></div>
             </div>
         </div>
         <div class="editor-form-pregunta-pie">
@@ -1053,15 +1155,22 @@ window.agregarPreguntaFormBuilder = (qData = null, paginaId = null) => {
                 <img class="q-img-preview" style="${img ? '' : 'display:none;'}" src="${escapeHTML(img)}" alt="Vista previa de imagen de pregunta">
                 <input type="hidden" class="q-img-existing" value="${escapeHTML(img)}">
             </div>
-            <div class="form-check form-switch editor-form-obligatorio">
+            <div class="editor-form-pregunta-pie-acciones">
+                <div class="editor-form-pregunta-acciones">
+                    <button type="button" class="btn editor-form-boton-icono" onclick="duplicarPregunta(this)" title="Duplicar pregunta" aria-label="Duplicar pregunta"><i class="bi bi-copy" aria-hidden="true"></i></button>
+                    <button type="button" class="btn editor-form-boton-icono editor-form-icono-eliminar" onclick="this.closest('.builder-q-block').remove()" title="Eliminar pregunta" aria-label="Eliminar pregunta"><i class="bi bi-trash" aria-hidden="true"></i></button>
+                </div>
+                <div class="form-check form-switch editor-form-obligatorio">
                 <label class="form-check-label" for="req_${numPreguntasForm}">Obligatorio</label>
                 <input class="form-check-input q-req" type="checkbox" role="switch" id="req_${numPreguntasForm}" ${req?'checked':''}>
+                </div>
             </div>
         </div>`;
     pagina.querySelector('.gform-page-questions').appendChild(div);
+    actualizarVistaOpcionesPregunta(div);
 };
 window.duplicarPregunta = (btn) => { const block = btn.closest('.builder-q-block'); const pTitulo = block.querySelector('.q-title').value; const pDesc = block.querySelector('.q-desc').value; const pType = block.querySelector('.q-type').value; const pOpts = block.querySelector('.q-opts').value; const pReq = block.querySelector('.q-req').checked; const pImgSrc = block.querySelector('.q-img-preview').src; const existImg = block.querySelector('.q-img-existing').value; let finalImg = ''; if (pImgSrc && pImgSrc.length > 100) finalImg = pImgSrc; else if (existImg) finalImg = existImg; window.agregarPreguntaFormBuilder({ titulo: pTitulo ? pTitulo + " (Copia)" : "Copia", desc: pDesc, tipo: pType, opciones: pOpts ? pOpts.split(',').map(s=>s.trim()) : [], obligatoria: pReq, imagen: finalImg }, block.closest('.gform-builder-page')?.dataset.pageId); };
-window.toggleQOpts = (selectEl) => { const optsWrap = selectEl.closest('.builder-q-block').querySelector('.editor-form-opciones-wrap'); optsWrap.style.display = ['text', 'textarea', 'date', 'time', 'scale'].includes(selectEl.value) ? 'none' : 'block'; };
+window.toggleQOpts = (selectEl) => { const optsWrap = selectEl.closest('.builder-q-block').querySelector('.editor-form-opciones-wrap'); optsWrap.style.display = ['text', 'textarea', 'date', 'time', 'scale'].includes(selectEl.value) ? 'none' : 'block'; actualizarVistaOpcionesPregunta(selectEl.closest('.builder-q-block')); };
 window.editarFormulario = (id) => { const data = window.postsData[id]; if(!data) return; window.editandoFormId = id; document.getElementById('form-header-title').innerText = "Editando Formulario"; document.getElementById('btn-pub-formulario').innerText = "Guardar Cambios"; document.getElementById('form-titulo').value = data.titulo || ''; document.getElementById('form-desc').value = data.descripcion || ''; if(data.fechaLimite) { const d = new Date(data.fechaLimite); document.getElementById('form-fecha').value = d.toISOString().split('T')[0]; } else { document.getElementById('form-fecha').value = ''; } document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; numPaginasForm = 0;
     const paginas = Array.isArray(data.paginas) && data.paginas.length ? data.paginas : [{ id: 'pagina_unica', titulo: '', descripcion: '' }];
     paginas.forEach(p => window.agregarSeccionFormBuilder(p));
