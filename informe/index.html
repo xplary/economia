@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Consulta los requisitos editoriales de CAFÉ UNP y envía tu trabajo mediante un enlace de Google Drive para su revisión.">
+  <title>Requisitos para publicar | CAFÉ UNP</title>
+  <link rel="icon" type="image/png" href="https://i.ibb.co/RG7dxCdp/cafe.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css?v=20261107-nav2">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.6/purify.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="informe.js?v=20261107-nav2"></script>
+</head>
+<body>
+  <!-- Navbar del portal CAFÉ UNP: mismas secciones y navegación -->
+  <nav class="navbar navbar-expand-lg bg-gradient-navbar shadow-sm py-3 mb-4 sticky-top" id="navbar-cafe" style="z-index:1060;">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a class="navbar-brand m-0 d-flex align-items-center" href="../" aria-label="CAFÉ UNP, inicio">
+        <svg width="35" height="35" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="me-2" aria-hidden="true"><path d="M 50,150 C 30,80 80,30 170,40 C 120,40 80,70 70,120 Z" fill="#ffffff"/><path d="M 50,150 C 70,180 140,160 170,110 C 130,140 90,140 70,120 Z" fill="#ffffff"/></svg>
+        <span class="fs-4 fw-bold font-inter text-white" style="letter-spacing:-.5px;">CAFE UNP</span>
+      </a>
+      <ul class="nav nav-underline d-none d-md-flex" id="pills-tab" aria-label="Navegación principal">
+        <li class="nav-item nav-opinion-item">
+          <a id="nav-opinion-general" class="nav-link text-white px-3 font-inter" href="../?cafeTab=columnas" aria-haspopup="true" aria-controls="menu-secciones-opinion" aria-expanded="false">Articulos y Opinión <i class="bi bi-chevron-down ms-1 opinion-caret" aria-hidden="true"></i></a>
+          <div id="menu-secciones-opinion" class="opinion-submenu" aria-label="Secciones de Artículos y Opinión">
+            <div class="opinion-submenu-options">
+              <a class="opinion-submenu-link opinion-submenu-general" href="../?cafeTab=columnas"><span class="opinion-submenu-icon"><i class="bi bi-grid-1x2" aria-hidden="true"></i></span><span class="opinion-submenu-label">Todas las columnas</span></a>
+            </div>
+          </div>
+        </li>
+        <li class="nav-item"><a class="nav-link text-white px-3 font-inter" href="../?cafeTab=investigacion">Investigación &amp; Papers</a></li>
+        <li class="nav-item"><a class="nav-link text-white px-3 font-inter" href="../?cafeTab=ensayos">Debates y Encuestas</a></li>
+      </ul>
+      <div class="d-flex align-items-center">
+        <button id="btn-login" type="button" class="btn btn-ingresar-navbar rounded-pill px-4 font-inter shadow-sm">Ingresar <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+        <div id="user-dropdown-container" class="dropdown d-none ms-1">
+          <button type="button" class="btn p-0 border-0 bg-transparent" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Mi cuenta">
+            <img id="user-avatar-img" src="" alt="Perfil" class="rounded-circle shadow-sm" style="width:40px;height:40px;object-fit:cover;border:2px solid rgba(255,255,255,.4);">
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 rounded-4 py-2" style="min-width:240px;z-index:1070;">
+            <li class="px-4 py-3 border-bottom text-center"><strong id="user-nombre" class="d-block font-inter text-dark text-truncate"></strong><span id="user-plan-badge" class="badge bg-secondary mt-2">Usuario</span></li>
+            <li id="admin-panel-link" class="d-none"><a class="dropdown-item fw-bold text-primary py-2 text-center" href="../admin/"><i class="bi bi-speedometer2 me-2"></i> Panel Admin</a></li>
+            <li><button class="dropdown-item fw-bold text-danger py-2 text-center" type="button" id="btn-logout-dropdown"><i class="bi bi-box-arrow-right me-2"></i> Cerrar sesión</button></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <!-- Misma barra móvil inferior del portal -->
+  <ul class="nav nav-pills nav-justified mobile-nav d-md-none fixed-bottom bg-white shadow-lg m-0 p-0 border-top" id="pills-tab-mobile" style="z-index:1060;" aria-label="Navegación móvil">
+    <li class="nav-item"><a class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" href="../?cafeTab=columnas"><i class="bi bi-newspaper fs-5 mb-1" aria-hidden="true"></i><span style="font-size:.65rem;font-weight:600;">Opinión</span></a></li>
+    <li class="nav-item"><a class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" href="../?cafeTab=investigacion"><i class="bi bi-journal-text fs-5 mb-1" aria-hidden="true"></i><span style="font-size:.65rem;font-weight:600;">Papers</span></a></li>
+    <li class="nav-item"><a class="nav-link mobile-tab border-0 rounded-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center py-2" href="../?cafeTab=ensayos"><i class="bi bi-ui-checks-grid fs-5 mb-1" aria-hidden="true"></i><span style="font-size:.65rem;font-weight:600;">Encuestas</span></a></li>
+  </ul>
+
+  <main id="contenido-principal" class="page-shell">
+    <div class="informe-breadcrumb" aria-label="Ruta de navegación"><a href="../">Inicio</a><i class="bi bi-chevron-right" aria-hidden="true"></i><span>Requisitos para publicar</span></div>
+
+    <section class="intro" aria-labelledby="page-heading">
+      <div class="intro-eyebrow"><i class="bi bi-journal-text" aria-hidden="true"></i> CONVOCATORIA EDITORIAL</div>
+      <h1 id="page-heading">Requisitos para publicar</h1>
+      <p>Conoce los lineamientos editoriales y envía tu trabajo para la revisión del equipo de CAFÉ UNP.</p>
+    </section>
+
+    <div class="layout">
+      <article class="requirements-card" aria-labelledby="requirements-heading">
+        <div class="card-head">
+          <div>
+            <span class="section-label">GUÍA DE PUBLICACIÓN</span>
+            <h2 id="requirements-heading">Lineamientos editoriales</h2>
+          </div>
+          <button type="button" id="btn-editar" class="edit-button" hidden><i class="bi bi-pencil-square" aria-hidden="true"></i> Editar requisitos</button>
+        </div>
+        <div id="requisitos-estado" class="load-note" role="status" aria-live="polite">Cargando requisitos de publicación…</div>
+        <div id="requisitos-contenido" class="editorial-content" aria-label="Contenido de los requisitos">
+          <h3>Presentación de trabajos</h3>
+          <p>Antes de solicitar la revisión, prepara tu documento y consulta los requisitos que el equipo editorial establezca en esta página.</p>
+        </div>
+        <div class="updated-at" id="ultima-actualizacion" hidden></div>
+      </article>
+
+      <aside class="submission-card" aria-labelledby="submission-heading">
+        <span class="section-label">ENVÍO DE ORIGINALES</span>
+        <h2 id="submission-heading">Solicita una revisión</h2>
+        <p class="submission-description">Comparte tu trabajo mediante un enlace de Google Drive e indica un correo electrónico en el que puedas recibir respuesta.</p>
+
+        <form id="form-revision" novalidate>
+          <div class="field">
+            <label for="solicitud-correo">Correo electrónico <span aria-hidden="true">*</span></label>
+            <input type="email" id="solicitud-correo" name="correo" placeholder="nombre@correo.com" autocomplete="email" maxlength="254" required>
+            <small>Usaremos este correo para comunicarnos contigo.</small>
+          </div>
+          <div class="field">
+            <label for="solicitud-enlace">Enlace de Google Drive <span aria-hidden="true">*</span></label>
+            <input type="url" id="solicitud-enlace" name="enlaceDrive" placeholder="https://drive.google.com/…" inputmode="url" maxlength="1000" required>
+            <small>Aceptamos enlaces de Google Drive y Google Docs.</small>
+          </div>
+          <label class="checkbox-row"><input type="checkbox" id="solicitud-acceso" required><span>Confirmo que el enlace permite al equipo editorial acceder al documento para revisarlo.</span></label>
+          <label class="checkbox-row"><input type="checkbox" id="solicitud-privacidad" required><span>Autorizo el uso de mi correo y enlace exclusivamente para gestionar la revisión editorial.</span></label>
+          <div id="solicitud-mensaje" class="form-message" role="status" aria-live="polite" hidden></div>
+          <button type="submit" id="btn-enviar" class="submit-button"><i class="bi bi-send" aria-hidden="true"></i> Enviar para revisión</button>
+        </form>
+        <div class="notice"><i class="bi bi-envelope-check" aria-hidden="true"></i><p><strong>Las observaciones y revisión se enviarán por tu correo.</strong><br>Verifica que tu dirección esté escrita correctamente y que el acceso a Drive esté habilitado.</p></div>
+        <p class="privacy-footnote"><i class="bi bi-shield-lock" aria-hidden="true"></i> Tu correo y tu enlace no se publican en la web. Solo el equipo owner puede ver las solicitudes.</p>
+      </aside>
+    </div>
+  </main>
+
+<footer class="mt-auto position-relative z-1" style="background-color: #004b79; color: #ffffff;">
+        <div class="container pt-5 pb-5">
+            <div class="row g-4 font-inter">
+                <!-- Col 1 -->
+                <div class="col-md-4 pe-md-4">
+                    <h6 class="fw-bold mb-4 ls-1 text-white">UBICACIÓN</h6>
+                    <p class="mb-4 text-light" id="f-ubicacion" style="font-size: 0.9rem; line-height: 1.6; min-height: 70px;">Campus Principal<br>Urb. Miraflores S/N, Castilla<br>Piura, Perú</p>
+                    <div class="footer-links-container">
+                        <a href="#" id="f-link1-url" class="footer-link-item">
+                            <span><i class="bi bi-geo-alt-fill me-2" id="f-link1-icon" style="display:none;"></i><span id="f-link1-text">Cómo llegar</span></span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        <a href="#" id="f-link2-url" class="footer-link-item">
+                            <span id="f-link2-text">Ver mapa del campus</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <!-- Col 2 -->
+                <div class="col-md-4 px-md-4">
+                    <h6 class="fw-bold mb-4 ls-1 text-white">CONTACTO</h6>
+                    <p class="mb-4 text-light" id="f-contacto" style="font-size: 0.9rem; line-height: 1.6; min-height: 70px;">Creador: Leonardo Pasapera +51 942 232 621 Atención al estudiante</p>
+                    <a href="#" id="f-btn1-url" class="btn footer-btn-outline w-100 mb-3 d-flex flex-column align-items-center justify-content-center">
+                        <span id="f-btn1-text" class="fw-bold mb-2">Enviar mensaje</span>
+                        <i class="bi bi-envelope fs-4"></i>
+                    </a>
+                    <a href="#" id="f-btn2-url" class="btn footer-btn-solid w-100 d-flex flex-column align-items-center justify-content-center">
+                        <span id="f-btn2-text" class="fw-bold mb-2">Libro de Reclamaciones</span>
+                        <i class="bi bi-book fs-4"></i>
+                    </a>
+                </div>
+                <!-- Col 3 -->
+                <div class="col-md-4 ps-md-4">
+                    <h6 class="fw-bold mb-4 ls-1 text-white">SOBRE LA UNP</h6>
+                    <p class="mb-4 text-light" id="f-sobre" style="font-size: 0.9rem; line-height: 1.6; min-height: 70px;">UNIVERSIDAD NACIONAL DE PIURA<br>FACULTAD DE ECONOMÍA<br>RUC: 20172606346</p>
+                    <div class="footer-links-container">
+                        <a href="#" id="f-link3-url" class="footer-link-item">
+                            <span id="f-link3-text">Mapa del sitio</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        <a href="#" id="f-link4-url" class="footer-link-item">
+                            <span id="f-link4-text">Términos y condiciones de uso</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        <a href="#" id="f-link5-url" class="footer-link-item">
+                            <span id="f-link5-text">Política de privacidad</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        <a href="#" id="f-link6-url" class="footer-link-item border-bottom-0">
+                            <span id="f-link6-text">Procedimiento de devoluciones</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center text-white small font-inter py-3 position-relative" style="background-color: #003657; z-index: 1060; font-weight: 500;">
+            &copy; <span id="current-year"></span> CAFE UNP. Todos los derechos reservados.
+        </div>
+    </footer>
+
+  <!-- Edición solo para owners. Firebase aplica también los permisos al guardar. -->
+  <div id="editor-overlay" class="editor-overlay" hidden>
+    <section class="editor-panel" role="dialog" aria-modal="true" aria-labelledby="editor-heading">
+      <div class="editor-heading-row"><div><span class="section-label">PANEL OWNER</span><h2 id="editor-heading">Editar requisitos para publicar</h2></div><button type="button" id="btn-cerrar-editor" class="close-editor" aria-label="Cerrar editor"><i class="bi bi-x-lg" aria-hidden="true"></i></button></div>
+      <p class="editor-help">Este es el contenido de una sola página pública. Puedes usar títulos, listas, tablas, enlaces e imágenes como en las publicaciones.</p>
+      <div class="field"><label for="editor-titulo">Título de la sección</label><input type="text" id="editor-titulo" maxlength="100" placeholder="Lineamientos editoriales"></div>
+      <div class="field"><label for="editor-contenido">Contenido de la página</label><textarea id="editor-contenido" rows="16" aria-label="Editor de requisitos"></textarea></div>
+      <p class="editor-help"><i class="bi bi-info-circle" aria-hidden="true"></i> Las imágenes insertadas en el contenido deben ser ligeras. El tamaño total permitido para este documento es limitado por Firestore.</p>
+      <div id="editor-mensaje" class="form-message" role="status" aria-live="polite" hidden></div>
+      <div class="editor-actions"><button type="button" id="btn-cancelar-editor" class="cancel-button">Cancelar</button><button type="button" id="btn-guardar-editor" class="submit-button"><i class="bi bi-floppy" aria-hidden="true"></i> Guardar cambios</button></div>
+    </section>
+  </div>
+</body>
+</html>
