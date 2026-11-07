@@ -636,3 +636,334 @@ body:has(#colNoticia.show) > .modal-backdrop { z-index: 1190; }
 @media (prefers-reduced-motion: reduce) {
     #colNoticia .editor-columna-publicar, #colNoticia .editor-columna-cerrar { transition: none; }
 }
+
+/* ================================================================
+   CAFÉ UNP · Editor de Debates y Encuestas
+   Rediseño visual delimitado a #colFormulario: conserva los
+   identificadores y flujos de publicación, edición y multipágina.
+   ================================================================ */
+#colFormulario.editor-formulario-modal {
+    z-index: 1220;
+    font-family: 'Inter', sans-serif;
+    color: #20394b;
+}
+body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
+#colFormulario .modal-dialog { max-width: min(1080px, calc(100vw - 40px)); }
+#colFormulario .modal-content {
+    border: 1px solid #dae5e9;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 26px 78px rgba(11, 43, 60, .27);
+}
+#colFormulario .editor-form-acento {
+    height: 5px;
+    flex: 0 0 5px;
+    background: linear-gradient(90deg, #009668, #004b79);
+}
+#colFormulario .editor-form-header {
+    padding: 22px 28px;
+    background: #fff;
+    border-bottom: 1px solid #e6edf0;
+    gap: 20px;
+}
+#colFormulario .editor-form-identidad { display: flex; align-items: center; gap: 15px; min-width: 0; }
+#colFormulario .editor-form-icono {
+    display: grid;
+    place-items: center;
+    flex: 0 0 46px;
+    height: 46px;
+    border-radius: 11px;
+    border: 1px solid #c9e9df;
+    background: #edfaf5;
+    color: #00876b;
+    font-size: 1.35rem;
+}
+#colFormulario .editor-form-sobretitulo {
+    color: #007e66;
+    font-size: .7rem;
+    font-weight: 800;
+    line-height: 1.4;
+    letter-spacing: .9px;
+    margin: 0 0 3px;
+}
+#colFormulario .editor-form-titulo {
+    color: #172f42;
+    font: 700 1.46rem/1.25 'Lora', Georgia, serif;
+    margin: 0;
+}
+#colFormulario .editor-form-cerrar {
+    display: grid;
+    place-items: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    margin-left: auto;
+    background: #f5f8fa;
+    border: 1px solid #dfe8ec;
+    border-radius: 9px;
+    color: #506878;
+    transition: background .2s, color .2s;
+}
+#colFormulario .editor-form-cerrar:hover { color: #183d51; background: #eaf1f4; }
+#colFormulario .editor-form-body { background: #f7fafb; padding: 25px 29px 30px; }
+#colFormulario .editor-form-panel {
+    background: #fff;
+    border: 1px solid #e0e9ed;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 21px;
+}
+#colFormulario .editor-form-panel:last-child { margin-bottom: 0; }
+#colFormulario .editor-form-panel-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #194b60;
+    font: 750 .92rem/1.4 'Inter', sans-serif;
+    padding: 0 0 14px;
+    margin: 0 0 20px;
+    border-bottom: 1px solid #edf0f2;
+}
+#colFormulario .editor-form-panel-titulo i { color: #009668; font-size: 1.1rem; }
+#colFormulario .editor-form-etiqueta {
+    display: block;
+    font: 700 .79rem/1.4 'Inter', sans-serif;
+    color: #2a4051;
+    margin-bottom: 7px;
+}
+#colFormulario .editor-form-opcional { color: #82929c; font-weight: 500; }
+#colFormulario .form-control,
+#colFormulario .form-select {
+    border: 1px solid #dbe5eb;
+    border-radius: 9px;
+    background-color: #fff;
+    min-height: 44px;
+    box-shadow: none;
+    color: #243c4d;
+    font: 400 .91rem/1.5 'Inter', sans-serif;
+}
+#colFormulario .form-control:focus,
+#colFormulario .form-select:focus {
+    border-color: #009668;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 150, 104, .1);
+}
+#colFormulario .form-control::placeholder { color: #92a1ac; opacity: 1; }
+#colFormulario .editor-form-campo-titulo { font: 700 1.15rem/1.5 'Lora', Georgia, serif; padding: 11px 14px; }
+#colFormulario #form-imagen { padding: 8px 10px; }
+#colFormulario #form-imagen::file-selector-button {
+    border: 0;
+    background: #eaf6f2;
+    color: #006e61;
+    padding: 6px 11px;
+    margin-right: 11px;
+    border-radius: 6px;
+    font-weight: 700;
+}
+#colFormulario .editor-form-ayuda {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border: 1px solid #d8ebe5;
+    border-left: 3px solid #009668;
+    background: #f0f8f5;
+    border-radius: 8px;
+    color: #476578;
+    padding: 13px 15px;
+    margin-bottom: 21px;
+    font: 400 .81rem/1.65 'Inter', sans-serif;
+}
+#colFormulario .editor-form-ayuda > i { color: #009668; margin-top: 1px; }
+#colFormulario .gform-builder-page {
+    border: 1px solid #dae7e9;
+    border-top: 4px solid #009668;
+    border-radius: 11px;
+    background: #f8fbfb;
+    padding: 17px;
+    margin-bottom: 19px;
+}
+#colFormulario .gform-builder-page-head {
+    border: 1px solid #e1e9ed;
+    background: #fff;
+    border-radius: 9px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+}
+#colFormulario .gform-page-count {
+    font: 800 .72rem 'Inter', sans-serif;
+    letter-spacing: .9px;
+    color: #00876b;
+}
+#colFormulario .gform-builder-page-head .btn-sm {
+    display: inline-grid;
+    place-items: center;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 5px;
+    border-radius: 7px;
+    border-color: #dce5e9;
+    color: #647784;
+    background: #fff;
+}
+#colFormulario .gform-builder-page-head .btn-sm:hover:not(:disabled) { color: #007f66; border-color: #97d9c9; background: #f0faf7; }
+#colFormulario .gform-builder-page-head .gform-page-remove:hover:not(:disabled) { color: #b72e36; border-color: #ebbbc0; background: #fff3f4; }
+#colFormulario .gform-page-title { font: 700 1.08rem/1.5 'Lora', Georgia, serif; border-radius: 7px; padding: 10px 12px; margin-bottom: 9px !important; }
+#colFormulario .gform-page-description { resize: vertical; padding: 10px 12px; }
+#colFormulario .gform-builder-page-head p { font-size: .74rem; color: #798d98 !important; }
+#colFormulario .builder-q-block {
+    border: 1px solid #dfe7eb !important;
+    border-left: 4px solid #d3e3e6 !important;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 9px rgba(23, 66, 82, .045);
+    padding: 17px 19px 18px;
+    margin: 0 0 13px;
+    transition: border-color .18s, box-shadow .18s;
+}
+#colFormulario .builder-q-block.gform-block-active,
+#colFormulario .builder-q-block:focus-within {
+    border-left-color: #009668 !important;
+    box-shadow: 0 5px 19px rgba(20, 78, 89, .1);
+}
+#colFormulario .editor-form-pregunta-cabecera { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+#colFormulario .editor-form-pregunta-indicador { font: 750 .75rem 'Inter',sans-serif; color: #00836b; }
+#colFormulario .editor-form-pregunta-indicador i { margin-right: 5px; }
+#colFormulario .editor-form-pregunta-acciones { display: flex; gap: 5px; }
+#colFormulario .editor-form-boton-icono {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    background: #f4f7f9;
+    border: 1px solid #e3eaed;
+    color: #597082;
+    padding: 0;
+}
+#colFormulario .editor-form-boton-icono:hover { background: #e9f4f1; border-color: #c3e5dc; color: #007b66; }
+#colFormulario .editor-form-icono-eliminar:hover { background: #fff0f0; border-color: #f3cbcb; color: #c83f43; }
+#colFormulario .editor-form-descripcion-pregunta {
+    margin-top: 9px;
+    min-height: 38px;
+    font-size: .82rem;
+    background: #fbfcfd;
+}
+#colFormulario .editor-form-opciones-wrap { padding-top: 2px; }
+#colFormulario .editor-form-ayuda-campo { display: block; margin: 5px 0 0; color: #8697a2; font-size: .73rem; }
+#colFormulario .editor-form-pregunta-pie {
+    border-top: 1px solid #edf0f3;
+    margin-top: 19px;
+    padding-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+}
+#colFormulario .editor-form-imagen-pregunta { display: flex; align-items: center; gap: 11px; min-width: 0; }
+#colFormulario .editor-form-boton-imagen {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 12px;
+    border: 1px solid #d9e7e9;
+    background: #fff;
+    border-radius: 7px;
+    color: #4b6576;
+    font: 700 .76rem 'Inter', sans-serif;
+    cursor: pointer;
+}
+#colFormulario .editor-form-boton-imagen:hover { color: #007d67; background: #f4faf8; border-color: #a8dacb; }
+#colFormulario .q-img-preview { width: 65px; height: 43px; object-fit: cover; border: 1px solid #dfe7eb; border-radius: 6px; }
+#colFormulario .editor-form-obligatorio { display: flex; align-items: center; gap: 10px; margin: 0; padding-left: 0; }
+#colFormulario .editor-form-obligatorio .form-check-label { font: 700 .79rem 'Inter', sans-serif; color: #385367; cursor: pointer; }
+#colFormulario .editor-form-obligatorio .form-check-input { margin: 0; float: none; cursor: pointer; border-color: #aec6ca; }
+#colFormulario .editor-form-obligatorio .form-check-input:checked { background-color: #009668; border-color: #009668; }
+#colFormulario .gform-page-questions + div .btn {
+    font: 700 .79rem 'Inter', sans-serif;
+    color: #007960;
+    border: 1px dashed #afd9cd;
+    background: #fff;
+    border-radius: 8px !important;
+    padding: 10px 15px;
+    box-shadow: none;
+}
+#colFormulario .gform-page-questions + div .btn:hover { background: #eff9f5 !important; border-color: #009668; }
+#colFormulario .editor-form-acciones-builder { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding-top: 3px; }
+#colFormulario .editor-form-acciones-builder .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    border-radius: 8px;
+    padding: 11px 16px;
+    font: 750 .84rem 'Inter', sans-serif;
+}
+#colFormulario .editor-form-boton-agregar { color: #27536a; border: 1px solid #cfdfe5; background: #fff; }
+#colFormulario .editor-form-boton-agregar:hover { color: #004b79; background: #f0f6f8; border-color: #aacdd6; }
+#colFormulario .editor-form-boton-seccion { color: #fff; background: #008c65; border: 1px solid #008c65; }
+#colFormulario .editor-form-boton-seccion:hover { background: #007a58; color: #fff; }
+#colFormulario .editor-form-footer {
+    flex: 0 0 auto;
+    gap: 10px;
+    padding: 16px 29px;
+    background: #fff;
+    border-top: 1px solid #e5edf0;
+}
+#colFormulario .editor-form-footer .btn { border-radius: 9px; padding: 11px 22px; font: 750 .85rem 'Inter', sans-serif; }
+#colFormulario .editor-form-cancelar { background: #f3f6f7; border: 1px solid #e0e9ed; color: #435967; }
+#colFormulario .editor-form-cancelar:hover { background: #e7eff2; color: #233e50; }
+#colFormulario .editor-form-publicar { min-width: 184px; background: #009668; border: 1px solid #009668; color: #fff; }
+#colFormulario .editor-form-publicar:hover { background: #007f5c; border-color: #007f5c; color: #fff; }
+#colFormulario .editor-form-publicar:disabled { opacity: .65; }
+@media (max-width: 767.98px) {
+    #colFormulario .modal-dialog { max-width: none; margin: 8px; height: calc(100dvh - 16px); }
+    #colFormulario .modal-content { height: 100%; border-radius: 12px; }
+    #colFormulario .editor-form-header { padding: 17px 16px; }
+    #colFormulario .editor-form-icono { flex-basis: 39px; height: 39px; font-size: 1.13rem; }
+    #colFormulario .editor-form-titulo { font-size: 1.13rem; }
+    #colFormulario .editor-form-sobretitulo { font-size: .56rem; letter-spacing: .45px; }
+    #colFormulario .editor-form-body { padding: 15px 13px 20px; }
+    #colFormulario .editor-form-panel { padding: 18px 14px; }
+    #colFormulario .gform-builder-page { padding: 10px; }
+    #colFormulario .gform-builder-page-head { padding: 15px 12px; }
+    #colFormulario .builder-q-block { padding: 13px 12px 15px; }
+    #colFormulario .editor-form-footer { padding: 12px 13px; }
+    #colFormulario .editor-form-footer .btn { padding: 10px 13px; }
+    #colFormulario .editor-form-publicar { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #colFormulario .editor-form-cerrar,
+    #colFormulario .builder-q-block { transition: none; }
+}
+
+/* Ajuste de presentación del autoguardado en el editor de encuestas.
+   No modifica el constructor ni el sistema de publicación. */
+#colFormulario .editor-form-footer > .me-auto {
+    flex: 1 1 240px;
+    min-width: 0;
+    gap: 3px;
+    line-height: 1.3;
+}
+#colFormulario #estado-borrador-formulario {
+    font: 500 .72rem/1.45 'Inter', sans-serif;
+    color: #718392 !important;
+}
+#colFormulario .editor-form-footer button[onclick^="descartarBorradorEditor"] {
+    font: 600 .7rem/1.4 'Inter', sans-serif;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    color: #5d7582 !important;
+}
+#colFormulario .editor-form-footer button[onclick^="descartarBorradorEditor"]:hover {
+    color: #b13d42 !important;
+}
+@media (max-width: 575.98px) {
+    #colFormulario .editor-form-footer {
+        gap: 9px;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    #colFormulario .editor-form-footer > .me-auto {
+        flex-basis: 100%;
+    }
+    #colFormulario .editor-form-footer .editor-form-publicar {
+        flex-grow: 1;
+    }
+}
