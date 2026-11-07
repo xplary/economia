@@ -379,9 +379,24 @@ document.getElementById('not-imagen').addEventListener('change', function(e) {
     }
 });
 
+
+// Los cuadros de diálogo de TinyMCE (vínculos, tablas, imágenes) se montan
+// fuera del modal. La excepción evita que el bloqueo de foco de Bootstrap
+// impida escribir en ellos; no cambia el guardado de las publicaciones.
+document.addEventListener('focusin', (event) => {
+    if (document.getElementById('colNoticia').classList.contains('show') &&
+        event.target.closest('.tox-tinymce-aux, .tox-dialog, .tox-menu, .tox-collection')) {
+        event.stopImmediatePropagation();
+    }
+});
+// Recalcular el ancho de TinyMCE cuando se muestra por primera vez el modal.
+document.getElementById('colNoticia').addEventListener('shown.bs.modal', () => {
+    window.dispatchEvent(new Event('resize'));
+});
+
 window.cancelarEdicion = () => { 
-    window.editandoId = null; document.querySelectorAll('input:not([type="color"]), textarea').forEach(i => i.value = ''); if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(''); document.getElementById('not-principal').checked = false; document.getElementById('not-principal-seccion').checked = false; document.getElementById('not-seccion').value = ''; actualizarPrincipalPorSeccion(); document.getElementById('not-form-title').innerText = "Editor de Columnas"; 
-    if(window.noticiaCropper) { window.noticiaCropper.destroy(); window.noticiaCropper = null; } const cropCont = document.getElementById('cropper-container'); if(cropCont) { cropCont.style.display = 'none'; document.getElementById('cropper-image').src = ''; } bootstrap.Collapse.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide(); 
+    window.editandoId = null; document.querySelectorAll('input:not([type="color"]), textarea').forEach(i => i.value = ''); if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(''); document.getElementById('not-principal').checked = false; document.getElementById('not-principal-seccion').checked = false; document.getElementById('not-seccion').value = ''; actualizarPrincipalPorSeccion(); document.getElementById('not-form-title').innerText = "Editor de Columnas"; document.getElementById('btn-pub-noticia').innerText = 'Publicar Columna'; 
+    if(window.noticiaCropper) { window.noticiaCropper.destroy(); window.noticiaCropper = null; } const cropCont = document.getElementById('cropper-container'); if(cropCont) { cropCont.style.display = 'none'; document.getElementById('cropper-image').src = ''; } bootstrap.Modal.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide(); 
 };
 
 // ==========================================
@@ -421,12 +436,23 @@ onSnapshot(doc(db, "config", "footer"), (s) => {
     } 
 });
 
+
+// Navegación recibida desde /informe: abrir la pestaña solicitada.
+// Si se abre la portada normalmente o se comparte un artículo, no altera su comportamiento.
+const enlaceDesdeInforme = new URLSearchParams(window.location.search);
+const pestañaDesdeInforme = enlaceDesdeInforme.has('v') ? '' : enlaceDesdeInforme.get('cafeTab');
 document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => { 
     btn.addEventListener('shown.bs.tab', (e) => { 
         const target = e.target.getAttribute('data-bs-target'); currentTab = target.replace('#', '');
         document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(b => b.classList.remove('active')); document.querySelectorAll(`button[data-bs-target="${target}"]`).forEach(tBtn => tBtn.classList.add('active')); window.scrollTo({ top: 0, behavior: 'smooth' }); updateReputationVisibility();
     }); 
 });
+
+// Se activa después de registrar los eventos de Bootstrap para sincronizar ambas barras.
+if (['columnas', 'investigacion', 'ensayos'].includes(pestañaDesdeInforme)) {
+    const botonDestino = document.querySelector(`#pills-tab button[data-bs-target="#${pestañaDesdeInforme}"]`);
+    if (botonDestino) bootstrap.Tab.getOrCreateInstance(botonDestino).show();
+}
 
 const normalizarBusqueda = (valor) => (valor == null ? '' : String(valor)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 let noticiasData = []; let noticiasCargadas = false; let qBuscar = ''; let ordDesc = true; document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = normalizarBusqueda(e.target.value); renderNoticias(); }); document.getElementById('btn-ordenar').addEventListener('click', () => { ordDesc = !ordDesc; document.getElementById('btn-ordenar').innerText = ordDesc ? 'Ordenar: Recientes ↓' : 'Ordenar: Antiguos ↑'; renderNoticias(); }); 
@@ -519,6 +545,12 @@ onSnapshot(collection(db, 'secciones_opinion'), snapshot => {
     renderizarMenuSeccionesOpinion();
     // Si se borra una sección, volver automáticamente a Todas las columnas.
     cambiarSeccionOpinion(seccionOpinionActiva);
+    const seccionDesdeInforme = enlaceDesdeInforme.get('cafeSeccion');
+    if (pestañaDesdeInforme === 'columnas' && seccionDesdeInforme && seccionesOpinion.some(s => s.id === seccionDesdeInforme)) {
+        cambiarSeccionOpinion(seccionDesdeInforme);
+        // Respetar las selecciones posteriores del usuario aunque Firestore se actualice.
+        enlaceDesdeInforme.delete('cafeSeccion');
+    }
 }, error => {
     console.error('No se pudieron cargar las secciones de opinión:', error);
     selectorMovilOpinion.innerHTML = '<option value="">Todas las columnas</option>';
@@ -618,7 +650,7 @@ function renderNoticias() {
     }); 
     cPrinc.innerHTML = principalDefinitiva ? hPrinc : ''; cLista.innerHTML = hLista; 
 }
-window.editarNoticia = (id) => { const d = window.postsData[id]; document.getElementById('not-titulo').value = d.titulo; document.getElementById('not-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('not-color').value = d.colorTag || '#004b79'; document.getElementById('not-principal').checked = !!d.principal; selectorEditorOpinion.value = seccionesOpinion.some(s => s.id === d.seccionId) ? d.seccionId : ''; actualizarPrincipalPorSeccion(); document.getElementById('not-principal-seccion').checked = !!d.principalSeccion && !!selectorEditorOpinion.value; if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(d.contenido || ''); window.editandoId = id; document.getElementById('not-form-title').innerText = "Editando Columna"; document.getElementById('btn-pub-noticia').innerText = "Guardar"; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colNoticia')).show(); window.scrollTo(0,0); };
+window.editarNoticia = (id) => { const d = window.postsData[id]; document.getElementById('not-titulo').value = d.titulo; document.getElementById('not-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('not-color').value = d.colorTag || '#004b79'; document.getElementById('not-principal').checked = !!d.principal; selectorEditorOpinion.value = seccionesOpinion.some(s => s.id === d.seccionId) ? d.seccionId : ''; actualizarPrincipalPorSeccion(); document.getElementById('not-principal-seccion').checked = !!d.principalSeccion && !!selectorEditorOpinion.value; if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(d.contenido || ''); window.editandoId = id; document.getElementById('not-form-title').innerText = "Editando Columna"; document.getElementById('btn-pub-noticia').innerText = "Guardar"; bootstrap.Modal.getOrCreateInstance(document.getElementById('colNoticia')).show(); };
 
 document.getElementById('btn-pub-articulo').onclick = async () => { const t = document.getElementById('art-titulo').value; const l = document.getElementById('art-link').value; if(!t||!l) return alert("Falta Título o Link."); const et = document.getElementById('art-tags').value ? document.getElementById('art-tags').value.split(',').map(x=>x.trim()).filter(Boolean) : ['Paper']; const data = { titulo: t, link: l, resumen: document.getElementById('art-resumen').value, etiquetas: et, colorTag: document.getElementById('art-color').value, vistas: 0 }; if(window.editandoId) await updateDoc(doc(db, "articulos", window.editandoId), data); else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "articulos"), data); } cancelarEdicion(); };
 onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) => { const cont = document.getElementById('contenedor-articulos'); if(snap.empty) return cont.innerHTML = '<div class="col-12 text-center text-muted font-inter">No hay papers.</div>'; let h = ''; snap.forEach(d => { const data = d.data(); window.postsData[d.id] = data; checkDeepLink(d.id, 'articulos'); const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios); const tHTML = (data.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${data.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join(''); h += `<article class="col-12 mb-5 pb-4 border-bottom border-light-subtle"><div class="row align-items-start"><div class="col-md-2 col-4 cursor-pointer" onclick="abrirModal('${d.id}', 'articulos')"><div class="paper-cover mx-auto rounded-1"><i class="bi bi-file-earmark-pdf-fill text-secondary fs-1"></i><div class="mt-2" style="width: 80%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-1" style="width: 60%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-auto" style="width: 40%; height: 4px; background: #cbd5e1; border-radius: 2px;"></div></div></div><div class="col-md-10 col-8 d-flex flex-column h-100 ps-md-4"><div class="d-flex justify-content-between align-items-start mb-2"><div>${tHTML} <span class="badge bg-secondary ms-1 fw-semibold font-inter" style="letter-spacing: 0.5px;">Acceso Abierto</span></div><div class="text-nowrap ms-3"><i class="bi bi-share-fill text-primary cursor-pointer me-3" onclick="compartir('${d.id}', 'articulos')"></i><i class="bi bi-pencil-fill text-warning me-3 admin-only-inline cursor-pointer" onclick="editarArt('${d.id}')"></i><i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('articulos', '${d.id}')"></i></div></div><a href="javascript:void(0)" onclick="abrirModal('${d.id}', 'articulos')" class="paper-title-link fw-bold font-serif mb-1" style="font-size: 1.45rem;">${d.data().titulo}</a><div class="text-muted small mb-3 font-inter">${data.fecha ? '(Publicado el ' + data.fecha.toDate().toLocaleDateString() + ')' : ''}</div><p class="text-muted mb-3 font-inter text-truncate-3" style="font-size: 1.05rem; line-height: 1.6;">${escapeHTML(data.resumen)}</p><div class="mt-auto d-flex align-items-center"><button class="btn btn-sm text-primary fw-bold font-inter rounded-pill me-3 shadow-sm" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${d.id}', 'articulos')">Leer documento <i class="bi bi-arrow-right ms-1"></i></button><span class="ms-2">${avgStr}</span></div></div></div></article>`; }); cont.innerHTML = h; if(window.modalActual.col === 'articulos' && window.modalActual.id) abrirModal(window.modalActual.id, 'articulos', true); });
