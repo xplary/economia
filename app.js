@@ -150,12 +150,9 @@ function actualizarProgresoLectura() {
     const barra = document.getElementById('mn-lectura-barra');
     const relleno = document.getElementById('mn-lectura-progreso');
     const etiqueta = document.getElementById('mn-lectura-porcentaje');
-    const area = lectorScroll.getBoundingClientRect();
-    const rect = lectorContenido.getBoundingClientRect();
-    // La barra mide el texto del artículo, no el recorrido por los comentarios o recomendaciones.
-    const inicio = lectorScroll.scrollTop + rect.top - area.top;
-    const distancia = Math.max(1, lectorContenido.offsetHeight - Math.min(lectorScroll.clientHeight * .4, 300));
-    const porcentaje = Math.round(Math.min(100, Math.max(0, (lectorScroll.scrollTop - inicio) / distancia * 100)));
+    // El progreso corresponde a TODO el recorrido del lector, hasta el pie editorial.
+    const distancia = Math.max(0, lectorScroll.scrollHeight - lectorScroll.clientHeight);
+    const porcentaje = distancia === 0 ? 100 : Math.round(Math.min(100, Math.max(0, lectorScroll.scrollTop / distancia * 100)));
     barra.setAttribute('aria-valuenow', String(porcentaje));
     relleno.style.width = porcentaje + '%';
     etiqueta.textContent = 'Lectura: ' + porcentaje + '%';
@@ -165,8 +162,32 @@ lectorScroll.addEventListener('scroll', () => {
     lectorProgresoPendiente = true;
     requestAnimationFrame(() => { lectorProgresoPendiente = false; actualizarProgresoLectura(); });
 }, { passive: true });
+// Alinear la vista de lectura exactamente con el borde inferior del navbar real.
+function ajustarPosicionLector() {
+    const navbar = document.querySelector('body > nav.navbar');
+    if (navbar) lectorModal.style.setProperty('--mn-navbar-bottom', Math.max(0, navbar.getBoundingClientRect().bottom) + 'px');
+}
+lectorModal.addEventListener('show.bs.modal', ajustarPosicionLector);
 lectorModal.addEventListener('shown.bs.modal', () => requestAnimationFrame(actualizarProgresoLectura));
-window.addEventListener('resize', () => { if (lectorModal.classList.contains('show')) actualizarProgresoLectura(); });
+lectorModal.addEventListener('hidden.bs.modal', () => {
+    // No conservar el porcentaje de una lectura anterior.
+    lectorScroll.scrollTop = 0;
+});
+window.addEventListener('resize', () => {
+    if (lectorModal.classList.contains('show')) {
+        ajustarPosicionLector();
+        requestAnimationFrame(actualizarProgresoLectura);
+    }
+});
+
+// El navbar sigue accesible por encima del lector. Al cambiar de apartado se
+// cierra el artículo, dejando que Bootstrap active la pestaña seleccionada.
+for (const id of ['pills-tab', 'pills-tab-mobile']) {
+    document.getElementById(id).addEventListener('click', event => {
+        if (!event.target.closest('[data-bs-target="#investigacion"], [data-bs-target="#ensayos"], [data-bs-target="#columnas"], [data-seccion-opinion]')) return;
+        if (lectorModal.classList.contains('show')) bootstrap.Modal.getOrCreateInstance(lectorModal).hide();
+    });
+}
 
 for (const enlace of ['mn-volver-inicio', 'mn-volver-articulos']) {
     document.getElementById(enlace).addEventListener('click', () => {
