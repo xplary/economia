@@ -20,6 +20,271 @@ tinymce.init({ selector: '#editor-noticias', height: 450, menubar: false, plugin
 
 if(!localStorage.getItem('uid')) localStorage.setItem('uid', 'anon_'+Math.random().toString(36).substring(2,11));
 const getUid = () => auth.currentUser ? auth.currentUser.uid : localStorage.getItem('uid');
+// Borradores locales de columnas y encuestas. Se separan por usuario y publicación;
+// los archivos se almacenan en IndexedDB para no agotar la cuota de localStorage.
+const CAFE_BORRADOR_VERSION = 'cafeunp:borrador:v1';
+const estadosBorrador = { columna: null, formulario: null };
+const timersBorrador = { columna: null, formulario: null };
+let restaurandoBorrador = false;
+
+function claveBorrador(tipo, id = null) {
+    return `${CAFE_BORRADOR_VERSION}:${getUid()}:${tipo}:${id || 'nuevo'}`;
+}
+function leerBorrador(clave) {
+    try { return JSON.parse(localStorage.getItem(clave) || 'null'); }
+    catch(e) { return null; }
+}
+function mensajeBorrador(tipo, texto) {
+    const el = document.getElementById(tipo === 'columna' ? 'estado-borrador-columna' : 'estado-borrador-formulario');
+    if (el) el.textContent = texto;
+}
+function archivoBorradorDB() {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) return reject(new Error('IndexedDB no disponible'));
+        const req = indexedDB.open('cafeunp-archivos-borradores', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('archivos');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+async function manejarArchivoBorrador(clave, archivo, eliminar = false) {
+    try {
+        const dbArchivos = await archivoBorradorDB();
+        return await new Promise((resolve, reject) => {
+            const tx = dbArchivos.transaction('archivos', 'readwrite');
+            const store = tx.objectStore('archivos');
+            const req = eliminar ? store.delete(clave) : (archivo ? store.put(archivo, clave) : store.get(clave));
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+            tx.oncomplete = () => dbArchivos.close();
+            tx.onerror = () => { dbArchivos.close(); reject(tx.error); };
+        });
+    } catch(e) { console.warn('Almacenamiento de archivo del borrador:', e); return null; }
+}
+async function limpiarArchivosBorrador(clave) {
+    try {
+        const dbArchivos = await archivoBorradorDB();
+        await new Promise((resolve, reject) => {
+            const tx = dbArchivos.transaction('archivos', 'readwrite');
+            const req = tx.objectStore('archivos').openCursor();
+            req.onsuccess = () => {
+                const cursor = req.result;
+                if (cursor) { if (String(cursor.key).startsWith(clave + '::')) cursor.delete(); cursor.continue(); }
+            };
+            tx.oncomplete = () => { dbArchivos.close(); resolve(); };
+            tx.onerror = () => { dbArchivos.close(); reject(tx.error); };
+        });
+    } catch(e) { console.warn('Limpieza de archivos del borrador:', e); }
+}
+function contenidoEditorColumna() {
+    const editor = window.tinymce?.get('editor-noticias');
+    return editor?.initialized ? editor.getContent() : (estadosBorrador.columna?.contenidoPendiente || '');
+}
+function datosBorradorColumna() {
+    return {
+        titulo: document.getElementById('not-titulo').value,
+        seccion: document.getElementById('not-seccion').value,
+        etiquetas: document.getElementById('not-tags').value,
+        color: document.getElementById('not-color').value,
+        principal: document.getElementById('not-principal').checked,
+        principalSeccion: document.getElementById('not-principal-seccion').checked,
+        contenido: contenidoEditorColumna(),
+        recorte: window.noticiaCropper?.getData(true) || null
+    };
+}
+function datosBorradorFormulario() {
+    return {
+        titulo: document.getElementById('form-titulo').value,
+        descripcion: document.getElementById('form-desc').value,
+        fecha: document.getElementById('form-fecha').value,
+        paginas: paginasEnEditor().map(p => ({
+            id: p.dataset.pageId,
+            titulo: p.querySelector('.gform-page-title').value,
+            descripcion: p.querySelector('.gform-page-description').value,
+            preguntas: [...p.querySelectorAll('.builder-q-block')].map(q => ({
+                id: q.dataset.questionId,
+                titulo: q.querySelector('.q-title').value,
+                desc: q.querySelector('.q-desc').value,
+                tipo: q.querySelector('.q-type').value,
+                opcionesTexto: q.querySelector('.q-opts').value,
+                obligatoria: q.querySelector('.q-req').checked,
+                imagen: q.querySelector('.q-img-existing').value
+            }))
+        }))
+    };
+}
+function guardarBorradorAhora(tipo) {
+    clearTimeout(timersBorrador[tipo]);
+    const estado = estadosBorrador[tipo];
+    if (!estado?.sucio || restaurandoBorrador) return;
+    const datos = tipo === 'columna' ? datosBorradorColumna() : datosBorradorFormulario();
+    try {
+        localStorage.setItem(estado.clave, JSON.stringify({ version: 1, editando: estado.id, actualizado: Date.now(), datos }));
+        mensajeBorrador(tipo, 'Borrador guardado en este dispositivo');
+    } catch(e) {
+        console.warn('No se pudo guardar el borrador:', e);
+        mensajeBorrador(tipo, 'Sin espacio para guardar el borrador. Libera almacenamiento del navegador.');
+    }
+}
+function programarBorrador(tipo) {
+    const estado = estadosBorrador[tipo];
+    if (!estado || restaurandoBorrador) return;
+    estado.sucio = true;
+    clearTimeout(timersBorrador[tipo]);
+    mensajeBorrador(tipo, 'Guardando borrador…');
+    timersBorrador[tipo] = setTimeout(() => guardarBorradorAhora(tipo), 500);
+}
+function ponerContenidoEditorColumna(html) {
+    const editor = window.tinymce?.get('editor-noticias');
+    if (editor?.initialized) editor.setContent(html || '');
+    else if (editor) editor.once('init', () => {
+        if (estadosBorrador.columna?.contenidoPendiente === html) editor.setContent(html || '');
+    });
+}
+function adjuntarArchivoRecuperado(input, archivo) {
+    if (!input || !archivo) return false;
+    try {
+        const transfer = new DataTransfer();
+        transfer.items.add(archivo);
+        input.files = transfer.files;
+        return Boolean(input.files.length);
+    } catch(e) { console.warn('No se pudo recuperar el archivo en el selector:', e); return false; }
+}
+async function recuperarArchivosBorrador(tipo, estado, datos) {
+    if (tipo === 'columna') {
+        const input = document.getElementById('not-imagen');
+        const archivo = await manejarArchivoBorrador(`${estado.clave}::imagen`);
+        if (estadosBorrador.columna !== estado || !archivo || !adjuntarArchivoRecuperado(input, archivo)) return;
+        // Se reutiliza el recortador existente y se recupera también el encuadre.
+        const img = document.getElementById('cropper-image');
+        if (datos.recorte) img.addEventListener('ready', () => {
+            try { window.noticiaCropper?.setData(datos.recorte); } catch(e) { /* imagen aún cargando */ }
+        }, { once: true });
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    } else {
+        const input = document.getElementById('form-imagen');
+        const img = await manejarArchivoBorrador(`${estado.clave}::imagen`);
+        if (estadosBorrador.formulario !== estado) return;
+        if (img) adjuntarArchivoRecuperado(input, img);
+        for (const p of datos.paginas || []) {
+            for (const q of p.preguntas || []) {
+                if (estadosBorrador.formulario !== estado) return;
+                const block = [...document.querySelectorAll('#contenedor-preguntas-builder .builder-q-block')].find(el => el.dataset.questionId === q.id);
+                if (!block) continue;
+                const archivo = await manejarArchivoBorrador(`${estado.clave}::pregunta:${q.id}`);
+                const selector = block.querySelector('.q-img-input');
+                if (archivo && adjuntarArchivoRecuperado(selector, archivo)) window.prevQImg(selector);
+            }
+        }
+    }
+}
+function activarBorrador(tipo, id = null) {
+    clearTimeout(timersBorrador[tipo]);
+    const estado = { id, clave: claveBorrador(tipo, id), sucio: false, contenidoPendiente: null };
+    estadosBorrador[tipo] = estado;
+    const borrador = leerBorrador(estado.clave);
+    mensajeBorrador(tipo, 'Guardado automático en este dispositivo');
+    if (!borrador || borrador.version !== 1 || !borrador.datos) return;
+    const d = borrador.datos;
+    restaurandoBorrador = true;
+    try {
+        if (tipo === 'columna') {
+            document.getElementById('not-titulo').value = d.titulo || '';
+            document.getElementById('not-tags').value = d.etiquetas || '';
+            document.getElementById('not-color').value = d.color || '#004b79';
+            const secciones = document.getElementById('not-seccion');
+            secciones.value = [...secciones.options].some(o => o.value === d.seccion) ? d.seccion : '';
+            actualizarPrincipalPorSeccion();
+            document.getElementById('not-principal').checked = !!d.principal;
+            document.getElementById('not-principal-seccion').checked = !!d.principalSeccion && !!secciones.value;
+            estado.contenidoPendiente = d.contenido || '';
+            ponerContenidoEditorColumna(estado.contenidoPendiente);
+        } else {
+            document.getElementById('form-titulo').value = d.titulo || '';
+            document.getElementById('form-desc').value = d.descripcion || '';
+            document.getElementById('form-fecha').value = d.fecha || '';
+            document.getElementById('contenedor-preguntas-builder').innerHTML = '';
+            numPaginasForm = 0; numPreguntasForm = 0;
+            for (const p of (d.paginas || [])) {
+                window.agregarSeccionFormBuilder({ id: p.id, titulo: p.titulo, descripcion: p.descripcion });
+                for (const q of (p.preguntas || [])) {
+                    window.agregarPreguntaFormBuilder({
+                        id: q.id, titulo: q.titulo, desc: q.desc, tipo: q.tipo,
+                        opciones: (q.opcionesTexto || '').split(',').map(v => v.trim()),
+                        obligatoria: q.obligatoria, imagen: q.imagen
+                    }, p.id);
+                    const block = [...document.querySelectorAll('#contenedor-preguntas-builder .builder-q-block')].at(-1);
+                    if (block) block.querySelector('.q-opts').value = q.opcionesTexto || '';
+                }
+            }
+            if (!paginasEnEditor().length) window.agregarPreguntaFormBuilder();
+        }
+        estado.sucio = true; // El borrador recuperado se conserva aunque se cierre inmediatamente.
+        mensajeBorrador(tipo, 'Borrador recuperado y guardado en este dispositivo');
+    } finally { restaurandoBorrador = false; }
+    recuperarArchivosBorrador(tipo, estado, d).catch(e => console.warn('Recuperación de imágenes:', e));
+}
+function guardarArchivoSeleccionado(tipo, target) {
+    const estado = estadosBorrador[tipo];
+    if (!estado || restaurandoBorrador) return;
+    let sufijo = '';
+    if (target.id === 'not-imagen' || target.id === 'form-imagen') sufijo = 'imagen';
+    else if (target.classList.contains('q-img-input')) {
+        const q = target.closest('.builder-q-block');
+        if (q) sufijo = `pregunta:${q.dataset.questionId}`;
+    }
+    if (!sufijo) return;
+    manejarArchivoBorrador(`${estado.clave}::${sufijo}`, target.files?.[0], !target.files?.length)
+        .then(resultado => {
+            if (!resultado && target.files?.length) mensajeBorrador(tipo, 'Texto guardado; puede ser necesario volver a seleccionar la imagen');
+        });
+}
+function limpiarBorradorActual(tipo) {
+    const estado = estadosBorrador[tipo];
+    clearTimeout(timersBorrador[tipo]);
+    if (!estado) return;
+    try { localStorage.removeItem(estado.clave); } catch(e) { /* almacenamiento bloqueado */ }
+    limpiarArchivosBorrador(estado.clave);
+    estado.sucio = false;
+}
+window.descartarBorradorEditor = (tipo) => {
+    if (!estadosBorrador[tipo]) return;
+    if (!confirm('¿Descartar el borrador local y cerrar este editor? Los cambios sin publicar se perderán.')) return;
+    limpiarBorradorActual(tipo);
+    if (tipo === 'columna') window.cancelarEdicion(true);
+    else window.cancelarEdicionFormulario(true);
+};
+for (const [tipo, modalId] of [['columna', 'colNoticia'], ['formulario', 'colFormulario']]) {
+    const modal = document.getElementById(modalId);
+    modal.addEventListener('show.bs.modal', () => activarBorrador(tipo,
+        tipo === 'columna' ? window.editandoId : window.editandoFormId));
+    modal.addEventListener('input', e => { if (e.target.matches('input,textarea,select')) programarBorrador(tipo); });
+    modal.addEventListener('change', e => {
+        if (e.target.matches('input,textarea,select')) programarBorrador(tipo);
+        if (e.target.matches('input[type="file"]')) guardarArchivoSeleccionado(tipo, e.target);
+    });
+    if (tipo === 'formulario') modal.addEventListener('click', e => {
+        if (e.target.closest('#contenedor-preguntas-builder button, .editor-form-acciones-builder button'))
+            setTimeout(() => programarBorrador('formulario'), 0);
+    });
+}
+// Detecta también movimientos, duplicaciones y eliminaciones de preguntas/secciones.
+new MutationObserver(cambios => {
+    if (estadosBorrador.formulario && !restaurandoBorrador && cambios.some(c => c.type === 'childList'))
+        programarBorrador('formulario');
+}).observe(document.getElementById('contenedor-preguntas-builder'), { childList: true, subtree: true });
+window.addEventListener('pagehide', () => {
+    for (const tipo of ['columna', 'formulario']) guardarBorradorAhora(tipo);
+});
+window.tinymce?.on?.('AddEditor', e => {
+    if (e.editor.id === 'editor-noticias') {
+        e.editor.on('input change undo redo keyup', () => programarBorrador('columna'));
+    }
+});
+// Si TinyMCE ya terminó de inicializar, registrar también la escucha directamente.
+const editorTextoColumna = window.tinymce?.get('editor-noticias');
+if (editorTextoColumna) editorTextoColumna.on('input change undo redo keyup', () => programarBorrador('columna'));
+
 document.getElementById('btn-login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
 if(document.getElementById('btn-logout')) document.getElementById('btn-logout').onclick = () => signOut(auth);
 
@@ -394,7 +659,9 @@ document.getElementById('colNoticia').addEventListener('shown.bs.modal', () => {
     window.dispatchEvent(new Event('resize'));
 });
 
-window.cancelarEdicion = () => { 
+window.cancelarEdicion = (descartar = false) => { 
+    if (!descartar) guardarBorradorAhora('columna');
+    estadosBorrador.columna = null;
     window.editandoId = null; document.querySelectorAll('input:not([type="color"]), textarea').forEach(i => i.value = ''); if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(''); document.getElementById('not-principal').checked = false; document.getElementById('not-principal-seccion').checked = false; document.getElementById('not-seccion').value = ''; actualizarPrincipalPorSeccion(); document.getElementById('not-form-title').innerText = "Editor de Columnas"; document.getElementById('btn-pub-noticia').innerText = 'Publicar Columna'; 
     if(window.noticiaCropper) { window.noticiaCropper.destroy(); window.noticiaCropper = null; } const cropCont = document.getElementById('cropper-container'); if(cropCont) { cropCont.style.display = 'none'; document.getElementById('cropper-image').src = ''; } bootstrap.Modal.getInstance(document.getElementById('colNoticia'))?.hide(); bootstrap.Collapse.getInstance(document.getElementById('colArticulo'))?.hide(); 
 };
@@ -606,7 +873,8 @@ document.getElementById('btn-pub-noticia').onclick = async () => {
             });
         }
         await batch.commit();
-        cancelarEdicion();
+        limpiarBorradorActual('columna');
+        cancelarEdicion(true);
     } catch (error) {
         console.error('Error al publicar la columna:', error);
         alert('No se pudo guardar la columna. Revisa tu conexión y los permisos de Firestore.');
@@ -658,9 +926,9 @@ window.editarArt = (id) => { const d = window.postsData[id]; document.getElement
 
 onSnapshot(doc(db, "config", "reputacion"), (s) => { if(s.exists() && s.data().requerida !== undefined) { reqReputacion = s.data().requerida; const reqEl = document.getElementById('req-rep-text'); if(reqEl) reqEl.innerText = reqReputacion; } });
 
-document.getElementById('btn-iniciar-crear-form').onclick = () => { const isOwner = document.body.classList.contains('is-owner'); if (!isOwner && userReputacion < reqReputacion) { alert(`☕ Necesitas al menos ${reqReputacion} puntos de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion} cafecitos.\n\n¡Gana +5 de reputación aportando tus respuestas a la comunidad!`); return; } window.editandoFormId = null; document.getElementById('form-header-title').innerText = "Nuevo Formulario"; document.getElementById('btn-pub-formulario').innerText = "Publicar y Activar"; document.getElementById('form-titulo').value = ''; document.getElementById('form-desc').value = ''; document.getElementById('form-fecha').value = ''; document.getElementById('form-imagen').value = ''; document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; numPaginasForm = 0; window.agregarPreguntaFormBuilder(); bootstrap.Collapse.getOrCreateInstance(document.getElementById('colFormulario')).toggle(); };
+document.getElementById('btn-iniciar-crear-form').onclick = () => { const isOwner = document.body.classList.contains('is-owner'); if (!isOwner && userReputacion < reqReputacion) { alert(`☕ Necesitas al menos ${reqReputacion} puntos de reputación para publicar encuestas y debates.\n\nActualmente tienes ${userReputacion} cafecitos.\n\n¡Gana +5 de reputación aportando tus respuestas a la comunidad!`); return; } window.editandoFormId = null; document.getElementById('form-header-title').innerText = "Nuevo Formulario"; document.getElementById('btn-pub-formulario').innerText = "Publicar y Activar"; document.getElementById('form-titulo').value = ''; document.getElementById('form-desc').value = ''; document.getElementById('form-fecha').value = ''; document.getElementById('form-imagen').value = ''; document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; numPaginasForm = 0; window.agregarPreguntaFormBuilder(); bootstrap.Modal.getOrCreateInstance(document.getElementById('colFormulario')).show(); };
 window.editarReqReputacion = async () => { const val = prompt("¿Cuántos puntos de reputación se necesitan para crear una encuesta?", reqReputacion); if(val !== null && !isNaN(parseInt(val))) { await setDoc(doc(db, "config", "reputacion"), { requerida: parseInt(val) }, { merge: true }); alert("Configuración de reputación actualizada."); } };
-window.cancelarEdicionFormulario = () => { window.editandoFormId = null; document.getElementById('form-titulo').value = ''; document.getElementById('form-desc').value = ''; document.getElementById('form-fecha').value = ''; document.getElementById('form-imagen').value = ''; document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; numPaginasForm = 0; bootstrap.Collapse.getInstance(document.getElementById('colFormulario'))?.hide(); };
+window.cancelarEdicionFormulario = (descartar = false) => { if (!descartar) guardarBorradorAhora('formulario'); estadosBorrador.formulario = null; window.editandoFormId = null; document.getElementById('form-titulo').value = ''; document.getElementById('form-desc').value = ''; document.getElementById('form-fecha').value = ''; document.getElementById('form-imagen').value = ''; document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; numPaginasForm = 0; bootstrap.Modal.getInstance(document.getElementById('colFormulario'))?.hide(); };
 let numPreguntasForm = 0;
 let numPaginasForm = 0;
 
@@ -726,23 +994,83 @@ window.eliminarSeccionFormBuilder = (button) => {
     actualizarNumeracionPaginasForm();
 };
 document.addEventListener('focusin', function(e) { if(e.target.closest('.builder-q-block')) { document.querySelectorAll('.builder-q-block').forEach(b => b.classList.remove('gform-block-active')); e.target.closest('.builder-q-block').classList.add('gform-block-active'); } });
-window.prevQImg = (input) => { if(input.files && input.files[0]){ let reader = new FileReader(); reader.onload = function(e){ let img = input.parentElement.parentElement.querySelector('.q-img-preview'); img.src = e.target.result; img.style.display = 'block'; }; reader.readAsDataURL(input.files[0]); } };
+window.prevQImg = (input) => { if(input.files && input.files[0]){ let reader = new FileReader(); reader.onload = function(e){ let img = input.closest('.builder-q-block').querySelector('.q-img-preview'); img.src = e.target.result; img.style.display = 'block'; }; reader.readAsDataURL(input.files[0]); } };
 window.agregarPreguntaFormBuilder = (qData = null, paginaId = null) => {
     let pagina = paginaId ? paginasEnEditor().find(p => p.dataset.pageId === paginaId) : null;
     if (!pagina) pagina = document.activeElement?.closest('.gform-builder-page') || paginasEnEditor().at(-1);
     if (!pagina) pagina = window.agregarSeccionFormBuilder();
-    numPreguntasForm++; const div = document.createElement('div'); div.className = 'builder-q-block position-relative bg-white p-4 border mb-3 shadow-sm'; div.id = `q-block-${numPreguntasForm}`; div.dataset.questionId = qData?.id || `pq_${Date.now().toString(36)}_${numPreguntasForm}`; div.style.borderRadius = "8px"; div.style.borderLeft = "1px solid #dee2e6"; const t = qData ? qData.titulo : ''; const desc = (qData && qData.desc) ? qData.desc : ''; const type = qData ? qData.tipo : 'radio'; const opts = (qData && qData.opciones) ? qData.opciones.join(', ') : ''; const req = qData ? qData.obligatoria : false; const img = qData ? qData.imagen : ''; div.innerHTML = ` <div class="row g-3 align-items-start mb-2"> <div class="col-md-7"> <input type="text" class="form-control fw-bold q-title font-inter bg-light border-0 border-bottom border-2 border-secondary rounded-0 shadow-none px-3 py-2 mb-2" placeholder="Pregunta" value="${escapeHTML(t)}"> <input type="text" class="form-control text-muted q-desc font-inter bg-transparent border-0 border-bottom border-1 border-light shadow-none px-2 py-1 small" placeholder="Descripción (opcional)" style="font-size: 0.85rem;" value="${escapeHTML(desc)}"> </div> <div class="col-md-4"> <select class="form-select q-type font-inter bg-white border shadow-sm py-2" onchange="toggleQOpts(this)"> <option value="text" ${type==='text'?'selected':''}>⚏ Respuesta corta</option> <option value="textarea" ${type==='textarea'?'selected':''}>☰ Párrafo</option> <option value="radio" ${type==='radio'?'selected':''}>◉ Varias opciones</option> <option value="checkbox" ${type==='checkbox'?'selected':''}>☑ Casillas</option> <option value="select" ${type==='select'?'selected':''}>▽ Desplegable</option> <option value="scale" ${type==='scale'?'selected':''}>⟷ Escala lineal</option> <option value="date" ${type==='date'?'selected':''}>📅 Fecha</option> <option value="time" ${type==='time'?'selected':''}>🕒 Hora</option> </select> </div> <div class="col-md-1 d-flex flex-column align-items-end gap-2"> <button type="button" class="btn btn-sm btn-light border-0 text-secondary hover-bg-light" onclick="duplicarPregunta(this)" title="Duplicar"><i class="bi bi-copy fs-5"></i></button> <button type="button" class="btn btn-sm btn-light border-0 text-danger hover-bg-light" onclick="this.parentElement.parentElement.parentElement.remove()" title="Eliminar"><i class="bi bi-trash fs-5"></i></button> </div> </div> <div class="mb-3 ps-2"> <input type="text" class="form-control q-opts font-inter bg-white border shadow-sm py-2" placeholder="Opciones (separadas por comas, ej: Sí, No, Tal vez)" value="${escapeHTML(opts)}" style="${['text', 'textarea', 'date', 'time', 'scale'].includes(type) ? 'display:none;' : ''}"> </div> <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top"> <div class="d-flex align-items-center"> <label class="btn btn-sm btn-outline-secondary font-inter rounded-pill me-3 shadow-sm cursor-pointer px-3"> <i class="bi bi-image me-1"></i> Añadir Imagen <input type="file" class="q-img-input d-none" accept="image/*" onchange="prevQImg(this)"> </label> <img class="q-img-preview rounded shadow-sm border" style="height: 40px; object-fit: cover; ${img ? 'display:block;' : 'display:none;'}" src="${img}"> <input type="hidden" class="q-img-existing" value="${img}"> </div> <div class="form-check form-switch mb-0 d-flex align-items-center"> <label class="form-check-label font-inter small fw-bold text-dark cursor-pointer me-2" for="req_${numPreguntasForm}">Obligatorio</label> <input class="form-check-input q-req cursor-pointer m-0 fs-5" type="checkbox" role="switch" id="req_${numPreguntasForm}" ${req?'checked':''}> </div> </div> `; pagina.querySelector('.gform-page-questions').appendChild(div); };
+    numPreguntasForm++;
+    const div = document.createElement('div');
+    div.className = 'builder-q-block position-relative';
+    div.id = `q-block-${numPreguntasForm}`;
+    div.dataset.questionId = qData?.id || `pq_${Date.now().toString(36)}_${numPreguntasForm}`;
+    const t = qData ? qData.titulo : '';
+    const desc = qData?.desc || '';
+    const type = qData ? qData.tipo : 'radio';
+    const opts = qData?.opciones ? qData.opciones.join(', ') : '';
+    const req = qData ? qData.obligatoria : false;
+    const img = qData?.imagen || '';
+    const opcionesOcultas = ['text', 'textarea', 'date', 'time', 'scale'].includes(type);
+    div.innerHTML = `
+        <div class="editor-form-pregunta-cabecera">
+            <span class="editor-form-pregunta-indicador"><i class="bi bi-question-circle" aria-hidden="true"></i> Pregunta</span>
+            <div class="editor-form-pregunta-acciones">
+                <button type="button" class="btn editor-form-boton-icono" onclick="duplicarPregunta(this)" title="Duplicar pregunta" aria-label="Duplicar pregunta"><i class="bi bi-copy" aria-hidden="true"></i></button>
+                <button type="button" class="btn editor-form-boton-icono editor-form-icono-eliminar" onclick="this.closest('.builder-q-block').remove()" title="Eliminar pregunta" aria-label="Eliminar pregunta"><i class="bi bi-trash" aria-hidden="true"></i></button>
+            </div>
+        </div>
+        <div class="row g-3 align-items-start">
+            <div class="col-md-7">
+                <label class="editor-form-etiqueta" for="q-title-${numPreguntasForm}">Enunciado de la pregunta</label>
+                <input type="text" id="q-title-${numPreguntasForm}" class="form-control q-title" placeholder="Escribe aquí tu pregunta" value="${escapeHTML(t)}">
+                <input type="text" class="form-control q-desc editor-form-descripcion-pregunta" placeholder="Descripción (opcional)" aria-label="Descripción de la pregunta (opcional)" value="${escapeHTML(desc)}">
+            </div>
+            <div class="col-md-5">
+                <label class="editor-form-etiqueta" for="q-type-${numPreguntasForm}">Tipo de respuesta</label>
+                <select id="q-type-${numPreguntasForm}" class="form-select q-type" onchange="toggleQOpts(this)">
+                    <option value="text" ${type==='text'?'selected':''}>Respuesta corta</option>
+                    <option value="textarea" ${type==='textarea'?'selected':''}>Párrafo</option>
+                    <option value="radio" ${type==='radio'?'selected':''}>Varias opciones</option>
+                    <option value="checkbox" ${type==='checkbox'?'selected':''}>Casillas</option>
+                    <option value="select" ${type==='select'?'selected':''}>Desplegable</option>
+                    <option value="scale" ${type==='scale'?'selected':''}>Escala lineal</option>
+                    <option value="date" ${type==='date'?'selected':''}>Fecha</option>
+                    <option value="time" ${type==='time'?'selected':''}>Hora</option>
+                </select>
+            </div>
+            <div class="col-12 editor-form-opciones-wrap" style="${opcionesOcultas ? 'display:none;' : ''}">
+                <label class="editor-form-etiqueta" for="q-opts-${numPreguntasForm}">Opciones de respuesta</label>
+                <input type="text" id="q-opts-${numPreguntasForm}" class="form-control q-opts" placeholder="Ej.: Sí, No, Tal vez" value="${escapeHTML(opts)}">
+                <small class="editor-form-ayuda-campo">Separa las opciones utilizando comas.</small>
+            </div>
+        </div>
+        <div class="editor-form-pregunta-pie">
+            <div class="editor-form-imagen-pregunta">
+                <label class="btn editor-form-boton-imagen">
+                    <i class="bi bi-image" aria-hidden="true"></i> Añadir imagen
+                    <input type="file" class="q-img-input d-none" accept="image/*" onchange="prevQImg(this)">
+                </label>
+                <img class="q-img-preview" style="${img ? '' : 'display:none;'}" src="${escapeHTML(img)}" alt="Vista previa de imagen de pregunta">
+                <input type="hidden" class="q-img-existing" value="${escapeHTML(img)}">
+            </div>
+            <div class="form-check form-switch editor-form-obligatorio">
+                <label class="form-check-label" for="req_${numPreguntasForm}">Obligatorio</label>
+                <input class="form-check-input q-req" type="checkbox" role="switch" id="req_${numPreguntasForm}" ${req?'checked':''}>
+            </div>
+        </div>`;
+    pagina.querySelector('.gform-page-questions').appendChild(div);
+};
 window.duplicarPregunta = (btn) => { const block = btn.closest('.builder-q-block'); const pTitulo = block.querySelector('.q-title').value; const pDesc = block.querySelector('.q-desc').value; const pType = block.querySelector('.q-type').value; const pOpts = block.querySelector('.q-opts').value; const pReq = block.querySelector('.q-req').checked; const pImgSrc = block.querySelector('.q-img-preview').src; const existImg = block.querySelector('.q-img-existing').value; let finalImg = ''; if (pImgSrc && pImgSrc.length > 100) finalImg = pImgSrc; else if (existImg) finalImg = existImg; window.agregarPreguntaFormBuilder({ titulo: pTitulo ? pTitulo + " (Copia)" : "Copia", desc: pDesc, tipo: pType, opciones: pOpts ? pOpts.split(',').map(s=>s.trim()) : [], obligatoria: pReq, imagen: finalImg }, block.closest('.gform-builder-page')?.dataset.pageId); };
-window.toggleQOpts = (selectEl) => { const inputOpts = selectEl.parentElement.parentElement.nextElementSibling.querySelector('.q-opts'); if(['text', 'textarea', 'date', 'time', 'scale'].includes(selectEl.value)) { inputOpts.style.display = 'none'; } else { inputOpts.style.display = 'block'; } };
+window.toggleQOpts = (selectEl) => { const optsWrap = selectEl.closest('.builder-q-block').querySelector('.editor-form-opciones-wrap'); optsWrap.style.display = ['text', 'textarea', 'date', 'time', 'scale'].includes(selectEl.value) ? 'none' : 'block'; };
 window.editarFormulario = (id) => { const data = window.postsData[id]; if(!data) return; window.editandoFormId = id; document.getElementById('form-header-title').innerText = "Editando Formulario"; document.getElementById('btn-pub-formulario').innerText = "Guardar Cambios"; document.getElementById('form-titulo').value = data.titulo || ''; document.getElementById('form-desc').value = data.descripcion || ''; if(data.fechaLimite) { const d = new Date(data.fechaLimite); document.getElementById('form-fecha').value = d.toISOString().split('T')[0]; } else { document.getElementById('form-fecha').value = ''; } document.getElementById('contenedor-preguntas-builder').innerHTML = ''; numPreguntasForm = 0; numPaginasForm = 0;
     const paginas = Array.isArray(data.paginas) && data.paginas.length ? data.paginas : [{ id: 'pagina_unica', titulo: '', descripcion: '' }];
     paginas.forEach(p => window.agregarSeccionFormBuilder(p));
     if (data.preguntas?.length) {
         data.preguntas.forEach(q => window.agregarPreguntaFormBuilder(q, paginas.some(p => p.id === q.paginaId) ? q.paginaId : paginas[0].id));
     } else { window.agregarPreguntaFormBuilder(null, paginas[0].id); }
-    bootstrap.Collapse.getOrCreateInstance(document.getElementById('colFormulario')).show(); window.scrollTo({ top: document.getElementById('colFormulario').offsetTop - 100, behavior: 'smooth' }); };
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('colFormulario')).show(); };
 document.getElementById('btn-pub-formulario').onclick = async () => { const titulo = document.getElementById('form-titulo').value; if(!titulo) return alert("Por favor, asigna un título principal."); const descripcion = document.getElementById('form-desc').value; const fechaStr = document.getElementById('form-fecha').value; let limitMillis = null; if (fechaStr && fechaStr.trim() !== '') limitMillis = new Date(fechaStr + "T23:59:59").getTime(); let imgFinal = ''; const imgFile = document.getElementById('form-imagen').files[0]; if (imgFile) { imgFinal = await compressImg(imgFile); } else if (window.editandoFormId && window.postsData[window.editandoFormId].imagen) { imgFinal = window.postsData[window.editandoFormId].imagen; } const paginas = paginasEnEditor().map((p, i) => ({ id: p.dataset.pageId, titulo: p.querySelector('.gform-page-title').value.trim() || `Sección ${i + 1}`, descripcion: p.querySelector('.gform-page-description').value.trim() }));
-    let preguntas = []; const blocks = document.querySelectorAll('#contenedor-preguntas-builder .builder-q-block'); for (let idx = 0; idx < blocks.length; idx++) { const block = blocks[idx]; const pTitulo = block.querySelector('.q-title').value; const pDesc = block.querySelector('.q-desc').value; const pType = block.querySelector('.q-type').value; const pOpts = block.querySelector('.q-opts').value; const pReq = block.querySelector('.q-req').checked; const pImgExisting = block.querySelector('.q-img-existing').value; let qImgFinal = pImgExisting; const qFileInput = block.querySelector('.q-img-input'); if (qFileInput && qFileInput.files[0]) { qImgFinal = await compressImg(qFileInput.files[0]); } if(pTitulo) { let opcionesArr = []; if(['radio', 'checkbox', 'select'].includes(pType) && pOpts) { opcionesArr = pOpts.split(',').map(s=>s.trim()).filter(Boolean); } preguntas.push({ id: block.dataset.questionId || `pq_${idx}`, paginaId: block.closest('.gform-builder-page')?.dataset.pageId || paginas[0].id, titulo: pTitulo, desc: pDesc, tipo: pType, opciones: opcionesArr, obligatoria: pReq, imagen: qImgFinal }); } } if(preguntas.length === 0) return alert("Debes agregar al menos una pregunta válida."); const btnPub = document.getElementById('btn-pub-formulario'); const oldText = btnPub.innerHTML; btnPub.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Guardando...'; btnPub.disabled = true; try { if (window.editandoFormId) { await updateDoc(doc(db, "formularios", window.editandoFormId), { titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, paginas, preguntas }); alert("¡Cambios guardados con éxito!"); } else { if (!document.body.classList.contains('is-owner')) { const userRef = doc(db, "usuarios", auth.currentUser.uid); await updateDoc(userRef, { reputacion: increment(-reqReputacion) }); } await addDoc(collection(db, "formularios"), { titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, paginas, preguntas, respuestas: [], fecha: serverTimestamp(), autorId: auth.currentUser.uid, vistas: 0 }); alert("¡Encuesta publicada y activada con éxito!"); } window.cancelarEdicionFormulario(); } catch(e) { alert("Hubo un error al guardar: " + e.message); } finally { btnPub.innerHTML = oldText; btnPub.disabled = false; } };
+    let preguntas = []; const blocks = document.querySelectorAll('#contenedor-preguntas-builder .builder-q-block'); for (let idx = 0; idx < blocks.length; idx++) { const block = blocks[idx]; const pTitulo = block.querySelector('.q-title').value; const pDesc = block.querySelector('.q-desc').value; const pType = block.querySelector('.q-type').value; const pOpts = block.querySelector('.q-opts').value; const pReq = block.querySelector('.q-req').checked; const pImgExisting = block.querySelector('.q-img-existing').value; let qImgFinal = pImgExisting; const qFileInput = block.querySelector('.q-img-input'); if (qFileInput && qFileInput.files[0]) { qImgFinal = await compressImg(qFileInput.files[0]); } if(pTitulo) { let opcionesArr = []; if(['radio', 'checkbox', 'select'].includes(pType) && pOpts) { opcionesArr = pOpts.split(',').map(s=>s.trim()).filter(Boolean); } preguntas.push({ id: block.dataset.questionId || `pq_${idx}`, paginaId: block.closest('.gform-builder-page')?.dataset.pageId || paginas[0].id, titulo: pTitulo, desc: pDesc, tipo: pType, opciones: opcionesArr, obligatoria: pReq, imagen: qImgFinal }); } } if(preguntas.length === 0) return alert("Debes agregar al menos una pregunta válida."); const btnPub = document.getElementById('btn-pub-formulario'); const oldText = btnPub.innerHTML; btnPub.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Guardando...'; btnPub.disabled = true; try { if (window.editandoFormId) { await updateDoc(doc(db, "formularios", window.editandoFormId), { titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, paginas, preguntas }); alert("¡Cambios guardados con éxito!"); } else { if (!document.body.classList.contains('is-owner')) { const userRef = doc(db, "usuarios", auth.currentUser.uid); await updateDoc(userRef, { reputacion: increment(-reqReputacion) }); } await addDoc(collection(db, "formularios"), { titulo, descripcion, imagen: imgFinal, fechaLimite: limitMillis, paginas, preguntas, respuestas: [], fecha: serverTimestamp(), autorId: auth.currentUser.uid, vistas: 0 }); alert("¡Encuesta publicada y activada con éxito!"); } limpiarBorradorActual('formulario'); window.cancelarEdicionFormulario(true); } catch(e) { alert("Hubo un error al guardar: " + e.message); } finally { btnPub.innerHTML = oldText; btnPub.disabled = false; } };
 
 let formulariosDataCache = [];
 onSnapshot(query(collection(db, "formularios"), orderBy("fecha", "desc")), (snap) => { formulariosDataCache = []; snap.forEach(d => { formulariosDataCache.push({id: d.id, ...d.data()}); window.postsData[d.id] = d.data(); checkDeepLink(d.id, 'formularios'); }); renderFormularios(); if(window.modalActual.col === 'formularios' && window.modalActual.id) abrirModal(window.modalActual.id, 'formularios', true); });

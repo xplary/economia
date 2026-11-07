@@ -12,14 +12,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=editor-columnas-20261107">
+    <link rel="stylesheet" href="style.css?v=editor-formularios-20261107">
     <style>
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar { width: 8px; background-color: transparent; }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track { background-color: transparent; }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb { background-color: #c1c1c1; border-radius: 10px; border: 2px solid rgba(255,255,255,0.1); }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb:hover { background-color: #a0a0a0; }
         
-        .gform-block-active { border-left: 6px solid #4285f4 !important; transition: all 0.2s ease; }
+        .gform-block-active { border-left-color: #009668 !important; }
         #modalFormulario .modal-content { border-radius: 12px; }
         
         .bg-gradient-navbar { background: linear-gradient(90deg, #009668 0%, #004b79 100%); }
@@ -195,37 +195,6 @@
                         <i class="bi bi-ui-checks-grid"></i> Crear Debate o Encuesta
                     </button>
                     
-                    <div class="collapse mt-4 text-start" id="colFormulario">
-                        <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white mx-auto" style="max-width: 800px; border-top: 8px solid #009668 !important;">
-                            <h4 class="fw-bold mb-4 font-serif" id="form-header-title" style="color: #1a202c;">Nuevo Formulario</h4>
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-12"><input type="text" id="form-titulo" class="form-control form-control-lg bg-light border-0 font-serif fw-bold shadow-none" placeholder="Título Principal del Formulario"></div>
-                                <div class="col-md-12"><textarea id="form-desc" class="form-control bg-light border-0 font-inter shadow-none" rows="2" placeholder="Descripción, contexto o instrucciones para los participantes..."></textarea></div>
-                                <div class="col-md-6">
-                                    <label class="small fw-bold text-muted mb-1">Imagen de Cabecera (Opcional):</label>
-                                    <input type="file" id="form-imagen" class="form-control bg-light border-0 shadow-none" accept="image/*">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="small fw-bold text-muted mb-1">Fecha Límite (Opcional):</label>
-                                    <input type="date" id="form-fecha" class="form-control bg-light border-0 shadow-none">
-                                </div>
-                            </div>
-                            
-                            <div class="p-0 mb-4 border-0">
-                                <div class="mb-3 d-flex align-items-start gap-2 p-3 gform-builder-help"><i class="bi bi-layers text-success fs-5"></i><div class="small font-inter text-secondary">Organiza las preguntas en <strong>secciones</strong>. Cada sección será una página que los participantes recorrerán con <strong>Siguiente</strong> y <strong>Anterior</strong>.</div></div>
-                                <div id="contenedor-preguntas-builder" class="mb-4"></div>
-                                <div class="text-center mt-3">
-                                    <button type="button" onclick="agregarPreguntaFormBuilder()" class="btn btn-outline-secondary bg-white fw-bold rounded-pill shadow-sm px-4 me-2 mb-2"><i class="bi bi-plus-circle me-1"></i> Añadir Pregunta</button>
-                                    <button type="button" onclick="agregarSeccionFormBuilder()" class="btn btn-success fw-bold rounded-pill shadow-sm px-4 mb-2" style="background:#009668;border-color:#009668;"><i class="bi bi-plus-square me-1"></i> Añadir sección / página</button>
-                                </div>
-                            </div>
-                            
-                            <div class="text-end border-top pt-4">
-                                <button class="btn btn-light px-4 py-2 rounded-pill fw-bold fs-6 shadow-sm me-2 text-secondary" onclick="cancelarEdicionFormulario()">Cancelar</button>
-                                <button id="btn-pub-formulario" class="btn btn-success px-5 py-2 rounded-pill fw-bold fs-6 shadow-sm" style="background-color: #009668; border-color:#009668;">Publicar y Activar</button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="row">
@@ -299,6 +268,68 @@
             &copy; <span id="current-year"></span> CAFE UNP. Todos los derechos reservados.
         </div>
     </footer>
+
+    <!-- Editor de debates y encuestas: misma lógica, ahora en ventana emergente. -->
+    <div class="modal fade editor-formulario-modal" id="colFormulario" tabindex="-1" aria-labelledby="form-header-title" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="editor-form-acento" aria-hidden="true"></div>
+                <div class="modal-header editor-form-header">
+                    <div class="editor-form-identidad">
+                        <span class="editor-form-icono"><i class="bi bi-ui-checks-grid" aria-hidden="true"></i></span>
+                        <div>
+                            <p class="editor-form-sobretitulo">CAFÉ UNP · DEBATES Y ENCUESTAS</p>
+                            <h2 class="editor-form-titulo" id="form-header-title">Nuevo Formulario</h2>
+                        </div>
+                    </div>
+                    <button type="button" class="editor-form-cerrar" onclick="cancelarEdicionFormulario()" aria-label="Cerrar editor" title="Cerrar editor"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                </div>
+                <div class="modal-body editor-form-body">
+                    <section class="editor-form-panel" aria-labelledby="editor-form-general-titulo">
+                        <h3 class="editor-form-panel-titulo" id="editor-form-general-titulo"><i class="bi bi-card-text" aria-hidden="true"></i> Información general</h3>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="editor-form-etiqueta" for="form-titulo">Título del debate o encuesta</label>
+                                <input type="text" id="form-titulo" class="form-control form-control-lg editor-form-campo-titulo" placeholder="Escribe el título de tu formulario">
+                            </div>
+                            <div class="col-12">
+                                <label class="editor-form-etiqueta" for="form-desc">Descripción o instrucciones</label>
+                                <textarea id="form-desc" class="form-control" rows="3" placeholder="Explica a los participantes de qué trata y cómo responder..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="editor-form-etiqueta" for="form-imagen">Imagen de cabecera <span class="editor-form-opcional">(opcional)</span></label>
+                                <input type="file" id="form-imagen" class="form-control" accept="image/*">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="editor-form-etiqueta" for="form-fecha">Fecha límite <span class="editor-form-opcional">(opcional)</span></label>
+                                <input type="date" id="form-fecha" class="form-control">
+                            </div>
+                        </div>
+                    </section>
+                    <section class="editor-form-panel editor-form-estructura" aria-labelledby="editor-form-estructura-titulo">
+                        <h3 class="editor-form-panel-titulo" id="editor-form-estructura-titulo"><i class="bi bi-layers" aria-hidden="true"></i> Secciones y preguntas</h3>
+                        <div class="editor-form-ayuda gform-builder-help">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <span>Organiza tus preguntas por secciones. Cada sección será una página que los participantes recorrerán con <strong>Siguiente</strong> y <strong>Anterior</strong>.</span>
+                        </div>
+                        <div id="contenedor-preguntas-builder"></div>
+                        <div class="editor-form-acciones-builder">
+                            <button type="button" onclick="agregarPreguntaFormBuilder()" class="btn editor-form-boton-agregar"><i class="bi bi-plus-circle" aria-hidden="true"></i> Añadir pregunta</button>
+                            <button type="button" onclick="agregarSeccionFormBuilder()" class="btn editor-form-boton-seccion"><i class="bi bi-plus-square" aria-hidden="true"></i> Añadir sección / página</button>
+                        </div>
+                    </section>
+                </div>
+                <div class="modal-footer editor-form-footer">
+                    <div class="me-auto d-flex flex-column align-items-start" style="min-width:0; font-family:Inter, sans-serif;">
+                        <small id="estado-borrador-formulario" class="text-secondary" role="status" aria-live="polite">Guardado automático en este dispositivo</small>
+                        <button type="button" class="btn btn-link text-secondary p-0 text-decoration-underline" style="font-size:12px;" onclick="descartarBorradorEditor('formulario')">Descartar borrador</button>
+                    </div>
+                    <button type="button" class="btn editor-form-cancelar" onclick="cancelarEdicionFormulario()">Cancelar</button>
+                    <button type="button" id="btn-pub-formulario" class="btn editor-form-publicar"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i> Publicar y Activar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL REPUTACIÓN E INFORMACIÓN -->
     <div class="modal fade" id="modalReputacion" tabindex="-1" aria-hidden="true" style="z-index: 1080;">
@@ -548,6 +579,10 @@
                     </section>
                 </div>
                 <div class="modal-footer editor-columna-footer">
+                    <div class="me-auto d-flex flex-column align-items-start" style="min-width:0; font-family:Inter, sans-serif;">
+                        <small id="estado-borrador-columna" class="text-secondary" role="status" aria-live="polite">Guardado automático en este dispositivo</small>
+                        <button type="button" class="btn btn-link text-secondary p-0 text-decoration-underline" style="font-size:12px;" onclick="descartarBorradorEditor('columna')">Descartar borrador</button>
+                    </div>
                     <button type="button" class="btn editor-columna-cancelar" onclick="cancelarEdicion()">Cancelar</button>
                     <button type="button" id="btn-pub-noticia" class="btn editor-columna-publicar">Publicar Columna</button>
                 </div>
@@ -556,6 +591,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="app.js?v=editor-columnas-20261107"></script>
+    <script type="module" src="app.js?v=borradores-20261107"></script>
 </body>
 </html>
