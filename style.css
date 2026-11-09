@@ -1076,10 +1076,16 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
    CAFÉ UNP · BUSCADOR Y PANELES LATERALES DE DEBATES Y ENCUESTAS
    Estilos restringidos a la pestaña #ensayos; no altera otros módulos.
    ============================================================= */
-#ensayos .encuestas-distribucion { margin-top: 2px; }
-#ensayos .encuestas-busqueda { margin-bottom: 22px; padding: 23px 24px 16px; border: 1px solid #dce6eb; border-radius: 12px; box-shadow: 0 3px 14px rgba(19, 54, 72, .04); }
-#ensayos .encuestas-busqueda-cabecera h2 { margin: 0 0 5px; font: 750 1.34rem/1.35 'Inter', sans-serif; color: #183549; }
-#ensayos .encuestas-busqueda-cabecera p { margin: 0 0 19px; font: 400 .85rem/1.55 'Inter', sans-serif; color: #69808e; }
+/* Escritorio: el botón queda sobre «Mis encuestas», a la altura del buscador.
+   Móvil: la misma acción pasa al inicio de la sección, sin duplicar botones. */
+#ensayos .encuestas-distribucion { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); grid-template-rows: auto 1fr; gap: 18px 24px; align-items: start; margin-top: 2px; }
+#ensayos .encuestas-lista-principal { grid-column: 1; grid-row: 1 / span 2; min-width: 0; }
+#ensayos .encuestas-accion-crear { grid-column: 2; grid-row: 1; margin: 0; padding: 0; text-align: center; }
+#ensayos .encuestas-accion-crear .btn-crear-sutil { display: inline-flex; justify-content: center; align-items: center; width: 100%; min-height: 57px; }
+#ensayos .encuestas-sidebar { grid-column: 2; grid-row: 2; min-width: 0; }
+/* Sin sesión iniciada, no se reserva un espacio vacío para el botón oculto. */
+#ensayos .encuestas-distribucion:has(> .encuestas-accion-crear.d-none) .encuestas-sidebar { grid-row: 1 / span 2; }
+#ensayos .encuestas-busqueda { margin-bottom: 22px; padding: 16px 24px 13px; border: 1px solid #dce6eb; border-radius: 12px; box-shadow: 0 3px 14px rgba(19, 54, 72, .04); }
 #ensayos .encuestas-busqueda-campo { position: relative; }
 #ensayos .encuestas-busqueda-campo > i { position: absolute; top: 50%; left: 15px; transform: translateY(-50%); color: #748b98; font-size: 1.03rem; pointer-events: none; }
 #ensayos #buscar-encuestas { box-sizing: border-box; display: block; width: 100%; min-height: 46px; padding: 11px 14px 11px 44px; border: 1px solid #cedde4; border-radius: 7px; background: #fbfdfe; font: 400 .86rem 'Inter', sans-serif; color: #183549; transition: border-color .18s, box-shadow .18s; }
@@ -1132,11 +1138,14 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
 #modalReputacionInsuficiente .reputacion-aviso-entendido { background: #009668; border: 1px solid #009668; color: #fff; }
 #modalReputacionInsuficiente .reputacion-aviso-entendido:hover { background: #007f5d; }
 @media (max-width: 991.98px) {
-    #ensayos .encuestas-sidebar { margin-top: 3px; }
+    #ensayos .encuestas-distribucion { display: flex; flex-direction: column; gap: 0; }
+    #ensayos .encuestas-accion-crear { order: 0; align-self: stretch; margin-bottom: 22px; text-align: center; }
+    #ensayos .encuestas-accion-crear .btn-crear-sutil { width: auto; min-height: unset; }
+    #ensayos .encuestas-lista-principal { order: 1; width: 100%; }
+    #ensayos .encuestas-sidebar { order: 2; width: 100%; margin-top: 3px; }
 }
 @media (max-width: 575.98px) {
-    #ensayos .encuestas-busqueda { padding: 19px 16px 13px; }
-    #ensayos .encuestas-busqueda-cabecera h2 { font-size: 1.18rem; }
+    #ensayos .encuestas-busqueda { padding: 15px 16px 13px; }
     #ensayos .encuestas-panel-lista { max-height: 310px; }
     #modalReputacionInsuficiente .modal-dialog-reputacion { margin: 12px; }
     #modalReputacionInsuficiente .reputacion-aviso-cabecera { padding: 26px 21px 23px; }

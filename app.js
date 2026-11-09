@@ -1216,7 +1216,6 @@ onSnapshot(query(collection(db, "formularios"), orderBy("fecha", "desc")), (snap
     document.getElementById('contenedor-formularios').innerHTML = '<div class="encuestas-panel-vacio">No se pudieron cargar las encuestas. Comprueba tu conexión.</div>';
     document.getElementById('contenedor-formularios').setAttribute('aria-busy', 'false');
     document.getElementById('lista-mis-encuestas').innerHTML = '<p class="encuestas-panel-vacio">Sin conexión a las encuestas.</p>';
-    document.getElementById('lista-todas-encuestas').innerHTML = '<p class="encuestas-panel-vacio">Sin conexión a las encuestas.</p>';
 });
 
 function normalizarBusquedaEncuesta(valor) {
@@ -1240,7 +1239,6 @@ function renderFormularios() {
     const visibles = formulariosDataCache.filter(data => !busqueda || normalizarBusquedaEncuesta(`${data.titulo || ''} ${data.descripcion || ''}`).includes(busqueda));
     const mias = uid ? visibles.filter(data => data.autorId === uid) : [];
     document.getElementById('contador-mis-encuestas').textContent = String(mias.length);
-    document.getElementById('contador-todas-encuestas').textContent = String(visibles.length);
     document.getElementById('encuestas-busqueda-estado').textContent = busqueda ? `${visibles.length} ${visibles.length === 1 ? 'resultado' : 'resultados'} encontrados` : `${formulariosDataCache.length} ${formulariosDataCache.length === 1 ? 'encuesta publicada' : 'encuestas publicadas'}`;
 
     const lateralMis = document.getElementById('lista-mis-encuestas');
@@ -1250,7 +1248,6 @@ function renderFormularios() {
     } else {
         lateralMis.innerHTML = mias.length ? mias.map(itemEncuestaLateral).join('') : `<p class="encuestas-panel-vacio">${busqueda ? 'No tienes encuestas que coincidan con la búsqueda.' : 'Todavía no has publicado encuestas.'}</p>`;
     }
-    document.getElementById('lista-todas-encuestas').innerHTML = visibles.length ? visibles.map(itemEncuestaLateral).join('') : `<p class="encuestas-panel-vacio">${busqueda ? 'No se encontraron encuestas.' : 'Aún no hay encuestas publicadas.'}</p>`;
 
     cont.setAttribute('aria-busy', 'false');
     if (visibles.length === 0) {
@@ -1275,12 +1272,10 @@ function renderFormularios() {
 
 document.getElementById('buscar-encuestas').addEventListener('input', renderFormularios);
 // Delegación: evita registrar listeners nuevos cada vez que Firestore refresca.
-for (const idLista of ['lista-mis-encuestas', 'lista-todas-encuestas']) {
-    document.getElementById(idLista).addEventListener('click', e => {
-        const boton = e.target.closest('button[data-formulario-id]');
-        if (boton) window.abrirModal(boton.dataset.formularioId, 'formularios');
-    });
-}
+document.getElementById('lista-mis-encuestas').addEventListener('click', e => {
+    const boton = e.target.closest('button[data-formulario-id]');
+    if (boton) window.abrirModal(boton.dataset.formularioId, 'formularios');
+});
 
 window.exportarExcel = (id) => { const data = window.postsData[id]; if (!data || !data.respuestas || data.respuestas.length === 0) return alert("No hay respuestas para exportar."); let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>table { border-collapse: collapse; font-family: Calibri, Arial, sans-serif; font-size: 11pt; } th { background-color: #8162b5; color: #000000; font-weight: bold; padding: 10px; border: 1px solid #6b4d9e; text-align: left; vertical-align: middle; } td { padding: 8px; border: 1px solid #d1d5db; vertical-align: top; mso-number-format:"\\@"; word-wrap: break-word; white-space: normal; } tr.alt-row td { background-color: #f8f6fa; } .col-fecha { width: 150px; } .col-email { width: 250px; } .col-pregunta { width: 300px; }</style></head><body><table><tr><th class="col-fecha">Marca temporal</th><th class="col-email">Dirección de correo electrónico</th>`; data.preguntas.forEach((q, idx) => { html += `<th class="col-pregunta">${idx + 1}. ${escapeHTML(q.titulo)}</th>`; }); html += `</tr>`; let rowIndex = 0; data.respuestas.forEach(r => { rowIndex++; const rowClass = rowIndex % 2 === 0 ? ' class="alt-row"' : ''; const fDate = r.date ? new Date(r.date).toLocaleString('es-PE') : ""; const fMail = r.email || "No registrado"; html += `<tr${rowClass}><td>${fDate}</td><td>${fMail}</td>`; data.preguntas.forEach(q => { let ans = r.datos[q.id] || ""; if (Array.isArray(ans)) ans = ans.join(", "); let safeAns = escapeHTML(ans.toString()).replace(/\n/g, "<br>"); html += `<td>${safeAns}</td>`; }); html += `</tr>`; }); html += `</table></body></html>`; const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `Resultados_${slugify(data.titulo)}.xls`); link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link); };
 window.renderModalFormulario = (id, data) => { const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalFormulario')); document.getElementById('mf-titulo').innerText = data.titulo; document.getElementById('mf-desc').innerText = data.descripcion; const banner = document.getElementById('mf-banner'); if(data.imagen) { banner.style.backgroundImage = `url('${data.imagen}')`; } else { banner.style.backgroundImage = 'none'; } const isOwner = document.body.classList.contains('is-owner'); const isCreator = auth.currentUser && data.autorId === auth.currentUser.uid; const canViewStats = isOwner || isCreator; const cont = document.getElementById('mf-contenido'); const btn = document.getElementById('btn-enviar-formulario'); const status = document.getElementById('mf-status'); const footerCont = document.getElementById('mf-footer-container');
