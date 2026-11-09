@@ -1070,3 +1070,77 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
     #colFormulario .editor-form-sobretitulo { letter-spacing:.45px;font-size:.55rem; }
     #colFormulario .editor-form-footer button[onclick^="descartarBorradorEditor"] { font-size:.66rem!important; }
 }
+
+
+/* =============================================================
+   CAFÉ UNP · BUSCADOR Y PANELES LATERALES DE DEBATES Y ENCUESTAS
+   Estilos restringidos a la pestaña #ensayos; no altera otros módulos.
+   ============================================================= */
+#ensayos .encuestas-distribucion { margin-top: 2px; }
+#ensayos .encuestas-busqueda { margin-bottom: 22px; padding: 23px 24px 16px; border: 1px solid #dce6eb; border-radius: 12px; box-shadow: 0 3px 14px rgba(19, 54, 72, .04); }
+#ensayos .encuestas-busqueda-cabecera h2 { margin: 0 0 5px; font: 750 1.34rem/1.35 'Inter', sans-serif; color: #183549; }
+#ensayos .encuestas-busqueda-cabecera p { margin: 0 0 19px; font: 400 .85rem/1.55 'Inter', sans-serif; color: #69808e; }
+#ensayos .encuestas-busqueda-campo { position: relative; }
+#ensayos .encuestas-busqueda-campo > i { position: absolute; top: 50%; left: 15px; transform: translateY(-50%); color: #748b98; font-size: 1.03rem; pointer-events: none; }
+#ensayos #buscar-encuestas { box-sizing: border-box; display: block; width: 100%; min-height: 46px; padding: 11px 14px 11px 44px; border: 1px solid #cedde4; border-radius: 7px; background: #fbfdfe; font: 400 .86rem 'Inter', sans-serif; color: #183549; transition: border-color .18s, box-shadow .18s; }
+#ensayos #buscar-encuestas::placeholder { color: #92a2ae; }
+#ensayos #buscar-encuestas:focus { background: #fff; outline: none; border-color: #009668; box-shadow: 0 0 0 3px rgba(0, 150, 104, .1); }
+#ensayos .encuestas-busqueda-estado { font: 450 .73rem 'Inter', sans-serif; color: #6c8190; margin: 9px 0 0; min-height: 1em; }
+#ensayos .encuestas-sidebar { display: flex; flex-direction: column; gap: 19px; }
+#ensayos .encuestas-panel-lateral { border: 1px solid #dce6eb; border-radius: 12px; background: #fff; box-shadow: 0 3px 14px rgba(19, 54, 72, .05); overflow: hidden; }
+#ensayos .encuestas-panel-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px 19px 15px; border-bottom: 1px solid #e6edf0; }
+#ensayos .encuestas-panel-cabecera > div { display: flex; align-items: center; gap: 10px; min-width: 0; }
+#ensayos .encuestas-panel-cabecera i { font-size: 1.05rem; color: #009668; }
+#ensayos .encuestas-panel-cabecera h3 { margin: 0; color: #203b4b; font: 720 .98rem 'Inter', sans-serif; }
+#ensayos .encuestas-panel-contador { background: #e9f7f2; color: #087d63; border-radius: 6px; font: 730 .7rem 'Inter', sans-serif; padding: 5px 9px; min-width: 28px; text-align: center; }
+#ensayos .encuestas-panel-lista { padding: 6px 10px 10px; max-height: 365px; overflow-y: auto; overscroll-behavior: contain; scrollbar-color: #c9dbe1 transparent; scrollbar-width: thin; }
+#ensayos .encuestas-panel-enlace { display: block; width: 100%; padding: 12px 10px; border: none; border-bottom: 1px solid #edf1f3; border-radius: 5px; background: transparent; text-align: left; font-family: 'Inter', sans-serif; transition: background .15s; cursor: pointer; }
+#ensayos .encuestas-panel-enlace:last-child { border-bottom: none; }
+#ensayos .encuestas-panel-enlace:hover, #ensayos .encuestas-panel-enlace:focus-visible { background: #eff9f6; outline: none; }
+#ensayos .encuestas-panel-enlace-titulo { display: block; font-size: .85rem; font-weight: 650; line-height: 1.43; color: #254458; overflow-wrap: anywhere; }
+#ensayos .encuestas-panel-enlace-meta { display: flex; align-items: center; justify-content: space-between; gap: 7px; color: #728894; margin-top: 7px; font-size: .72rem; }
+#ensayos .encuestas-panel-estado { display: inline-flex; align-items: center; font-weight: 650; color: #00826a; }
+#ensayos .encuestas-panel-estado.cerrada { color: #9d6370; }
+#ensayos .encuestas-panel-estado::before { content: ''; width: 6px; height: 6px; margin-right: 6px; background: currentColor; border-radius: 50%; }
+#ensayos .encuestas-panel-vacio { margin: 4px; padding: 17px 10px; text-align: center; color: #748894; font: 400 .82rem/1.55 'Inter', sans-serif; }
+#ensayos .encuestas-panel-ingresar { display: inline-block; margin-top: 10px; border: 1px solid #bfded4; border-radius: 7px; background: #ebf7f2; padding: 8px 14px; font: 660 .78rem 'Inter', sans-serif; color: #007b62; cursor: pointer; }
+#ensayos .encuestas-panel-ingresar:hover { background: #d9f0e7; }
+
+/* Modal propio para reputación insuficiente: evita alert() del navegador. */
+#modalReputacionInsuficiente .modal-dialog-reputacion { max-width: 480px; margin-left: auto; margin-right: auto; }
+#modalReputacionInsuficiente .reputacion-aviso { border: 0; border-radius: 14px; overflow: hidden; box-shadow: 0 26px 65px rgba(14, 42, 57, .24); font-family: 'Inter', sans-serif; }
+#modalReputacionInsuficiente .reputacion-aviso-cabecera { position: relative; padding: 29px 30px 27px; background: linear-gradient(115deg, #008c6e 0%, #005676 100%); color: white; }
+#modalReputacionInsuficiente .reputacion-aviso-cabecera .btn-close { position: absolute; top: 18px; right: 18px; opacity: .85; }
+#modalReputacionInsuficiente .reputacion-aviso-icono { display: grid; place-items: center; width: 53px; height: 53px; background: rgba(255, 255, 255, .17); border: 1px solid rgba(255, 255, 255, .26); border-radius: 12px; font-size: 1.65rem; margin-bottom: 15px; }
+#modalReputacionInsuficiente .reputacion-aviso-etiqueta { margin: 0 0 7px; font-size: .63rem; letter-spacing: 1.35px; font-weight: 800; opacity: .83; }
+#modalReputacionInsuficiente .reputacion-aviso-cabecera h2 { font-size: 1.27rem; font-weight: 750; line-height: 1.4; margin: 0 0 7px; padding-right: 16px; }
+#modalReputacionInsuficiente .reputacion-aviso-cabecera > p:last-child { margin: 0; font-size: .83rem; opacity: .86; line-height: 1.57; }
+#modalReputacionInsuficiente .reputacion-aviso-cuerpo { padding: 24px 30px 15px; }
+#modalReputacionInsuficiente .reputacion-aviso-cifras { display: flex; justify-content: space-between; gap: 18px; }
+#modalReputacionInsuficiente .reputacion-aviso-cifras small { display: block; font: 550 .73rem 'Inter', sans-serif; color: #738997; margin-bottom: 5px; }
+#modalReputacionInsuficiente .reputacion-aviso-cifras strong { font: 800 1.75rem/1.2 'Inter', sans-serif; color: #173e51; }
+#modalReputacionInsuficiente .reputacion-aviso-cifras strong span:last-child { font-size: .78rem; font-weight: 600; color: #6b8190; }
+#modalReputacionInsuficiente .reputacion-aviso-progreso { width: 100%; height: 8px; margin: 19px 0 9px; border-radius: 6px; background: #e8eff1; overflow: hidden; }
+#modalReputacionInsuficiente .reputacion-aviso-progreso span { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #009668, #0aa9a2); transition: width .35s ease; }
+#modalReputacionInsuficiente .reputacion-aviso-pendientes { font-size: .77rem; color: #536f7d; margin: 0 0 18px; }
+#modalReputacionInsuficiente .reputacion-aviso-consejo { display: flex; gap: 11px; padding: 14px; background: #edf8f4; border: 1px solid #d5eee3; border-radius: 8px; font-size: .8rem; line-height: 1.65; color: #365f58; }
+#modalReputacionInsuficiente .reputacion-aviso-consejo i { color: #008e71; font-size: 1.1rem; }
+#modalReputacionInsuficiente .reputacion-aviso-pie { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 17px 30px 24px; }
+#modalReputacionInsuficiente .reputacion-aviso-pie button { border-radius: 7px; font: 650 .81rem 'Inter', sans-serif; padding: 10px 15px; }
+#modalReputacionInsuficiente .reputacion-aviso-mas { background: #fff; border: 1px solid #d2e2e6; color: #42697c; }
+#modalReputacionInsuficiente .reputacion-aviso-mas:hover { background: #f4f8fa; }
+#modalReputacionInsuficiente .reputacion-aviso-entendido { background: #009668; border: 1px solid #009668; color: #fff; }
+#modalReputacionInsuficiente .reputacion-aviso-entendido:hover { background: #007f5d; }
+@media (max-width: 991.98px) {
+    #ensayos .encuestas-sidebar { margin-top: 3px; }
+}
+@media (max-width: 575.98px) {
+    #ensayos .encuestas-busqueda { padding: 19px 16px 13px; }
+    #ensayos .encuestas-busqueda-cabecera h2 { font-size: 1.18rem; }
+    #ensayos .encuestas-panel-lista { max-height: 310px; }
+    #modalReputacionInsuficiente .modal-dialog-reputacion { margin: 12px; }
+    #modalReputacionInsuficiente .reputacion-aviso-cabecera { padding: 26px 21px 23px; }
+    #modalReputacionInsuficiente .reputacion-aviso-cuerpo { padding: 21px 21px 8px; }
+    #modalReputacionInsuficiente .reputacion-aviso-pie { padding: 17px 21px 23px; flex-wrap: wrap; }
+    #modalReputacionInsuficiente .reputacion-aviso-pie button { flex: 1; min-width: 140px; }
+}

@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
-    <link rel="stylesheet" href="./style.css?v=opinion-menu-simple-20261108-1">
+    <link rel="stylesheet" href="./style.css?v=encuestas-panel-reputacion-20261108-1">
     <style>
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar { width: 8px; background-color: transparent; }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track { background-color: transparent; }
@@ -57,8 +57,8 @@
                 <li class="nav-item"><button class="nav-link text-white px-3 font-inter" data-bs-toggle="pill" data-bs-target="#ensayos">Debates y Encuestas</button></li>
             </ul>
             <div class="d-flex align-items-center">
-                <div id="reputacion-container" class="d-none me-3 align-items-center px-3 py-1 rounded-pill border border-light shadow-sm bg-white bg-opacity-25 reputacion-hover" data-bs-toggle="modal" data-bs-target="#modalReputacion" style="opacity: 0;" title="Ver Información de Reputación">
-                    <i class="bi bi-cup-hot-fill me-2" style="color: #ffcc00; font-size: 1.2rem;"></i>
+                <div id="reputacion-container" class="d-none me-3 align-items-center px-3 py-1 rounded-pill border border-light shadow-sm bg-white bg-opacity-25 reputacion-hover" data-bs-toggle="modal" data-bs-target="#modalReputacion" style="opacity: 0;" title="Ver puntos de reputación">
+                    <i class="bi bi-award-fill me-2" style="color: #ffe19b; font-size: 1.2rem;" aria-hidden="true"></i>
                     <span class="fw-bold font-inter text-white" style="font-size: 0.95rem;" id="user-reputacion">0</span>
                 </div>
                 <button id="btn-login" class="btn btn-ingresar-navbar rounded-pill px-4 font-inter shadow-sm">Ingresar <i class="bi bi-arrow-right ms-1"></i></button>
@@ -191,11 +191,41 @@
                     
                 </div>
 
-                <div class="row">
-                    <div class="col-lg-8 col-md-10 mx-auto" id="contenedor-formularios">
+                <div class="row g-4 align-items-start encuestas-distribucion">
+                    <div class="col-12 col-lg-8">
+                        <div class="encuestas-busqueda bg-white">
+                            <div class="encuestas-busqueda-cabecera">
+                                <h2>Debates y Encuestas</h2>
+                                <p>Explora los formularios publicados por la comunidad.</p>
+                            </div>
+                            <label for="buscar-encuestas" class="visually-hidden">Buscar encuestas por título o descripción</label>
+                            <div class="encuestas-busqueda-campo">
+                                <i class="bi bi-search" aria-hidden="true"></i>
+                                <input type="search" id="buscar-encuestas" placeholder="Buscar encuestas por título o descripción..." autocomplete="off">
+                            </div>
+                            <p id="encuestas-busqueda-estado" class="encuestas-busqueda-estado" role="status" aria-live="polite"></p>
+                        </div>
+                        <div id="contenedor-formularios" aria-live="polite" aria-busy="true">
                         <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white"><div class="row g-0"><div class="col-4 col-md-3"><div class="skeleton-box w-100 h-100" style="min-height: 140px;"></div></div><div class="col-8 col-md-9"><div class="card-body"><div class="skeleton-box w-25 mb-2" style="height: 20px;"></div><div class="skeleton-box w-75 mb-3" style="height: 30px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div></div></div></div></div>
                         <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white"><div class="row g-0"><div class="col-4 col-md-3"><div class="skeleton-box w-100 h-100" style="min-height: 140px;"></div></div><div class="col-8 col-md-9"><div class="card-body"><div class="skeleton-box w-25 mb-2" style="height: 20px;"></div><div class="skeleton-box w-75 mb-3" style="height: 30px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div></div></div></div></div>
+                        </div>
                     </div>
+                    <aside class="col-12 col-lg-4 encuestas-sidebar" aria-label="Listas de encuestas">
+                        <section class="encuestas-panel-lateral" aria-labelledby="titulo-mis-encuestas">
+                            <div class="encuestas-panel-cabecera">
+                                <div><i class="bi bi-person-lines-fill" aria-hidden="true"></i><h3 id="titulo-mis-encuestas">Mis encuestas</h3></div>
+                                <span class="encuestas-panel-contador" id="contador-mis-encuestas">0</span>
+                            </div>
+                            <div id="lista-mis-encuestas" class="encuestas-panel-lista" aria-live="polite"><p class="encuestas-panel-vacio">Cargando encuestas...</p></div>
+                        </section>
+                        <section class="encuestas-panel-lateral" aria-labelledby="titulo-todas-encuestas">
+                            <div class="encuestas-panel-cabecera">
+                                <div><i class="bi bi-ui-checks-grid" aria-hidden="true"></i><h3 id="titulo-todas-encuestas">Todas las encuestas</h3></div>
+                                <span class="encuestas-panel-contador" id="contador-todas-encuestas">0</span>
+                            </div>
+                            <div id="lista-todas-encuestas" class="encuestas-panel-lista" aria-live="polite"><p class="encuestas-panel-vacio">Cargando encuestas...</p></div>
+                        </section>
+                    </aside>
                 </div>
             </div>
         </div>
@@ -367,28 +397,56 @@
                         <div class="d-inline-flex align-items-center justify-content-center bg-white rounded-circle mb-3 shadow-sm" style="width: 80px; height: 80px;">
                             <i class="bi bi-cup-hot-fill" style="color: #ffcc00; font-size: 2.5rem;"></i>
                         </div>
-                        <h3 class="fw-bold font-serif mb-1 text-white">Tu Reputacion</h3>
-                        <p class="text-white opacity-75 font-inter small mb-0">Sistema de reputación de CAFE UNP</p>
+                        <h3 class="fw-bold font-serif mb-1 text-white">Tu reputación</h3>
+                        <p class="text-white opacity-75 font-inter small mb-0">Sistema de reputación de CAFÉ UNP</p>
                     </div>
                     
                     <div class="px-4 px-md-5 py-4 pt-4 bg-white">
-                        <p class="text-secondary font-inter mb-4 text-center" style="font-size: 0.95rem;">Los <strong>Puntos de Reputacion</strong> representan tu nivel de participación e influencia académica en la comunidad estudiantil.</p>
+                        <p class="text-secondary font-inter mb-4 text-center" style="font-size: 0.95rem;">Los <strong>puntos de reputación</strong> representan tu nivel de participación e influencia académica en la comunidad estudiantil.</p>
                         
                         <div class="row g-3 text-start mb-2">
                             <div class="col-12">
                                 <div class="p-3 bg-light rounded-3 border-start shadow-sm border-4" style="border-color: #009668 !important;">
                                     <h6 class="fw-bold font-inter text-dark mb-2"><i class="bi bi-star-fill text-warning me-2 fs-5"></i>¿Cómo ganar puntos?</h6>
-                                    <p class="small text-muted mb-0 font-inter">Ganas <strong>+5 Puntos</strong> automáticamente cada vez que participas y envías tus respuestas de forma válida en una encuesta o debate.</p>
+                                    <p class="small text-muted mb-0 font-inter">Ganas <strong>+5 puntos de reputación</strong> automáticamente cada vez que participas y envías tus respuestas de forma válida en una encuesta o debate.</p>
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="p-3 bg-light rounded-3 border-start shadow-sm border-4" style="border-color: #004b79 !important;">
                                     <h6 class="fw-bold font-inter text-dark mb-2"><i class="bi bi-unlock-fill text-primary me-2 fs-5"></i>¿Para qué sirven?</h6>
-                                    <p class="small text-muted mb-0 font-inter">Al acumular <strong id="req-rep-text" style="color:#004b79;">5</strong> Puntos de reputacion, la plataforma te desbloquea el permiso especial para crear y publicar tus propias encuestas o debates.</p>
+                                    <p class="small text-muted mb-0 font-inter">Al acumular <strong id="req-rep-text" style="color:#004b79;">5</strong> puntos de reputación, la plataforma te desbloquea el permiso especial para crear y publicar tus propias encuestas o debates.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AVISO DE PUNTOS INSUFICIENTES (SUSTITUYE AL ALERT DEL NAVEGADOR) -->
+    <div class="modal fade" id="modalReputacionInsuficiente" tabindex="-1" aria-labelledby="reputacion-insuficiente-titulo" aria-modal="true" role="dialog" style="z-index: 1085;">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-reputacion">
+            <div class="modal-content reputacion-aviso">
+                <div class="reputacion-aviso-cabecera">
+                    <span class="reputacion-aviso-icono"><i class="bi bi-award" aria-hidden="true"></i></span>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <p class="reputacion-aviso-etiqueta">CAFÉ UNP · PARTICIPACIÓN</p>
+                    <h2 id="reputacion-insuficiente-titulo">Necesitas más puntos de reputación</h2>
+                    <p>Para publicar debates y encuestas debes alcanzar el mínimo de puntos requerido.</p>
+                </div>
+                <div class="reputacion-aviso-cuerpo">
+                    <div class="reputacion-aviso-cifras">
+                        <div><small>Tu reputación actual</small><strong><span id="reputacion-insuficiente-actual">0</span> <span>puntos</span></strong></div>
+                        <div><small>Puntos requeridos</small><strong><span id="reputacion-insuficiente-meta">5</span> <span>puntos</span></strong></div>
+                    </div>
+                    <div class="reputacion-aviso-progreso" role="progressbar" id="reputacion-insuficiente-barra" aria-label="Progreso de reputación" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0"><span id="reputacion-insuficiente-relleno"></span></div>
+                    <p class="reputacion-aviso-pendientes" id="reputacion-insuficiente-faltantes">Te faltan 5 puntos para publicar.</p>
+                    <div class="reputacion-aviso-consejo"><i class="bi bi-lightbulb" aria-hidden="true"></i><span>Gana <strong>+5 puntos de reputación</strong> al participar y enviar tus respuestas en una encuesta o debate.</span></div>
+                </div>
+                <div class="reputacion-aviso-pie">
+                    <button type="button" class="btn reputacion-aviso-mas" id="btn-como-ganar-reputacion">¿Cómo funcionan los puntos?</button>
+                    <button type="button" class="btn reputacion-aviso-entendido" data-bs-dismiss="modal">Entendido</button>
                 </div>
             </div>
         </div>
@@ -615,6 +673,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="app.js?v=opinion-menu-simple-20261108-1"></script>
+    <script type="module" src="app.js?v=encuestas-panel-reputacion-20261108-1"></script>
 </body>
 </html>
