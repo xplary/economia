@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
-    <link rel="stylesheet" href="./style.css?v=encuestas-panel-layout-20261109-1">
+    <link rel="stylesheet" href="./style.css?v=encuestas-buscador-unificado-20261109-1">
     <style>
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar { width: 8px; background-color: transparent; }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track { background-color: transparent; }
@@ -193,9 +193,9 @@
                     <div class="encuestas-lista-principal">
                         <div class="encuestas-busqueda bg-white">
                             <label for="buscar-encuestas" class="visually-hidden">Buscar encuestas por título o descripción</label>
-                            <div class="encuestas-busqueda-campo">
-                                <i class="bi bi-search" aria-hidden="true"></i>
-                                <input type="search" id="buscar-encuestas" placeholder="Buscar encuestas por título o descripción..." autocomplete="off">
+                            <div class="encuestas-busqueda-campo input-group shadow-sm rounded-3 overflow-hidden border">
+                                <span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-search" aria-hidden="true"></i></span>
+                                <input type="search" id="buscar-encuestas" class="form-control border-0 py-2 font-inter shadow-none" placeholder="Buscar encuestas..." autocomplete="off">
                             </div>
                             <p id="encuestas-busqueda-estado" class="encuestas-busqueda-estado" role="status" aria-live="polite"></p>
                         </div>

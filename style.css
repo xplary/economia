@@ -1085,12 +1085,12 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
 #ensayos .encuestas-sidebar { grid-column: 2; grid-row: 2; min-width: 0; }
 /* Sin sesión iniciada, no se reserva un espacio vacío para el botón oculto. */
 #ensayos .encuestas-distribucion:has(> .encuestas-accion-crear.d-none) .encuestas-sidebar { grid-row: 1 / span 2; }
-#ensayos .encuestas-busqueda { margin-bottom: 22px; padding: 16px 24px 13px; border: 1px solid #dce6eb; border-radius: 12px; box-shadow: 0 3px 14px rgba(19, 54, 72, .04); }
-#ensayos .encuestas-busqueda-campo { position: relative; }
-#ensayos .encuestas-busqueda-campo > i { position: absolute; top: 50%; left: 15px; transform: translateY(-50%); color: #748b98; font-size: 1.03rem; pointer-events: none; }
-#ensayos #buscar-encuestas { box-sizing: border-box; display: block; width: 100%; min-height: 46px; padding: 11px 14px 11px 44px; border: 1px solid #cedde4; border-radius: 7px; background: #fbfdfe; font: 400 .86rem 'Inter', sans-serif; color: #183549; transition: border-color .18s, box-shadow .18s; }
-#ensayos #buscar-encuestas::placeholder { color: #92a2ae; }
-#ensayos #buscar-encuestas:focus { background: #fff; outline: none; border-color: #009668; box-shadow: 0 0 0 3px rgba(0, 150, 104, .1); }
+/* Igual al campo «Buscar columnas»: mismo grupo de Bootstrap, icono, fuente Inter y sombra. */
+#ensayos .encuestas-busqueda { margin-bottom: 22px; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent !important; }
+#ensayos .encuestas-busqueda-campo { position: relative; background: #fff; }
+#ensayos #buscar-encuestas { box-sizing: border-box; display: block; width: 1%; flex: 1 1 auto; min-width: 0; min-height: unset; padding: .5rem .75rem; border: 0; border-radius: 0; background: #fff; font: 400 1rem/1.5 'Inter', sans-serif; color: #212529; }
+#ensayos #buscar-encuestas::placeholder { color: #6c757d; opacity: 1; }
+#ensayos #buscar-encuestas:focus { background: #fff; outline: none; border-color: transparent; box-shadow: none; }
 #ensayos .encuestas-busqueda-estado { font: 450 .73rem 'Inter', sans-serif; color: #6c8190; margin: 9px 0 0; min-height: 1em; }
 #ensayos .encuestas-sidebar { display: flex; flex-direction: column; gap: 19px; }
 #ensayos .encuestas-panel-lateral { border: 1px solid #dce6eb; border-radius: 12px; background: #fff; box-shadow: 0 3px 14px rgba(19, 54, 72, .05); overflow: hidden; }
@@ -1145,7 +1145,7 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
     #ensayos .encuestas-sidebar { order: 2; width: 100%; margin-top: 3px; }
 }
 @media (max-width: 575.98px) {
-    #ensayos .encuestas-busqueda { padding: 15px 16px 13px; }
+    #ensayos .encuestas-busqueda { padding: 0; }
     #ensayos .encuestas-panel-lista { max-height: 310px; }
     #modalReputacionInsuficiente .modal-dialog-reputacion { margin: 12px; }
     #modalReputacionInsuficiente .reputacion-aviso-cabecera { padding: 26px 21px 23px; }
