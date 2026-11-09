@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
-    <link rel="stylesheet" href="./style.css?v=editor-forms-20261107-3">
+    <link rel="stylesheet" href="./style.css?v=opinion-menu-simple-20261108-1">
     <style>
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar { width: 8px; background-color: transparent; }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track { background-color: transparent; }
@@ -49,14 +49,8 @@
             <ul class="nav nav-underline d-none d-md-flex" id="pills-tab" role="tablist">
                 <li class="nav-item nav-opinion-item">
                     <button id="nav-opinion-general" class="nav-link text-white active px-3 font-inter" data-bs-toggle="pill" data-bs-target="#columnas" type="button" aria-haspopup="true" aria-controls="menu-secciones-opinion" aria-expanded="false">Articulos y Opinión <i class="bi bi-chevron-down ms-1 opinion-caret" aria-hidden="true"></i></button>
-                    <div id="menu-secciones-opinion" class="opinion-submenu" aria-label="Secciones de Artículos y Opinión">
-                        <div class="opinion-submenu-options">
-                            <button type="button" class="opinion-submenu-link opinion-submenu-general active" data-seccion-opinion="">
-                                <span class="opinion-submenu-icon"><i class="bi bi-grid-1x2" aria-hidden="true"></i></span>
-                                <span class="opinion-submenu-label">Todas las columnas</span>
-                                <i class="bi bi-check-lg opinion-submenu-indicator" aria-hidden="true"></i>
-                            </button>
-                        </div>
+                    <div id="menu-secciones-opinion" class="opinion-submenu" aria-label="Secciones de Artículos y Opinión" hidden>
+                        <div class="opinion-submenu-options"></div>
                     </div>
                 </li>
                 <li class="nav-item"><button class="nav-link text-white px-3 font-inter" data-bs-toggle="pill" data-bs-target="#investigacion">Investigación & Papers</button></li>
@@ -621,6 +615,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="app.js?v=editor-forms-20261107-3"></script>
+    <script type="module" src="app.js?v=opinion-menu-simple-20261108-1"></script>
 </body>
 </html>

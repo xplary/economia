@@ -778,24 +778,18 @@ menuOpinion.addEventListener('click', event => {
     cambiarSeccionOpinion(btn.dataset.seccionOpinion);
 });
 
-// Solo cambia la presentación del menú; la selección y el filtrado siguen intactos.
+// Menú discreto: solo las secciones existentes. La vista general se abre
+// directamente desde el botón "Artículos y Opinión" del navbar.
 function renderizarMenuSeccionesOpinion() {
     menuOpinion.innerHTML = `
         <div class="opinion-submenu-options">
-            <button type="button" class="opinion-submenu-link opinion-submenu-general" data-seccion-opinion="">
-                <span class="opinion-submenu-icon"><i class="bi bi-grid-1x2" aria-hidden="true"></i></span>
-                <span class="opinion-submenu-label">Todas las columnas</span>
-                <i class="bi bi-check-lg opinion-submenu-indicator" aria-hidden="true"></i>
-            </button>
-            ${seccionesOpinion.length ? '<span class="opinion-submenu-section-title">Secciones</span>' : ''}
             ${seccionesOpinion.map(s => `
                 <button type="button" class="opinion-submenu-link" data-seccion-opinion="${escapeHTML(s.id)}">
-                    <span class="opinion-submenu-icon"><i class="bi bi-bookmark" aria-hidden="true"></i></span>
                     <span class="opinion-submenu-label">${escapeHTML(s.nombre)}</span>
-                    <i class="bi bi-chevron-right opinion-submenu-indicator" aria-hidden="true"></i>
-                    <i class="bi bi-check-lg opinion-submenu-indicator" aria-hidden="true"></i>
                 </button>`).join('')}
         </div>`;
+    // No mostrar un panel vacío si todavía no existen secciones.
+    menuOpinion.hidden = seccionesOpinion.length === 0;
 }
 
 onSnapshot(collection(db, 'secciones_opinion'), snapshot => {
