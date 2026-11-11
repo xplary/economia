@@ -1392,3 +1392,16 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
     .paginacion-columnas-boton { min-width: 36px; min-height: 36px; padding: 6px 9px; }
     #contenedor-noticias-lista { scroll-margin-top: 84px; }
 }
+
+/* Evitar el espacio sobrante entre el listado y los videos, solo en PC.
+   Se conservan intactos la paginación y los estilos de móvil/tablet. */
+@media (min-width: 992px) {
+    #columnas > #tienes-un-minuto {
+        margin-top: 8px;
+        padding-top: 12px;
+    }
+    #columnas:has(> #tienes-un-minuto:not([hidden])) #contenedor-noticias-lista > .card:last-of-type {
+        margin-bottom: 0 !important;
+        padding-bottom: 10px !important;
+    }
+}
