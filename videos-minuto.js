@@ -114,25 +114,82 @@ function actualizarFlechas() {
     siguiente.disabled = lista.scrollLeft + lista.clientWidth >= lista.scrollWidth - 4;
 }
 
-async function miniaturaTikTok(video, img, fondo) {
+// Si TikTok no entrega una imagen en oEmbed (o la bloquea), su reproductor
+// oficial muestra la portada original del video sin iniciarlo automáticamente.
+// La capa de reproducción del sitio permanece encima y recibe los clics.
+function vistaPreviaOficialTikTok(video, tarjeta, fondo) {
+    if (!tarjeta || tarjeta.querySelector('.cafe-minuto-card-embed')) return;
+    const iframe = document.createElement('iframe');
+    iframe.className = 'cafe-minuto-card-embed';
+    iframe.src = `https://www.tiktok.com/player/v1/${video.idVideo}?autoplay=0&controls=0&play_button=0&music_info=0&description=0`;
+    iframe.title = `Vista previa de TikTok: ${video.titulo}`;
+    iframe.loading = 'lazy';
+    iframe.tabIndex = -1;
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+
+    // "load" también se dispara si el navegador presenta una página de error.
+    // Solo mostramos el iframe cuando TikTok confirma que el player está listo.
+    let timeout;
+    const limpiar = () => {
+        window.removeEventListener('message', alResponderTikTok);
+        window.clearTimeout(timeout);
+    };
+    const alResponderTikTok = (evento) => {
+        if (evento.origin !== 'https://www.tiktok.com' || evento.source !== iframe.contentWindow) return;
+        const dato = evento.data;
+        if (!dato || dato['x-tiktok-player'] !== true) return;
+        if (dato.type === 'onPlayerReady') {
+            if (iframe.isConnected) {
+                iframe.classList.add('cafe-minuto-card-embed-ready');
+                fondo.hidden = true;
+            }
+            limpiar();
+        } else if (dato.type === 'onPlayerError') {
+            iframe.remove();
+            limpiar();
+        }
+    };
+    window.addEventListener('message', alResponderTikTok);
+    iframe.addEventListener('error', () => { iframe.remove(); limpiar(); }, { once: true });
+    timeout = window.setTimeout(limpiar, 20000);
+    tarjeta.prepend(iframe);
+}
+
+async function miniaturaTikTok(video, img, fondo, tarjeta) {
     const clave = video.idVideo;
-    if (cacheMiniaturas.get(clave) === null) return;
     let url = cacheMiniaturas.get(clave);
+    if (url === null) {
+        vistaPreviaOficialTikTok(video, tarjeta, fondo);
+        return;
+    }
     if (!url) {
         try {
             const respuesta = await fetch('https://www.tiktok.com/oembed?url=' + encodeURIComponent(video.url));
             if (!respuesta.ok) throw new Error('Sin miniatura');
             const datos = await respuesta.json();
+            if (!datos.thumbnail_url) throw new Error('TikTok no proporcionó una imagen');
             const imagen = new URL(datos.thumbnail_url);
             if (imagen.protocol !== 'https:') throw new Error('Miniatura inválida');
             url = imagen.href;
             cacheMiniaturas.set(clave, url);
-        } catch (_) { cacheMiniaturas.set(clave, null); return; }
+        } catch (_) {
+            cacheMiniaturas.set(clave, null);
+            if (tarjeta.isConnected) vistaPreviaOficialTikTok(video, tarjeta, fondo);
+            return;
+        }
     }
     if (!img.isConnected) return;
+    img.onload = () => {
+        if (img.isConnected) { img.hidden = false; fondo.hidden = true; }
+    };
+    img.onerror = () => {
+        img.hidden = true;
+        fondo.hidden = false;
+        cacheMiniaturas.set(clave, null);
+        if (tarjeta.isConnected) vistaPreviaOficialTikTok(video, tarjeta, fondo);
+    };
     img.src = url;
-    img.onload = () => { if (img.isConnected) { img.hidden = false; fondo.hidden = true; } };
-    img.onerror = () => { img.hidden = true; fondo.hidden = false; cacheMiniaturas.set(clave, null); };
 }
 
 function dibujarVideos() {
@@ -176,7 +233,7 @@ function dibujarVideos() {
             imagen.loading = 'lazy';
             imagen.hidden = true;
             abrir.append(fondo, imagen);
-            miniaturaTikTok(video, imagen, fondo);
+            miniaturaTikTok(video, imagen, fondo, card);
         }
 
         const degradado = document.createElement('span');

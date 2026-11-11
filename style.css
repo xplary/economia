@@ -1336,3 +1336,10 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
 }
 @media (prefers-reduced-motion:reduce) { .cafe-minuto-card-image { transition:none; } }
 .cafe-minuto-card-image[hidden], .cafe-minuto-fallback[hidden] { display: none !important; }
+/* Portadas de TikTok: si oEmbed no ofrece imagen, el player oficial
+   presenta el fotograma de portada detrás del botón de apertura. */
+.cafe-minuto-card-embed { position:absolute; top:50%; left:50%; width:max(100%, 325px); height:max(100%, 578px); transform:translate(-50%,-50%); border:0; z-index:0; pointer-events:none; opacity:0; transition:opacity .18s ease; }
+.cafe-minuto-card-embed.cafe-minuto-card-embed-ready { opacity:1; }
+.cafe-minuto-card .cafe-minuto-open { z-index:1; }
+@media (prefers-reduced-motion:reduce) { .cafe-minuto-card-embed { transition:none; } }
+
