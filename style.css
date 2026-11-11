@@ -1343,3 +1343,52 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
 .cafe-minuto-card .cafe-minuto-open { z-index:1; }
 @media (prefers-reduced-motion:reduce) { .cafe-minuto-card-embed { transition:none; } }
 
+
+
+/* Artículos y Opinión: paginación del listado (5 columnas por página). */
+#contenedor-noticias-lista { scroll-margin-top: 100px; }
+.paginacion-columnas {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 14px 0 42px;
+    font-family: 'Inter', sans-serif;
+}
+.paginacion-columnas-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 39px;
+    min-height: 39px;
+    padding: 7px 11px;
+    border: 1px solid #dae4e8;
+    border-radius: 7px;
+    background: #fff;
+    color: #365569;
+    font-size: .88rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: color .15s ease, background-color .15s ease, border-color .15s ease;
+}
+.paginacion-columnas-boton:hover:not(:disabled):not(.active) {
+    color: #007c64;
+    border-color: #9acfc2;
+    background: #eff9f5;
+}
+.paginacion-columnas-boton.active {
+    color: #fff;
+    border-color: #008f6b;
+    background: #008f6b;
+    cursor: default;
+}
+.paginacion-columnas-boton:disabled { opacity: .4; cursor: default; }
+.paginacion-columnas-boton:focus-visible { outline: 2px solid #004b79; outline-offset: 2px; }
+.paginacion-columnas-puntos { padding: 0 3px; color: #7e929d; }
+@media (max-width: 575.98px) {
+    .paginacion-columnas { gap: 5px; margin: 8px 0 30px; }
+    .paginacion-columnas-boton { min-width: 36px; min-height: 36px; padding: 6px 9px; }
+    #contenedor-noticias-lista { scroll-margin-top: 84px; }
+}

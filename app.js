@@ -722,7 +722,57 @@ if (['columnas', 'investigacion', 'ensayos'].includes(pestañaDesdeInforme)) {
 }
 
 const normalizarBusqueda = (valor) => (valor == null ? '' : String(valor)).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-let noticiasData = []; let noticiasCargadas = false; let qBuscar = ''; let ordDesc = true; document.getElementById('input-buscar').addEventListener('input', (e) => { qBuscar = normalizarBusqueda(e.target.value); renderNoticias(); }); document.getElementById('btn-ordenar').addEventListener('click', () => { ordDesc = !ordDesc; document.getElementById('btn-ordenar').innerText = ordDesc ? 'Ordenar: Recientes ↓' : 'Ordenar: Antiguos ↑'; renderNoticias(); }); 
+let noticiasData = [];
+let noticiasCargadas = false;
+let qBuscar = '';
+let ordDesc = true;
+// Solo se pagina el listado; el destacado principal mantiene su selección independiente.
+const COLUMNAS_POR_PAGINA = 5;
+let paginaColumnasActual = 1;
+document.getElementById('input-buscar').addEventListener('input', (e) => {
+    qBuscar = normalizarBusqueda(e.target.value);
+    paginaColumnasActual = 1;
+    renderNoticias();
+});
+document.getElementById('btn-ordenar').addEventListener('click', () => {
+    ordDesc = !ordDesc;
+    paginaColumnasActual = 1;
+    document.getElementById('btn-ordenar').innerText = ordDesc ? 'Ordenar: Recientes ↓' : 'Ordenar: Antiguos ↑';
+    renderNoticias();
+});
+// La búsqueda y las secciones se aplican al conjunto completo antes de dividirlo en páginas.
+document.getElementById('contenedor-noticias-lista').addEventListener('click', (event) => {
+    const boton = event.target.closest('button[data-pagina-columnas]');
+    if (!boton || boton.disabled) return;
+    const proximaPagina = Number(boton.dataset.paginaColumnas);
+    if (!Number.isInteger(proximaPagina) || proximaPagina < 1 || proximaPagina === paginaColumnasActual) return;
+    paginaColumnasActual = proximaPagina;
+    renderNoticias();
+    document.getElementById('contenedor-noticias-lista').scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start'
+    });
+});
+
+function crearPaginacionColumnas(totalPaginas) {
+    if (totalPaginas <= 1) return '';
+    // En listados extensos se muestran los extremos y las páginas próximas a la actual.
+    const visibles = [];
+    for (let i = 1; i <= totalPaginas; i++) {
+        if (totalPaginas <= 7 || i === 1 || i === totalPaginas || Math.abs(i - paginaColumnasActual) <= 1) visibles.push(i);
+    }
+    const boton = (numero, texto, aria, actual = false, deshabilitado = false) =>
+        `<button type="button" class="paginacion-columnas-boton${actual ? ' active' : ''}" data-pagina-columnas="${numero}" aria-label="${aria}"${actual ? ' aria-current="page"' : ''}${deshabilitado ? ' disabled' : ''}>${texto}</button>`;
+    let paginas = '';
+    let anterior = 0;
+    visibles.forEach(numero => {
+        if (numero - anterior > 1) paginas += '<span class="paginacion-columnas-puntos" aria-hidden="true">…</span>';
+        paginas += boton(numero, numero, `Página ${numero}`, numero === paginaColumnasActual);
+        anterior = numero;
+    });
+    return `<nav class="paginacion-columnas" aria-label="Páginas de artículos y opinión">${boton(paginaColumnasActual - 1, '<i class="bi bi-chevron-left" aria-hidden="true"></i>', 'Página anterior', false, paginaColumnasActual === 1)}${paginas}${boton(paginaColumnasActual + 1, '<i class="bi bi-chevron-right" aria-hidden="true"></i>', 'Página siguiente', false, paginaColumnasActual === totalPaginas)}</nav>`;
+}
+
 
 // ==========================================
 // SECCIONES DE ARTÍCULOS Y OPINIÓN
@@ -847,6 +897,7 @@ selectorEditorOpinion.addEventListener('change', () => {
 });
 
 function cambiarSeccionOpinion(id = '') {
+    paginaColumnasActual = 1;
     seccionOpinionActiva = id && seccionesOpinion.some(s => s.id === id) ? id : '';
     const actual = seccionesOpinion.find(s => s.id === seccionOpinionActiva);
     const filtro = document.getElementById('opinion-filtro-activo');
@@ -995,8 +1046,19 @@ function renderNoticias() {
     if (principales.length > 0) { principales.sort((a,b) => { let tA = a.fecha?.toMillis()||0; let tB = b.fecha?.toMillis()||0; return tB - tA; }); principalDefinitiva = principales[0]; }
     filtradas.sort((a,b) => { let tA = a.fecha?.toMillis()||0; let tB = b.fecha?.toMillis()||0; return ordDesc ? tB - tA : tA - tB; }); 
     const cLista = document.getElementById('contenedor-noticias-lista'); const cPrinc = document.getElementById('contenedor-noticia-principal'); 
-    if (filtradas.length === 0) { cPrinc.innerHTML=''; cLista.innerHTML='<div class="text-center text-muted">No hay resultados.</div>'; return; } 
-    let hLista = ''; let hPrinc = ''; 
+    if (filtradas.length === 0) {
+        paginaColumnasActual = 1;
+        cPrinc.innerHTML = '';
+        cLista.innerHTML = '<div class="text-center text-muted">No hay resultados.</div>';
+        return;
+    }
+    const totalPaginas = Math.ceil(filtradas.length / COLUMNAS_POR_PAGINA);
+    paginaColumnasActual = Math.min(Math.max(1, paginaColumnasActual), totalPaginas);
+    const columnasDePagina = filtradas.slice((paginaColumnasActual - 1) * COLUMNAS_POR_PAGINA, paginaColumnasActual * COLUMNAS_POR_PAGINA);
+    let hLista = ''; let hPrinc = '';
+    // La portada continúa siendo global o de la sección; no depende de la página activa.
+    // Las tarjetas del listado sí se limitan a cinco.
+    const idsDePagina = new Set(columnasDePagina.map(d => d.id));
     filtradas.forEach(d => { 
         const date = d.fecha ? d.fecha.toDate().toLocaleDateString() : 'Reciente'; const avgStr = getPromedioStars(d.comentarios); const textoLimpioPreview = (d.contenido || '').replace(/<[^>]*>?/gm, ''); 
 
@@ -1006,11 +1068,12 @@ function renderNoticias() {
             hPrinc = `<div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-white mx-auto" style="max-width: 100%;"><div class="row g-0 align-items-center"><div class="col-lg-7 pe-lg-4 mb-4 mb-lg-0">${imgP}</div><div class="col-lg-5 ps-lg-2 pe-lg-3 d-flex flex-column h-100"><div class="mb-3">${tHTMLPrincipal}</div><h2 class="fw-bold mb-3 font-serif cursor-pointer text-dark" style="font-size: 2.2rem; line-height: 1.25;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h2><div class="text-secondary mb-4 text-truncate-3 font-inter" style="font-size: 1.05rem; line-height: 1.6;">${textoLimpioPreview}</div><div class="d-flex justify-content-between align-items-center mt-auto pt-2"><small class="text-muted fw-semibold font-inter"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2">${avgStr}</span></small><small class="text-muted fw-semibold cursor-pointer font-inter hover-text-primary" onclick="compartir('${d.id}', 'noticias')"><i class="bi bi-share me-1"></i> Compartir</small></div></div></div></div><div style="height: 2px; background-color: #009668; width: 100%; margin-bottom: 2.5rem; opacity: 0.3;"></div>`; 
         } 
         
+        if (!idsDePagina.has(d.id)) return;
         const tHTMLLista = (d.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${d.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join('');
         const imgH = d.imagen ? `<img src="${d.imagen}" class="post-img-rect shadow-sm" onclick="abrirModal('${d.id}', 'noticias')">` : `<div class="post-img-rect bg-light d-flex align-items-center justify-content-center text-muted border shadow-sm" onclick="abrirModal('${d.id}', 'noticias')"><i class="bi bi-image fs-1"></i></div>`; 
         hLista += `<div class="card border-0 border-bottom rounded-0 mb-4 pb-4 bg-transparent"><div class="row g-4 align-items-center"><div class="col-md-5">${imgH}</div><div class="col-md-7 d-flex flex-column"><div class="d-flex justify-content-between mb-2"><div>${tHTMLLista}</div><div><i class="bi bi-share text-muted me-2 cursor-pointer" onclick="compartir('${d.id}', 'noticias')"></i><i class="bi bi-pencil-fill text-warning me-2 admin-only-inline cursor-pointer" onclick="editarNoticia('${d.id}')"></i><i class="bi bi-trash text-danger admin-only-inline cursor-pointer" onclick="borrarPost('noticias', '${d.id}')"></i></div></div><h3 class="fw-bold mb-2 text-truncate-2 cursor-pointer font-serif text-dark" style="font-size: 1.5rem;" onclick="abrirModal('${d.id}', 'noticias')">${d.titulo}</h3><small class="text-muted fw-semibold mt-1 d-flex align-items-center"><i class="bi bi-calendar3 me-1"></i> ${date} <span class="ms-2">${avgStr}</span></small></div></div></div>`;
     }); 
-    cPrinc.innerHTML = principalDefinitiva ? hPrinc : ''; cLista.innerHTML = hLista; 
+    cPrinc.innerHTML = principalDefinitiva ? hPrinc : ''; cLista.innerHTML = hLista + crearPaginacionColumnas(totalPaginas); 
 }
 window.editarNoticia = (id) => { const d = window.postsData[id]; document.getElementById('not-titulo').value = d.titulo; document.getElementById('not-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('not-color').value = d.colorTag || '#004b79'; document.getElementById('not-principal').checked = !!d.principal; selectorEditorOpinion.value = seccionesOpinion.some(s => s.id === d.seccionId) ? d.seccionId : ''; actualizarPrincipalPorSeccion(); document.getElementById('not-principal-seccion').checked = !!d.principalSeccion && !!selectorEditorOpinion.value; if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(d.contenido || ''); window.editandoId = id; document.getElementById('not-form-title').innerText = "Editando Columna"; document.getElementById('btn-pub-noticia').innerText = "Guardar"; bootstrap.Modal.getOrCreateInstance(document.getElementById('colNoticia')).show(); };
 
