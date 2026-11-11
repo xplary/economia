@@ -1217,3 +1217,39 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
 @media (min-width: 768px) {
     .cafe-mobile-menu-toggle, .cafe-mobile-menu { display: none !important; }
 }
+
+
+/* CAFÉ UNP · Ajustes puntuales de portada y enlaces largos (11/11/2026).
+   En escritorio la portada principal no lleva contorno; el borde original
+   permanece en móvil. No afecta a otras tarjetas ni destacados. */
+@media (min-width: 768px) {
+    #contenedor-noticia-principal > .card { border: 0 !important; }
+}
+@media (max-width: 767.98px) {
+    #contenedor-noticia-principal > .card { border: 1px solid #e2e8f0 !important; }
+
+    /* Los enlaces y textos muy largos no ensanchan el lector. */
+    #modalNoticia .mn-reader-body { overflow-x: hidden; }
+    #modalNoticia .mn-reader-shell,
+    #modalNoticia .mn-reader-content,
+    #modalNoticia .mn-reader-content .contenido-apa {
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+    #modalNoticia .mn-reader-content a {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        white-space: normal !important;
+    }
+    #modalNoticia .mn-reader-content pre {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+    #modalNoticia .mn-reader-content img,
+    #modalNoticia .mn-reader-content iframe,
+    #modalNoticia .mn-reader-content video {
+        max-width: 100%;
+    }
+}
