@@ -1219,11 +1219,15 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
 }
 
 
-/* CAFÉ UNP · Ajustes puntuales de portada y enlaces largos (11/11/2026).
-   En escritorio la portada principal no lleva contorno; el borde original
-   permanece en móvil. No afecta a otras tarjetas ni destacados. */
+/* CAFÉ UNP · Portada principal sin recuadro blanco en escritorio.
+   El contenido, imagen y disposición interior permanecen iguales. */
 @media (min-width: 768px) {
-    #contenedor-noticia-principal > .card { border: 0 !important; }
+    #contenedor-noticia-principal > .card {
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
 }
 @media (max-width: 767.98px) {
     #contenedor-noticia-principal > .card { border: 1px solid #e2e8f0 !important; }
@@ -1256,6 +1260,13 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
 
 
 /* ===== CAFÉ UNP | ¿Tienes un minuto? ===== */
+.cafe-minuto[hidden] { display: none !important; }
+/* Sin publicaciones: los visitantes no ven la sección; el owner conserva
+   únicamente el botón para subir el primer video, sin tarjeta vacía. */
+.cafe-minuto.cafe-minuto-sin-videos .cafe-minuto-heading-text,
+.cafe-minuto.cafe-minuto-sin-videos .cafe-minuto-track { display: none; }
+.cafe-minuto.cafe-minuto-sin-videos .cafe-minuto-heading { justify-content: flex-end; margin-bottom: 0; }
+.cafe-minuto.cafe-minuto-sin-videos { margin: 20px 0; padding: 0; border-top: 0; }
 .cafe-minuto { margin: 76px 0 88px; padding-top: 26px; border-top: 1px solid #dce9e8; }
 .cafe-minuto-heading { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:22px; margin-bottom:23px; }
 .cafe-minuto-heading-text { min-width:0; }

@@ -9,6 +9,7 @@ import { getFirestore, doc, collection, addDoc, deleteDoc, onSnapshot, serverTim
 const appMinuto = getApp();
 const authMinuto = getAuth(appMinuto);
 const dbMinuto = getFirestore(appMinuto);
+const seccionMinuto = document.getElementById('tienes-un-minuto');
 const lista = document.getElementById('cafe-minuto-lista');
 const botonAgregar = document.getElementById('cafe-minuto-agregar');
 const flechas = document.getElementById('cafe-minuto-flechas');
@@ -135,9 +136,15 @@ async function miniaturaTikTok(video, img, fondo) {
 }
 
 function dibujarVideos() {
-    if (!videos.length) {
+    const hayVideos = videos.length > 0;
+    // Sin videos, ocultar por completo la sección al público. Los owners
+    // siguen viendo solo el botón «Agregar video» para publicar el primero.
+    seccionMinuto.hidden = !hayVideos && !esOwner;
+    seccionMinuto.classList.toggle('cafe-minuto-sin-videos', !hayVideos);
+    if (!hayVideos) {
+        lista.replaceChildren();
         lista.setAttribute('aria-busy', 'false');
-        vacio(esOwner ? 'Todavía no hay videos. Agrega el primero con el botón superior.' : 'Próximamente encontrarás aquí videos breves de CAFÉ UNP.');
+        flechas.hidden = true;
         return;
     }
 
@@ -205,7 +212,14 @@ function dibujarVideos() {
         }
         fragmento.append(card);
     }
-    if (!fragmento.childNodes.length) { vacio('No hay videos disponibles.'); return; }
+    if (!fragmento.childNodes.length) {
+        seccionMinuto.hidden = !esOwner;
+        seccionMinuto.classList.add('cafe-minuto-sin-videos');
+        lista.replaceChildren();
+        lista.setAttribute('aria-busy', 'false');
+        flechas.hidden = true;
+        return;
+    }
     lista.replaceChildren(fragmento);
     lista.setAttribute('aria-busy', 'false');
     requestAnimationFrame(actualizarFlechas);
