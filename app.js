@@ -711,7 +711,7 @@ const pestañaDesdeInforme = enlaceDesdeInforme.has('v') ? '' : enlaceDesdeInfor
 document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(btn => { 
     btn.addEventListener('shown.bs.tab', (e) => { 
         const target = e.target.getAttribute('data-bs-target'); currentTab = target.replace('#', '');
-        document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(b => b.classList.remove('active')); document.querySelectorAll(`button[data-bs-target="${target}"]`).forEach(tBtn => tBtn.classList.add('active')); window.scrollTo({ top: 0, behavior: 'smooth' }); updateReputationVisibility();
+        document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(b => b.classList.remove('active')); document.querySelectorAll(`button[data-bs-target="${target}"]`).forEach(tBtn => tBtn.classList.add('active')); window.scrollTo({ top: 0, behavior: 'smooth' }); updateReputationVisibility(); actualizarMenuMovilActivo();
     }); 
 });
 
@@ -734,6 +734,103 @@ let seccionOpinionActiva = '';
 const selectorEditorOpinion = document.getElementById('not-seccion');
 const selectorMovilOpinion = document.getElementById('opinion-secciones-movil');
 const menuOpinion = document.getElementById('menu-secciones-opinion');
+
+// Menú superior móvil: reutiliza las pestañas y los filtros existentes.
+const menuMovil = document.getElementById('cafe-mobile-menu');
+const botonMenuMovil = document.getElementById('cafe-mobile-menu-toggle');
+const enlacesSeccionesMovil = document.getElementById('cafe-mobile-opinion-sections');
+const iconoMenuMovil = botonMenuMovil.querySelector('i');
+let ultimoFocoMenuMovil = null;
+
+function cerrarMenuMovil(restaurarFoco = false) {
+    if (menuMovil.hidden) return;
+    menuMovil.hidden = true;
+    document.body.classList.remove('cafe-mobile-menu-open');
+    botonMenuMovil.setAttribute('aria-expanded', 'false');
+    botonMenuMovil.setAttribute('aria-label', 'Abrir menú');
+    iconoMenuMovil.className = 'bi bi-list';
+    if (restaurarFoco && ultimoFocoMenuMovil) ultimoFocoMenuMovil.focus();
+}
+function actualizarMenuMovilActivo() {
+    menuMovil.querySelectorAll('[data-cafe-mobile-tab]').forEach(boton => {
+        const activo = currentTab === boton.dataset.cafeMobileTab &&
+            (boton.dataset.cafeMobileTab !== 'columnas' || !seccionOpinionActiva);
+        boton.classList.toggle('active', activo);
+        if (activo) boton.setAttribute('aria-current', 'page');
+        else boton.removeAttribute('aria-current');
+    });
+    enlacesSeccionesMovil.querySelectorAll('[data-cafe-mobile-seccion]').forEach(boton => {
+        const activo = currentTab === 'columnas' && boton.dataset.cafeMobileSeccion === seccionOpinionActiva;
+        boton.classList.toggle('active', activo);
+        if (activo) boton.setAttribute('aria-current', 'page');
+        else boton.removeAttribute('aria-current');
+    });
+}
+function renderizarSeccionesMenuMovil() {
+    enlacesSeccionesMovil.replaceChildren();
+    seccionesOpinion.forEach(seccion => {
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.className = 'cafe-mobile-subsection';
+        boton.dataset.cafeMobileSeccion = seccion.id;
+        boton.textContent = seccion.nombre;
+        enlacesSeccionesMovil.appendChild(boton);
+    });
+    actualizarMenuMovilActivo();
+}
+function cambiarPestanaDesdeMenuMovil(destino, seccion = '') {
+    if (lectorModal.classList.contains('show')) bootstrap.Modal.getOrCreateInstance(lectorModal).hide();
+    if (destino === 'columnas') cambiarSeccionOpinion(seccion);
+    const botonPestana = document.querySelector(`#pills-tab button[data-bs-target="#${destino}"]`);
+    if (botonPestana) bootstrap.Tab.getOrCreateInstance(botonPestana).show();
+    cerrarMenuMovil();
+    actualizarMenuMovilActivo();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+}
+botonMenuMovil.addEventListener('click', () => {
+    if (!menuMovil.hidden) return cerrarMenuMovil(true);
+    ultimoFocoMenuMovil = botonMenuMovil;
+    const navbar = document.querySelector('body > nav.navbar');
+    if (navbar) menuMovil.style.setProperty('--cafe-mobile-menu-top', Math.max(0, navbar.getBoundingClientRect().bottom) + 'px');
+    menuMovil.hidden = false;
+    document.body.classList.add('cafe-mobile-menu-open');
+    botonMenuMovil.setAttribute('aria-expanded', 'true');
+    botonMenuMovil.setAttribute('aria-label', 'Cerrar menú');
+    iconoMenuMovil.className = 'bi bi-x-lg';
+    actualizarMenuMovilActivo();
+    menuMovil.querySelector('[data-cafe-mobile-tab]').focus();
+});
+menuMovil.addEventListener('click', event => {
+    const seccion = event.target.closest('[data-cafe-mobile-seccion]');
+    if (seccion) return cambiarPestanaDesdeMenuMovil('columnas', seccion.dataset.cafeMobileSeccion);
+    const tab = event.target.closest('[data-cafe-mobile-tab]');
+    if (tab) cambiarPestanaDesdeMenuMovil(tab.dataset.cafeMobileTab);
+});
+document.getElementById('cafe-mobile-search-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const termino = document.getElementById('cafe-mobile-search-input').value;
+    cambiarPestanaDesdeMenuMovil('columnas');
+    const buscador = document.getElementById('input-buscar');
+    buscador.value = termino;
+    buscador.dispatchEvent(new Event('input', { bubbles: true }));
+});
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !menuMovil.hidden) cerrarMenuMovil(true);
+    if (event.key === 'Tab' && !menuMovil.hidden) {
+        const focables = [botonMenuMovil, ...menuMovil.querySelectorAll('button:not([disabled]), input:not([disabled])')];
+        const actual = focables.indexOf(document.activeElement);
+        if (event.shiftKey && actual === 0) { event.preventDefault(); focables[focables.length - 1].focus(); }
+        else if (!event.shiftKey && actual === focables.length - 1) { event.preventDefault(); focables[0].focus(); }
+    }
+});
+window.addEventListener('resize', () => {
+    if (window.innerWidth >= 768) cerrarMenuMovil();
+    else if (!menuMovil.hidden) {
+        const navbar = document.querySelector('body > nav.navbar');
+        if (navbar) menuMovil.style.setProperty('--cafe-mobile-menu-top', Math.max(0, navbar.getBoundingClientRect().bottom) + 'px');
+    }
+});
+
 
 function actualizarPrincipalPorSeccion() {
     const tieneSeccion = Boolean(selectorEditorOpinion.value);
@@ -762,6 +859,7 @@ function cambiarSeccionOpinion(id = '') {
         btn.setAttribute('aria-current', activo ? 'true' : 'false');
     });
     renderNoticias();
+    actualizarMenuMovilActivo();
 }
 
 // El botón padre siempre muestra TODAS las columnas, no una sección anterior.
@@ -804,6 +902,7 @@ onSnapshot(collection(db, 'secciones_opinion'), snapshot => {
 
     selectorMovilOpinion.innerHTML = '<option value="">Todas las columnas</option>' + opciones;
     renderizarMenuSeccionesOpinion();
+    renderizarSeccionesMenuMovil();
     // Si se borra una sección, volver automáticamente a Todas las columnas.
     cambiarSeccionOpinion(seccionOpinionActiva);
     const seccionDesdeInforme = enlaceDesdeInforme.get('cafeSeccion');
@@ -817,6 +916,7 @@ onSnapshot(collection(db, 'secciones_opinion'), snapshot => {
     selectorMovilOpinion.innerHTML = '<option value="">Todas las columnas</option>';
     seccionesOpinion = [];
     renderizarMenuSeccionesOpinion();
+    renderizarSeccionesMenuMovil();
 });
 
 document.getElementById('btn-pub-noticia').onclick = async () => {
