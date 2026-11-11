@@ -1253,3 +1253,75 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
         max-width: 100%;
     }
 }
+
+
+/* ===== CAFÉ UNP | ¿Tienes un minuto? ===== */
+.cafe-minuto { margin: 76px 0 88px; padding-top: 26px; border-top: 1px solid #dce9e8; }
+.cafe-minuto-heading { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:22px; margin-bottom:23px; }
+.cafe-minuto-heading-text { min-width:0; }
+.cafe-minuto-eyebrow { display:inline-flex; align-items:center; gap:7px; font:700 .69rem/1.3 'Inter',sans-serif; letter-spacing:.12em; color:#008767; }
+.cafe-minuto h2 { font:700 clamp(1.65rem,2.4vw,2.2rem)/1.23 'Lora',serif; color:#17283a; margin:9px 0 7px; }
+.cafe-minuto-heading p { margin:0; color:#627789; font:400 .89rem/1.6 'Inter',sans-serif; }
+.cafe-minuto-heading-actions { display:flex; align-items:center; gap:13px; }
+.cafe-minuto-add { display:inline-flex; align-items:center; gap:8px; background:#008d67; color:#fff; border:1px solid #008d67; border-radius:8px; padding:10px 14px; font:650 .83rem 'Inter',sans-serif; transition:background .2s; }
+.cafe-minuto-add[hidden], .cafe-minuto-arrows[hidden] { display:none!important; }
+.cafe-minuto-add:hover { background:#006f54; }
+.cafe-minuto-arrows { display:flex; align-items:center; gap:7px; }
+.cafe-minuto-arrows button { width:38px; height:38px; display:grid; place-items:center; border-radius:50%; border:1px solid #d6e1e7; background:white; color:#004b79; transition:background .2s, border-color .2s; }
+.cafe-minuto-arrows button:hover:not(:disabled) { background:#edf8f4; border-color:#009668; }
+.cafe-minuto-arrows button:disabled { color:#a4afb7; cursor:default; opacity:.5; }
+.cafe-minuto-track { display:grid; grid-auto-flow:column; grid-auto-columns:calc((100% - 54px)/4); gap:18px; overflow-x:auto; overscroll-behavior-inline:contain; scroll-snap-type:x mandatory; scroll-padding-inline:1px; scrollbar-width:thin; scrollbar-color:#d4e2e3 transparent; padding:3px 1px 15px; }
+.cafe-minuto-card { min-width:0; position:relative; aspect-ratio:9/16; scroll-snap-align:start; overflow:hidden; isolation:isolate; background:#053d47; border-radius:10px; box-shadow:0 4px 15px rgba(0,44,64,.1); }
+.cafe-minuto-open { display:block; position:absolute; inset:0; width:100%; color:#fff; border:0; padding:0; background:transparent; text-align:left; }
+.cafe-minuto-card-image { width:100%; height:100%; object-fit:cover; display:block; transition:transform .35s ease; }
+.cafe-minuto-card:hover .cafe-minuto-card-image { transform:scale(1.05); }
+.cafe-minuto-fallback { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:14px; background:linear-gradient(153deg,#00537a 5%,#028c78 62%,#15314b 100%); color:#fff; }
+.cafe-minuto-fallback .bi { font-size:clamp(2.5rem,5vw,4rem); opacity:.86; }
+.cafe-minuto-fallback strong { font:700 .88rem 'Inter',sans-serif; letter-spacing:.05em; }
+.cafe-minuto-card-gradient { position:absolute; inset:35% 0 0; background:linear-gradient(0deg,rgba(4,19,28,.93) 0%,rgba(4,19,28,.25) 60%,transparent 100%); pointer-events:none; }
+.cafe-minuto-platform { position:absolute; left:12px; top:12px; display:inline-flex; align-items:center; gap:6px; font:650 .68rem 'Inter',sans-serif; color:white; background:rgba(7,35,44,.68); border:1px solid rgba(255,255,255,.22); border-radius:5px; padding:6px 9px; backdrop-filter:blur(5px); }
+.cafe-minuto-play { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:52px; height:52px; display:grid; place-items:center; border-radius:50%; background:rgba(0,0,0,.32); color:#fff; border:2px solid white; font-size:1.35rem; transition:background .2s, scale .2s; }
+.cafe-minuto-card:hover .cafe-minuto-play { background:#009668; scale:1.06; }
+.cafe-minuto-caption { position:absolute; bottom:17px; left:14px; right:13px; color:white; font:700 clamp(.83rem,1.3vw,1.05rem)/1.4 'Inter',sans-serif; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; text-shadow:0 1px 6px rgba(0,0,0,.4); }
+.cafe-minuto-delete { position:absolute; right:10px; top:10px; z-index:3; display:grid; place-items:center; width:32px; height:32px; border:1px solid #ffccd0; border-radius:6px; background:#fff; color:#b32635; box-shadow:0 2px 9px rgba(0,0,0,.15); }
+.cafe-minuto-card:has(.cafe-minuto-delete) .cafe-minuto-platform { right:49px; width:max-content; }
+.cafe-minuto-loading, .cafe-minuto-empty { grid-column:1/-1; min-height:160px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:9px; border:1px dashed #cddfdd; background:rgba(255,255,255,.77); border-radius:10px; color:#667c86; font:500 .9rem 'Inter',sans-serif; text-align:center; padding:25px; }
+.cafe-minuto-empty .bi { font-size:2rem; color:#008e74; }
+.cafe-minuto-player-modal { --bs-modal-width:470px; z-index:1080; }
+.cafe-minuto-player-modal .modal-content { background:#081b25; border:0; border-radius:12px; overflow:hidden; }
+.cafe-minuto-player-head { display:flex; justify-content:space-between; align-items:center; padding:13px 15px; gap:15px; color:#fff; }
+.cafe-minuto-player-head h3 { font:650 .92rem/1.4 'Inter',sans-serif; margin:0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cafe-minuto-player-head .btn-close { filter:invert(1); flex-shrink:0; }
+.cafe-minuto-player-frame { position:relative; width:min(100%,410px); margin:auto; aspect-ratio:9/16; max-height:74vh; background:#020d14; }
+.cafe-minuto-player-frame iframe { position:absolute; width:100%; height:100%; inset:0; border:0; }
+.cafe-minuto-player-footer { text-align:center; padding:10px 16px 15px; }
+.cafe-minuto-player-footer a { font:500 .78rem 'Inter',sans-serif; color:#b6eee0; text-decoration:none; }
+.cafe-minuto-editor-modal { z-index:1080; }
+.cafe-minuto-editor-modal .modal-content { border:0; border-radius:12px; overflow:hidden; box-shadow:0 12px 45px rgba(0,30,48,.2); }
+.cafe-minuto-editor-modal .modal-header { border-top:5px solid #008d6d; padding:22px 24px 17px; }
+.cafe-minuto-editor-modal .modal-title { font:700 1.35rem/1.35 'Lora',serif; margin:5px 0 0; color:#1d3040; }
+.cafe-minuto-editor-modal .modal-body { padding:17px 24px 10px; }
+.cafe-minuto-editor-modal .form-label { color:#293e4f; font:650 .84rem 'Inter',sans-serif; margin:0 0 8px; }
+.cafe-minuto-editor-modal .form-control { border-radius:7px; padding:12px; font:400 .9rem 'Inter',sans-serif; margin-bottom:6px; }
+.cafe-minuto-editor-modal .form-control:focus { border-color:#009668; box-shadow:0 0 0 .17rem rgba(0,150,104,.1); }
+.cafe-minuto-help { color:#758896; font:400 .75rem/1.6 'Inter',sans-serif; margin:3px 0 20px; }
+.cafe-minuto-help code { color:#47687a; }
+.cafe-minuto-form-status { min-height:20px; color:#a92335; font:500 .82rem 'Inter',sans-serif; }
+.cafe-minuto-editor-modal .modal-footer { padding:15px 24px 20px; border:0; }
+.cafe-minuto-submit { color:#fff; background:#008e68; border:1px solid #008e68; font:650 .85rem 'Inter',sans-serif; padding:10px 18px; }
+.cafe-minuto-submit:hover, .cafe-minuto-submit:focus { background:#006e55; border-color:#006e55; color:#fff; }
+@media (max-width:1199.98px) { .cafe-minuto-track { grid-auto-columns:calc((100% - 36px)/3); } }
+@media (max-width:991.98px) { .cafe-minuto-track { grid-auto-columns:calc((100% - 18px)/2); } }
+@media (max-width:575.98px) {
+    .cafe-minuto { margin:48px 0 58px; padding-top:20px; }
+    .cafe-minuto-heading { align-items:flex-start; gap:15px; }
+    .cafe-minuto h2 { font-size:1.65rem; }
+    .cafe-minuto-heading p { font-size:.8rem; }
+    .cafe-minuto-heading-actions { width:100%; justify-content:space-between; }
+    .cafe-minuto-arrows { margin-left:auto; }
+    .cafe-minuto-track { grid-auto-columns:77%; gap:13px; }
+    .cafe-minuto-player-modal .modal-dialog { margin:10px; }
+    .cafe-minuto-player-frame { width:min(100%,370px); max-height:74vh; }
+}
+@media (prefers-reduced-motion:reduce) { .cafe-minuto-card-image { transition:none; } }
+.cafe-minuto-card-image[hidden], .cafe-minuto-fallback[hidden] { display: none !important; }
