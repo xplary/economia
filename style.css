@@ -1408,6 +1408,8 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
 
 
 /* Investigación & Papers: búsqueda visualmente idéntica al buscador de columnas. */
+/* Centra el buscador en escritorio sin cambiar su ancho ni la vista móvil. */
+#investigacion .papers-search-row > .col-md-8 { margin-left: auto; margin-right: auto; }
 #investigacion .papers-search-row .input-group { background: #fff; }
 #investigacion #buscar-papers { min-width: 0; font-family: 'Inter', sans-serif; }
 #investigacion #buscar-papers:focus { box-shadow: none; }
