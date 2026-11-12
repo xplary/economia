@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
-    <link rel="stylesheet" href="./style.css?v=miniaturas-tiktok-20261111-1">
+    <link rel="stylesheet" href="./style.css?v=papers-mobile-search-20261112-1">
     <style>
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar { width: 8px; background-color: transparent; }
         .modal-dialog-scrollable .modal-body::-webkit-scrollbar-track { background-color: transparent; }
@@ -216,7 +216,17 @@
                         </div>
                     </div>
                 </div>
-                <div class="row" id="contenedor-articulos">
+                <!-- Buscador de investigaciones: mismo diseño que Artículos y Opinión. -->
+                <div class="row mb-4 mt-2 papers-search-row">
+                    <div class="col-md-8">
+                        <label class="visually-hidden" for="buscar-papers">Buscar investigaciones y papers</label>
+                        <div class="input-group shadow-sm rounded-3 overflow-hidden border">
+                            <span class="input-group-text bg-white border-0 text-muted"><i class="bi bi-search" aria-hidden="true"></i></span>
+                            <input type="search" id="buscar-papers" class="form-control border-0 py-2 font-inter shadow-none" placeholder="Buscar investigaciones y papers..." autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+                <div class="row" id="contenedor-articulos" aria-live="polite" aria-busy="true">
                     <article class="col-12 mb-5 pb-4 border-bottom border-light-subtle"><div class="row align-items-start"><div class="col-md-2 col-4"><div class="skeleton-box w-100 rounded-3" style="height: 120px;"></div></div><div class="col-md-10 col-8"><div class="skeleton-box w-25 mb-2" style="height: 20px;"></div><div class="skeleton-box w-75 mb-3" style="height: 30px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div></div></div></article>
                     <article class="col-12 mb-5 pb-4 border-bottom border-light-subtle"><div class="row align-items-start"><div class="col-md-2 col-4"><div class="skeleton-box w-100 rounded-3" style="height: 120px;"></div></div><div class="col-md-10 col-8"><div class="skeleton-box w-25 mb-2" style="height: 20px;"></div><div class="skeleton-box w-75 mb-3" style="height: 30px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div><div class="skeleton-box w-100 mb-2" style="height: 15px;"></div></div></div></article>
                 </div>
@@ -743,7 +753,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="app.js?v=ajuste-borde-enlaces-20261111-1"></script>
+    <script type="module" src="app.js?v=papers-mobile-search-20261112-1"></script>
     <script type="module" src="./videos-minuto.js?v=portadas-tiktok-20261111-2"></script>
 </body>
 </html>

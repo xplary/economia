@@ -1405,3 +1405,101 @@ body:has(#colFormulario.show) > .modal-backdrop { z-index: 1210; }
         padding-bottom: 10px !important;
     }
 }
+
+
+/* Investigación & Papers: búsqueda visualmente idéntica al buscador de columnas. */
+#investigacion .papers-search-row .input-group { background: #fff; }
+#investigacion #buscar-papers { min-width: 0; font-family: 'Inter', sans-serif; }
+#investigacion #buscar-papers:focus { box-shadow: none; }
+#investigacion .papers-search-row .input-group:focus-within {
+    border-color: #9ccfc3 !important;
+    box-shadow: 0 0 0 2px rgba(0, 150, 104, .09) !important;
+}
+
+/* Solo celulares: las fichas se reorganizan sin alterar el diseño de PC. */
+@media (max-width: 767.98px) {
+    #investigacion .papers-search-row { margin-top: 0 !important; margin-bottom: 20px !important; }
+    #investigacion .papers-search-row > [class*="col-"] { width: 100%; }
+    #investigacion #contenedor-articulos { margin-inline: 0; row-gap: 15px; }
+    #investigacion .paper-item {
+        min-width: 0;
+        margin-bottom: 0 !important;
+        padding: 17px 16px 18px !important;
+        background: #fff;
+        border: 1px solid #e0e7ec !important;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 38, 60, .045);
+    }
+    #investigacion .paper-item-row {
+        display: grid;
+        grid-template-columns: 78px minmax(0, 1fr);
+        column-gap: 15px;
+        row-gap: 0;
+        margin: 0;
+        align-items: start;
+    }
+    #investigacion .paper-item-content { display: contents !important; }
+    #investigacion .paper-item-top {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        display: flex;
+        align-items: flex-start !important;
+        flex-wrap: wrap;
+        gap: 8px;
+        min-width: 0;
+        margin-bottom: 15px !important;
+    }
+    #investigacion .paper-item-tags { flex: 1 1 0; min-width: 0; }
+    #investigacion .paper-item-tags .tag-badge { display: inline-block; margin: 0 4px 5px 0; font-size: .66rem; }
+    #investigacion .paper-item-tags .badge { font-size: .66rem; margin: 0 0 5px 0 !important; }
+    #investigacion .paper-item-actions { margin: 0 !important; display: flex; align-items: center; gap: 12px; }
+    #investigacion .paper-item-actions i { margin: 0 !important; font-size: 1rem; padding: 3px; }
+    #investigacion .paper-item-cover {
+        grid-column: 1;
+        grid-row: 2 / span 2;
+        width: 78px;
+        max-width: 78px;
+        padding: 0;
+    }
+    #investigacion .paper-cover { max-width: 78px; width: 100%; aspect-ratio: 1 / 1.36; }
+    #investigacion .paper-cover::before { width: 5px; }
+    #investigacion .paper-item-title {
+        grid-column: 2;
+        grid-row: 2;
+        font-size: 1.11rem !important;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+        margin: 0 0 7px !important;
+    }
+    #investigacion .paper-item-date {
+        grid-column: 2;
+        grid-row: 3;
+        font-size: .73rem !important;
+        line-height: 1.5;
+        margin: 0 !important;
+    }
+    #investigacion .paper-item-summary {
+        grid-column: 1 / -1;
+        grid-row: 4;
+        margin: 15px 0 16px !important;
+        font-size: .9rem !important;
+        line-height: 1.6 !important;
+        overflow-wrap: anywhere;
+    }
+    #investigacion .paper-item-footer {
+        grid-column: 1 / -1;
+        grid-row: 5;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 0;
+    }
+    #investigacion .paper-item-footer .btn { margin: 0 !important; min-height: 36px; padding: 7px 13px; }
+    #investigacion .paper-item-footer > span { margin: 0 !important; }
+}
+@media (max-width: 359.98px) {
+    #investigacion .paper-item { padding-inline: 12px !important; }
+    #investigacion .paper-item-row { grid-template-columns: 65px minmax(0,1fr); column-gap: 12px; }
+    #investigacion .paper-item-cover { width: 65px; max-width: 65px; }
+    #investigacion .paper-cover { max-width: 65px; }
+    #investigacion .paper-item-title { font-size: 1.02rem !important; }
+}

@@ -1078,7 +1078,77 @@ function renderNoticias() {
 window.editarNoticia = (id) => { const d = window.postsData[id]; document.getElementById('not-titulo').value = d.titulo; document.getElementById('not-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('not-color').value = d.colorTag || '#004b79'; document.getElementById('not-principal').checked = !!d.principal; selectorEditorOpinion.value = seccionesOpinion.some(s => s.id === d.seccionId) ? d.seccionId : ''; actualizarPrincipalPorSeccion(); document.getElementById('not-principal-seccion').checked = !!d.principalSeccion && !!selectorEditorOpinion.value; if(tinymce.get('editor-noticias')) tinymce.get('editor-noticias').setContent(d.contenido || ''); window.editandoId = id; document.getElementById('not-form-title').innerText = "Editando Columna"; document.getElementById('btn-pub-noticia').innerText = "Guardar"; bootstrap.Modal.getOrCreateInstance(document.getElementById('colNoticia')).show(); };
 
 document.getElementById('btn-pub-articulo').onclick = async () => { const t = document.getElementById('art-titulo').value; const l = document.getElementById('art-link').value; if(!t||!l) return alert("Falta Título o Link."); const et = document.getElementById('art-tags').value ? document.getElementById('art-tags').value.split(',').map(x=>x.trim()).filter(Boolean) : ['Paper']; const data = { titulo: t, link: l, resumen: document.getElementById('art-resumen').value, etiquetas: et, colorTag: document.getElementById('art-color').value, vistas: 0 }; if(window.editandoId) await updateDoc(doc(db, "articulos", window.editandoId), data); else { data.fecha = serverTimestamp(); data.comentarios = []; await addDoc(collection(db, "articulos"), data); } cancelarEdicion(); };
-onSnapshot(query(collection(db, "articulos"), orderBy("fecha", "desc")), (snap) => { const cont = document.getElementById('contenedor-articulos'); if(snap.empty) return cont.innerHTML = '<div class="col-12 text-center text-muted font-inter">No hay papers.</div>'; let h = ''; snap.forEach(d => { const data = d.data(); window.postsData[d.id] = data; checkDeepLink(d.id, 'articulos'); const date = data.fecha ? data.fecha.toDate().toLocaleDateString() : ''; const avgStr = getPromedioStars(data.comentarios); const tHTML = (data.etiquetas||[]).map(t => `<span class="tag-badge" style="color: ${data.colorTag||'#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`).join(''); h += `<article class="col-12 mb-5 pb-4 border-bottom border-light-subtle"><div class="row align-items-start"><div class="col-md-2 col-4 cursor-pointer" onclick="abrirModal('${d.id}', 'articulos')"><div class="paper-cover mx-auto rounded-1"><i class="bi bi-file-earmark-pdf-fill text-secondary fs-1"></i><div class="mt-2" style="width: 80%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-1" style="width: 60%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div><div class="mt-auto" style="width: 40%; height: 4px; background: #cbd5e1; border-radius: 2px;"></div></div></div><div class="col-md-10 col-8 d-flex flex-column h-100 ps-md-4"><div class="d-flex justify-content-between align-items-start mb-2"><div>${tHTML} <span class="badge bg-secondary ms-1 fw-semibold font-inter" style="letter-spacing: 0.5px;">Acceso Abierto</span></div><div class="text-nowrap ms-3"><i class="bi bi-share-fill text-primary cursor-pointer me-3" onclick="compartir('${d.id}', 'articulos')"></i><i class="bi bi-pencil-fill text-warning me-3 admin-only-inline cursor-pointer" onclick="editarArt('${d.id}')"></i><i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('articulos', '${d.id}')"></i></div></div><a href="javascript:void(0)" onclick="abrirModal('${d.id}', 'articulos')" class="paper-title-link fw-bold font-serif mb-1" style="font-size: 1.45rem;">${d.data().titulo}</a><div class="text-muted small mb-3 font-inter">${data.fecha ? '(Publicado el ' + data.fecha.toDate().toLocaleDateString() + ')' : ''}</div><p class="text-muted mb-3 font-inter text-truncate-3" style="font-size: 1.05rem; line-height: 1.6;">${escapeHTML(data.resumen)}</p><div class="mt-auto d-flex align-items-center"><button class="btn btn-sm text-primary fw-bold font-inter rounded-pill me-3 shadow-sm" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${d.id}', 'articulos')">Leer documento <i class="bi bi-arrow-right ms-1"></i></button><span class="ms-2">${avgStr}</span></div></div></div></article>`; }); cont.innerHTML = h; if(window.modalActual.col === 'articulos' && window.modalActual.id) abrirModal(window.modalActual.id, 'articulos', true); });
+// El buscador de papers usa todas las investigaciones obtenidas de Firestore,
+// no solo las que se ven en pantalla, y tolera mayúsculas y tildes.
+let papersPublicados = [];
+const entradaBuscarPapers = document.getElementById('buscar-papers');
+const normalizarTextoPaper = valor => String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
+
+function renderizarPapers() {
+    const cont = document.getElementById('contenedor-articulos');
+    const busqueda = normalizarTextoPaper(entradaBuscarPapers?.value);
+    const papersFiltrados = !busqueda ? papersPublicados : papersPublicados.filter(({ data }) => {
+        const texto = [data.titulo, data.resumen, ...(Array.isArray(data.etiquetas) ? data.etiquetas : [])].join(' ');
+        return normalizarTextoPaper(texto).includes(busqueda);
+    });
+    if (!papersFiltrados.length) {
+        cont.innerHTML = `<div class="col-12 text-center text-muted font-inter py-4" role="status">${busqueda ? 'No se encontraron investigaciones para tu búsqueda.' : 'No hay papers.'}</div>`;
+        cont.setAttribute('aria-busy', 'false');
+        return;
+    }
+    let html = '';
+    for (const { id, data } of papersFiltrados) {
+        const fecha = data.fecha?.toDate ? data.fecha.toDate().toLocaleDateString() : '';
+        const promedio = getPromedioStars(data.comentarios);
+        const etiquetas = (Array.isArray(data.etiquetas) ? data.etiquetas : []).map(t =>
+            `<span class="tag-badge" style="color: ${data.colorTag || '#004b79'}; border-color: #d1d5db;">${escapeHTML(t)}</span>`
+        ).join('');
+        html += `<article class="col-12 mb-5 pb-4 border-bottom border-light-subtle paper-item">
+            <div class="row align-items-start paper-item-row">
+                <div class="col-md-2 col-4 cursor-pointer paper-item-cover" onclick="abrirModal('${id}', 'articulos')">
+                    <div class="paper-cover mx-auto rounded-1">
+                        <i class="bi bi-file-earmark-pdf-fill text-secondary fs-1"></i>
+                        <div class="mt-2" style="width: 80%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div>
+                        <div class="mt-1" style="width: 60%; height: 3px; background: #e2e8f0; border-radius: 2px;"></div>
+                        <div class="mt-auto" style="width: 40%; height: 4px; background: #cbd5e1; border-radius: 2px;"></div>
+                    </div>
+                </div>
+                <div class="col-md-10 col-8 d-flex flex-column h-100 ps-md-4 paper-item-content">
+                    <div class="d-flex justify-content-between align-items-start mb-2 paper-item-top">
+                        <div class="paper-item-tags">${etiquetas} <span class="badge bg-secondary ms-1 fw-semibold font-inter" style="letter-spacing: 0.5px;">Acceso Abierto</span></div>
+                        <div class="text-nowrap ms-3 paper-item-actions">
+                            <i class="bi bi-share-fill text-primary cursor-pointer me-3" onclick="compartir('${id}', 'articulos')" title="Compartir"></i>
+                            <i class="bi bi-pencil-fill text-warning me-3 admin-only-inline cursor-pointer" onclick="editarArt('${id}')" title="Editar"></i>
+                            <i class="bi bi-trash-fill text-danger admin-only-inline cursor-pointer" onclick="borrarPost('articulos', '${id}')" title="Eliminar"></i>
+                        </div>
+                    </div>
+                    <a href="javascript:void(0)" onclick="abrirModal('${id}', 'articulos')" class="paper-title-link fw-bold font-serif mb-1 paper-item-title" style="font-size: 1.45rem;">${escapeHTML(data.titulo)}</a>
+                    <div class="text-muted small mb-3 font-inter paper-item-date">${fecha ? '(Publicado el ' + fecha + ')' : ''}</div>
+                    <p class="text-muted mb-3 font-inter text-truncate-3 paper-item-summary" style="font-size: 1.05rem; line-height: 1.6;">${escapeHTML(data.resumen)}</p>
+                    <div class="mt-auto d-flex align-items-center paper-item-footer">
+                        <button class="btn btn-sm text-primary fw-bold font-inter rounded-pill me-3 shadow-sm" style="border: 1px solid #004b79; color:#004b79!important;" onclick="abrirModal('${id}', 'articulos')">Leer documento <i class="bi bi-arrow-right ms-1"></i></button>
+                        <span class="ms-2">${promedio}</span>
+                    </div>
+                </div>
+            </div>
+        </article>`;
+    }
+    cont.innerHTML = html;
+    cont.setAttribute('aria-busy', 'false');
+}
+
+entradaBuscarPapers?.addEventListener('input', renderizarPapers);
+onSnapshot(query(collection(db, 'articulos'), orderBy('fecha', 'desc')), (snap) => {
+    papersPublicados = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+    for (const { id, data } of papersPublicados) {
+        window.postsData[id] = data;
+        checkDeepLink(id, 'articulos');
+    }
+    renderizarPapers();
+    if (window.modalActual.col === 'articulos' && window.modalActual.id) {
+        abrirModal(window.modalActual.id, 'articulos', true);
+    }
+});
 window.editarArt = (id) => { const d = window.postsData[id]; document.getElementById('art-titulo').value = d.titulo; document.getElementById('art-link').value = d.link; document.getElementById('art-tags').value = (d.etiquetas||[]).join(', '); document.getElementById('art-color').value = d.colorTag || '#004b79'; document.getElementById('art-resumen').value = d.resumen; window.editandoId = id; bootstrap.Collapse.getOrCreateInstance(document.getElementById('colArticulo')).show(); window.scrollTo(0,0); };
 
 onSnapshot(doc(db, "config", "reputacion"), (s) => { if(s.exists() && s.data().requerida !== undefined) { reqReputacion = s.data().requerida; const reqEl = document.getElementById('req-rep-text'); if(reqEl) reqEl.innerText = reqReputacion; } });
