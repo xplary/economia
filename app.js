@@ -316,7 +316,7 @@ onAuthStateChanged(auth, async (u) => {
             ddCont.id = 'user-dropdown-container';
             ddCont.className = 'dropdown d-inline-block ms-1 cafe-profile-dropdown';
             ddCont.innerHTML = `
-                <button type="button" class="cafe-profile-trigger" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" aria-label="Abrir menú de mi cuenta" title="Mi cuenta">
+                <button type="button" class="cafe-profile-trigger" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-display="static" aria-expanded="false" aria-label="Abrir menú de mi cuenta" title="Mi cuenta">
                     <img src="https://via.placeholder.com/42" id="user-avatar-img" class="cafe-profile-avatar" alt="Mi foto de perfil">
                     <span class="cafe-profile-online" aria-hidden="true"></span>
                 </button>
@@ -337,6 +337,27 @@ onAuthStateChanged(auth, async (u) => {
                                 </a>
                             </li>
                             <li class="cafe-profile-divider" aria-hidden="true"></li>
+                            <li class="cafe-profile-options-wrap">
+                                <button type="button" id="cafe-profile-options-toggle" class="cafe-profile-action cafe-profile-action-options" aria-expanded="false" aria-controls="cafe-profile-theme-panel">
+                                    <span class="cafe-profile-action-icon" aria-hidden="true"><i class="bi bi-sliders2"></i></span>
+                                    <span class="cafe-profile-action-name">Opciones</span>
+                                    <i class="bi bi-chevron-down cafe-profile-action-arrow cafe-profile-options-chevron" aria-hidden="true"></i>
+                                </button>
+                                <div id="cafe-profile-theme-panel" class="cafe-profile-theme-panel" hidden>
+                                    <p class="cafe-profile-theme-label">Apariencia de la página</p>
+                                    <div class="cafe-profile-theme-choices" role="group" aria-label="Seleccionar apariencia">
+                                        <button type="button" class="cafe-profile-theme-choice" data-cafe-theme-choice="light" aria-pressed="false">
+                                            <i class="bi bi-sun" aria-hidden="true"></i><span>Claro</span>
+                                            <i class="bi bi-check2 cafe-profile-theme-check" aria-hidden="true"></i>
+                                        </button>
+                                        <button type="button" class="cafe-profile-theme-choice" data-cafe-theme-choice="dark" aria-pressed="false">
+                                            <i class="bi bi-moon-stars" aria-hidden="true"></i><span>Oscuro</span>
+                                            <i class="bi bi-check2 cafe-profile-theme-check" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="cafe-profile-divider" aria-hidden="true"></li>
                             <li>
                                 <button type="button" class="cafe-profile-action cafe-profile-action-logout" id="btn-logout-dropdown">
                                     <span class="cafe-profile-action-icon" aria-hidden="true"><i class="bi bi-box-arrow-right"></i></span>
@@ -350,6 +371,40 @@ onAuthStateChanged(auth, async (u) => {
             `;
             btnLogin.parentNode.insertBefore(ddCont, btnLogin.nextSibling);
             document.getElementById('btn-logout-dropdown').onclick = () => signOut(auth);
+            // Opciones de apariencia: se guarda solo en este navegador, sin modificar Firebase.
+            const optionToggle = ddCont.querySelector('#cafe-profile-options-toggle');
+            const optionPanel = ddCont.querySelector('#cafe-profile-theme-panel');
+            const themeChoices = ddCont.querySelectorAll('[data-cafe-theme-choice]');
+            const updateAppearanceControls = () => {
+                const active = document.documentElement.getAttribute('data-cafe-theme') === 'dark' ? 'dark' : 'light';
+                themeChoices.forEach(button => {
+                    const selected = button.dataset.cafeThemeChoice === active;
+                    button.classList.toggle('is-selected', selected);
+                    button.setAttribute('aria-pressed', String(selected));
+                });
+            };
+            optionToggle.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const opening = optionPanel.hidden;
+                optionPanel.hidden = !opening;
+                optionToggle.setAttribute('aria-expanded', String(opening));
+                optionToggle.classList.toggle('is-expanded', opening);
+                updateAppearanceControls();
+            });
+            themeChoices.forEach(button => button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const theme = button.dataset.cafeThemeChoice === 'dark' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-cafe-theme', theme);
+                document.documentElement.setAttribute('data-bs-theme', theme);
+                try { localStorage.setItem('cafeunp.appearance', theme); } catch (error) {}
+                updateAppearanceControls();
+            }));
+            updateAppearanceControls();
+            ddCont.addEventListener('hidden.bs.dropdown', () => {
+                optionPanel.hidden = true;
+                optionToggle.classList.remove('is-expanded');
+                optionToggle.setAttribute('aria-expanded', 'false');
+            });
             // Bootstrap conserva el funcionamiento de teclado, Escape y clic fuera del menú.
             // Se retrasa brevemente la ocultación solo para permitir la animación de salida.
             const profileTrigger = ddCont.querySelector('.cafe-profile-trigger');
