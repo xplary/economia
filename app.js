@@ -314,29 +314,76 @@ onAuthStateChanged(auth, async (u) => {
         if(!ddCont) {
             ddCont = document.createElement('div');
             ddCont.id = 'user-dropdown-container';
-            ddCont.className = 'dropdown d-inline-block ms-1'; 
+            ddCont.className = 'dropdown d-inline-block ms-1 cafe-profile-dropdown';
             ddCont.innerHTML = `
-                <div class="position-relative cursor-pointer" data-bs-toggle="dropdown" aria-expanded="false" title="Mi Cuenta">
-                    <img src="${u.photoURL || 'https://via.placeholder.com/42'}" id="user-avatar-img" class="rounded-circle shadow-sm" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid rgba(255,255,255,0.4); transition: border-color 0.2s ease;" alt="Perfil" onmouseover="this.style.borderColor='#ffffff'" onmouseout="this.style.borderColor='rgba(255,255,255,0.4)'">
-                </div>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 rounded-4 py-2" style="min-width: 250px; z-index: 1070; right: 0;">
-                    <li class="px-4 py-3 border-bottom mb-2 text-center">
-                        <img src="${u.photoURL || 'https://via.placeholder.com/60'}" class="rounded-circle mb-3 shadow-sm border" style="width: 55px; height: 55px; object-fit: cover;" id="user-avatar-img-large">
-                        <span class="fw-bold font-inter text-dark d-block text-truncate mb-2" style="max-width: 210px; margin: 0 auto; font-size: 1.05rem;">${escapeHTML(u.displayName || 'Usuario')}</span>
-                        <span class="badge bg-secondary font-inter px-3 py-1 rounded-pill shadow-sm" id="user-plan-badge" style="font-weight: 600; letter-spacing: 0.5px;">Usuario</span>
+                <button type="button" class="cafe-profile-trigger" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" aria-label="Abrir menú de mi cuenta" title="Mi cuenta">
+                    <img src="https://via.placeholder.com/42" id="user-avatar-img" class="cafe-profile-avatar" alt="Mi foto de perfil">
+                    <span class="cafe-profile-online" aria-hidden="true"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end cafe-profile-menu" aria-label="Opciones de mi cuenta">
+                    <li class="cafe-profile-top" aria-hidden="true"><span class="cafe-profile-top-label">MI CUENTA</span></li>
+                    <li class="cafe-profile-identity">
+                        <img src="https://via.placeholder.com/60" id="user-avatar-img-large" class="cafe-profile-avatar-large" alt="">
+                        <span id="user-profile-name" class="cafe-profile-name"></span>
+                        <span class="cafe-profile-role" id="user-plan-badge">Usuario</span>
                     </li>
-                    <li id="admin-panel-link" class="d-none"><a href="admin/" class="dropdown-item fw-bold text-primary py-2 cursor-pointer font-inter text-center hover-bg-light"><i class="bi bi-speedometer2 me-2"></i> Panel Admin</a></li>
-                    <li><a class="dropdown-item fw-bold text-danger py-2 cursor-pointer font-inter text-center hover-bg-light rounded-bottom-4" id="btn-logout-dropdown"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
+                    <li class="cafe-profile-actions">
+                        <ul class="list-unstyled m-0">
+                            <li id="admin-panel-link" class="d-none">
+                                <a href="admin/" class="cafe-profile-action cafe-profile-action-admin">
+                                    <span class="cafe-profile-action-icon" aria-hidden="true"><i class="bi bi-speedometer2"></i></span>
+                                    <span class="cafe-profile-action-name">Panel Admin</span>
+                                    <i class="bi bi-arrow-up-right cafe-profile-action-arrow" aria-hidden="true"></i>
+                                </a>
+                            </li>
+                            <li class="cafe-profile-divider" aria-hidden="true"></li>
+                            <li>
+                                <button type="button" class="cafe-profile-action cafe-profile-action-logout" id="btn-logout-dropdown">
+                                    <span class="cafe-profile-action-icon" aria-hidden="true"><i class="bi bi-box-arrow-right"></i></span>
+                                    <span class="cafe-profile-action-name">Cerrar sesión</span>
+                                    <i class="bi bi-chevron-right cafe-profile-action-arrow" aria-hidden="true"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </li>
                 </ul>
             `;
             btnLogin.parentNode.insertBefore(ddCont, btnLogin.nextSibling);
             document.getElementById('btn-logout-dropdown').onclick = () => signOut(auth);
+            // Bootstrap conserva el funcionamiento de teclado, Escape y clic fuera del menú.
+            // Se retrasa brevemente la ocultación solo para permitir la animación de salida.
+            const profileTrigger = ddCont.querySelector('.cafe-profile-trigger');
+            const profileMenu = ddCont.querySelector('.cafe-profile-menu');
+            let closeAllowed = false;
+            let closeTimeout = null;
+            ddCont.addEventListener('show.bs.dropdown', () => {
+                clearTimeout(closeTimeout);
+                profileMenu.classList.remove('is-closing');
+                closeAllowed = false;
+            });
+            ddCont.addEventListener('hide.bs.dropdown', event => {
+                if (closeAllowed || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+                event.preventDefault();
+                if (profileMenu.classList.contains('is-closing')) return;
+                profileMenu.classList.add('is-closing');
+                closeTimeout = setTimeout(() => {
+                    closeAllowed = true;
+                    bootstrap.Dropdown.getOrCreateInstance(profileTrigger).hide();
+                    profileMenu.classList.remove('is-closing');
+                    closeAllowed = false;
+                }, 160);
+            });
         } else {
             ddCont.classList.remove('d-none');
             document.getElementById('user-avatar-img').src = u.photoURL || 'https://via.placeholder.com/42';
             const largeAvatar = document.getElementById('user-avatar-img-large');
             if(largeAvatar) largeAvatar.src = u.photoURL || 'https://via.placeholder.com/60';
         }
+
+        const profilePicture = u.photoURL || 'https://via.placeholder.com/60';
+        document.getElementById('user-avatar-img').src = profilePicture;
+        document.getElementById('user-avatar-img-large').src = profilePicture;
+        document.getElementById('user-profile-name').textContent = u.displayName || 'Usuario';
 
         const ref = doc(db, "usuarios", u.uid);
         userSub = onSnapshot(ref, (d) => {
@@ -345,18 +392,18 @@ onAuthStateChanged(auth, async (u) => {
             if(d.exists()) {
                 if(d.data().owner) {
                     document.body.classList.add('is-owner');
-                    if(badge) { badge.innerText = 'Administrador'; badge.className = 'badge font-inter px-3 py-1 rounded-pill shadow-sm text-white'; badge.style.backgroundColor = '#004b79'; }
+                    if(badge) { badge.textContent = 'Administrador'; badge.className = 'cafe-profile-role is-admin'; badge.style.backgroundColor = ''; }
                     if(adminLink) adminLink.classList.remove('d-none');
                 } else {
                     document.body.classList.remove('is-owner');
-                    if(badge) { badge.innerText = 'Usuario'; badge.className = 'badge bg-secondary font-inter px-3 py-1 rounded-pill shadow-sm text-white'; badge.style.backgroundColor = ''; }
+                    if(badge) { badge.textContent = 'Usuario'; badge.className = 'cafe-profile-role'; badge.style.backgroundColor = ''; }
                     if(adminLink) adminLink.classList.add('d-none');
                 }
                 userReputacion = d.data().reputacion || 0;
             } else {
                 setDoc(ref, { nombre: u.displayName, email: u.email, reputacion: 0 });
                 userReputacion = 0;
-                if(badge) { badge.innerText = 'Usuario'; badge.className = 'badge bg-secondary font-inter px-3 py-1 rounded-pill shadow-sm text-white'; badge.style.backgroundColor = ''; }
+                if(badge) { badge.textContent = 'Usuario'; badge.className = 'cafe-profile-role'; badge.style.backgroundColor = ''; }
                 if(adminLink) adminLink.classList.add('d-none');
             }
             document.getElementById('user-reputacion').innerText = userReputacion;
